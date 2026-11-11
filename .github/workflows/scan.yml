@@ -1,0 +1,85 @@
+name: Scan Chromium source with fdroid scanner
+
+# 照 F-Droid 編譯伺服器的規則（fdroidserver 的 scanner）掃一遍 gclient sync 完的 Chromium 原始碼，
+# 列出預編譯的二進位檔、jar/aar、.so 和 Play 服務等不開源的依賴。不編譯，只佔一個 job。
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chromium 版本 tag（留空 = 最新 Android Stable）"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Resolve version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          v="$INPUT_VERSION"
+          if [ -z "$v" ]; then
+            v=$(curl -fsSL "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Android&num=1" | jq -r '.[0].version')
+          fi
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "版本格式不對: '$v'"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "Chromium $v"
+
+      # 新版 runner 映像只有一顆碟，清掉用不到的東西，根目錄約有 110GB
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af > /dev/null || true
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: .github/scripts
+
+      - name: Get depot_tools
+        run: |
+          git clone -q --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$GITHUB_WORKSPACE/depot_tools"
+          echo "$GITHUB_WORKSPACE/depot_tools" >> "$GITHUB_PATH"
+
+      - name: Fetch chromium/src at tag
+        run: |
+          git init -q src
+          cd src
+          git remote add origin https://chromium.googlesource.com/chromium/src.git
+          git fetch -q --depth 1 origin "refs/tags/$VERSION"
+          git checkout -q FETCH_HEAD
+
+      - name: gclient sync
+        run: |
+          cat > .gclient <<'GCLIENT'
+          solutions = [{
+            "name": "src",
+            "url": "https://chromium.googlesource.com/chromium/src.git",
+            "managed": False,
+            "custom_deps": {},
+            "custom_vars": {},
+          }]
+          target_os = ["android"]
+          GCLIENT
+          gclient sync --no-history -j 8
+          du -sh src
+
+      - name: Install fdroidserver
+        run: |
+          python3 -m venv fd
+          fd/bin/pip install -q fdroidserver==2.4.5
+
+      - name: Scan
+        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-scan-${{ env.VERSION }}
+          path: scan-${{ env.VERSION }}/
+          retention-days: 90

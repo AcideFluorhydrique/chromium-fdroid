@@ -1,0 +1,138 @@
+name: Build Chromium Android for F-Droid tests
+
+# 免費 runner 單一 job 最多 6 小時，編不完 Chromium。
+# 所以拆成多個 stage 接力：每個 stage 編到快超時就停，把進度打包成 artifact，
+# 下一個 stage 下載後讓 ninja 從中斷的地方繼續。編完的那個 stage 會直接上傳 APK，
+# 後面的 stage 自動跳過。
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chromium 版本 tag，例如 142.0.7444.171（留空 = 最新 Android Stable）"
+        required: false
+        default: ""
+        type: string
+      target_cpu:
+        description: "CPU 架構"
+        required: true
+        default: "arm64"
+        type: choice
+        options:
+          - arm64   # 一般手機
+          - arm     # 舊款 32 位元手機
+          - x64     # 模擬器
+      package_name:
+        description: "APK 包名（預設和正式發布的不同，可以同時安裝）"
+        required: true
+        default: "org.chromium.chrome.fdroidtest"
+        type: string
+      official:
+        description: "官方等級最佳化（is_official_build，照 uazo Vanilla 的設定；實驗中）"
+        required: false
+        default: false
+        type: boolean
+      own_toolchain:
+        description: "clang / rust / gn / ninja / node 自己從原始碼編，不用 Google 預編譯的"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+        run: |
+          v="$INPUT_VERSION"
+          if [ -z "$v" ]; then
+            v=$(curl -fsSL "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Android&num=1" | jq -r '.[0].version')
+          fi
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "版本格式不對: '$v'"; exit 1
+          fi
+          if ! [[ "$PACKAGE_NAME" =~ ^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$ ]]; then
+            echo "包名格式不對: '$PACKAGE_NAME'"; exit 1
+          fi
+          echo "Chromium $v ($PACKAGE_NAME)"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+  toolchain:
+    needs: resolve
+    if: inputs.own_toolchain
+    uses: ./.github/workflows/toolchain.yml
+    with:
+      version: ${{ needs.resolve.outputs.version }}
+
+  stage1:
+    needs: [resolve, toolchain]
+    if: ${{ !cancelled() && needs.resolve.result == 'success' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 1
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+      own_toolchain: ${{ inputs.own_toolchain || false }}
+
+  stage2:
+    needs: [resolve, stage1]
+    if: needs.stage1.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 2
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+
+  stage3:
+    needs: [resolve, stage2]
+    if: needs.stage2.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 3
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+
+  stage4:
+    needs: [resolve, stage3]
+    if: needs.stage3.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 4
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+
+  stage5:
+    needs: [resolve, stage4]
+    if: needs.stage4.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 5
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+
+  stage6:
+    needs: [resolve, stage5]
+    if: needs.stage5.outputs.done != 'true'
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 6
+      last_stage: true
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}

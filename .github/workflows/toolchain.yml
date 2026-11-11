@@ -1,0 +1,285 @@
+name: Chromium toolchain from source
+
+# 不用 Google 預編譯的 clang / rust / gn / ninja / node，改成自己從原始碼編，
+# 編好的東西上傳成 artifact，給 chromium-android-stage.yml 的 stage 1 換掉 Google 的版本。
+# 起點用 Ubuntu 套件的 clang-18 / lld-18 / gcc，和 Rust 官方的 stage0 rustc（Rust 本身只能這樣 bootstrap）。
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+
+env:
+  VERSION: ${{ inputs.version }}
+  HOST_CC: /usr/lib/llvm-18/bin/clang
+  HOST_CXX: /usr/lib/llvm-18/bin/clang++
+
+jobs:
+  clang:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      # 新版 runner 映像的 /mnt 和根目錄在同一顆碟上，maximize-build-space 會把根目錄吃到只剩 100MB，
+      # apt 就寫不進去了。根目錄本身有 86GB，清掉用不到的東西就夠
+      - name: Free disk space
+        run: |
+          # 留著 /usr/local/lib/android，要用 runner 上用 sdkmanager 裝好的 NDK 編 Android 的 compiler-rt
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af > /dev/null || true
+          df -h /
+      - name: Host compiler
+        run: |
+          need=""
+          for p in clang-18 lld-18 llvm-18; do dpkg -s "$p" > /dev/null 2>&1 || need="$need $p"; done
+          if [ -n "$need" ]; then
+            for i in 1 2 3 4 5; do
+              sudo apt-get update -q -o Acquire::Retries=5 && \
+                sudo apt-get install -y -q -o Acquire::Retries=5 $need && break
+              echo "apt 失敗，60 秒後重試 ($i/5)"; sleep 60
+            done
+            for p in $need; do dpkg -s "$p" > /dev/null; done
+          fi
+          echo /usr/lib/llvm-18/bin >> "$GITHUB_PATH"
+          /usr/lib/llvm-18/bin/clang --version
+          cmake --version
+
+      - name: Fetch chromium/src at tag
+        run: |
+          git init -q src
+          cd src
+          git remote add origin https://chromium.googlesource.com/chromium/src.git
+          git fetch -q --depth 1 origin "refs/tags/$VERSION"
+          git checkout -q FETCH_HEAD
+          grep -E "^CLANG_(SUB_)?REVISION" tools/clang/scripts/update.py
+
+      # 不用 apt 的 ninja-build，照 DEPS 指定的版本從原始碼編
+      - name: Build ninja
+        run: |
+          v=$(grep -oP "'ninja_version': 'version:[0-9]+@\K[0-9]+\.[0-9]+\.[0-9]+" src/DEPS)
+          git clone -q --depth 1 -b "v$v" https://github.com/ninja-build/ninja.git ninja-src
+          (cd ninja-src && CXX="$HOST_CXX" python3 configure.py --bootstrap)
+          sudo install -m755 ninja-src/ninja /usr/local/bin/ninja
+          ninja --version
+
+      - name: Checkout ci scripts
+        uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: .github/scripts
+
+      - name: Patch build scripts to refuse prebuilt downloads
+        run: python3 ci/.github/scripts/patch_toolchain_scripts.py src
+
+      - name: Link NDK
+        run: |
+          test -d "$ANDROID_NDK_LATEST_HOME"
+          echo "NDK: $ANDROID_NDK_LATEST_HOME"
+          mkdir -p src/third_party/android_toolchain
+          ln -s "$ANDROID_NDK_LATEST_HOME" src/third_party/android_toolchain/ndk
+
+      - name: Build clang
+        run: |
+          python3 src/tools/clang/scripts/build.py \
+            --disable-asserts \
+            --host-cc="$HOST_CC" --host-cxx="$HOST_CXX" \
+            --use-system-cmake \
+            --without-fuchsia \
+            --with-android \
+            --with-ml-inliner-model=
+
+      - name: Pack clang
+        run: |
+          d=src/third_party/llvm-build/Release+Asserts
+          cat "$d/cr_build_revision"
+          "$d/bin/clang" --version
+          mkdir -p pkg
+          tar -C src -cf - \
+            "third_party/llvm-build/Release+Asserts/bin" \
+            "third_party/llvm-build/Release+Asserts/lib/clang" \
+            "third_party/llvm-build/Release+Asserts/cr_build_revision" \
+            | zstd -T0 -6 > pkg/clang.tar.zst
+          ls -lh pkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chromium-tc-clang
+          path: pkg/
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+          if-no-files-found: error
+
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      # 新版 runner 映像的 /mnt 和根目錄在同一顆碟上，maximize-build-space 會把根目錄吃到只剩 100MB，
+      # apt 就寫不進去了。根目錄本身有 86GB，清掉用不到的東西就夠
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/lib/android
+          sudo docker image prune -af > /dev/null || true
+          df -h /
+      - name: Host compiler
+        run: |
+          need=""
+          for p in clang-18 lld-18 llvm-18; do dpkg -s "$p" > /dev/null 2>&1 || need="$need $p"; done
+          if [ -n "$need" ]; then
+            for i in 1 2 3 4 5; do
+              sudo apt-get update -q -o Acquire::Retries=5 && \
+                sudo apt-get install -y -q -o Acquire::Retries=5 $need && break
+              echo "apt 失敗，60 秒後重試 ($i/5)"; sleep 60
+            done
+            for p in $need; do dpkg -s "$p" > /dev/null; done
+          fi
+          echo /usr/lib/llvm-18/bin >> "$GITHUB_PATH"
+
+      - name: Fetch chromium/src at tag
+        run: |
+          git init -q src
+          cd src
+          git remote add origin https://chromium.googlesource.com/chromium/src.git
+          git fetch -q --depth 1 origin "refs/tags/$VERSION"
+          git checkout -q FETCH_HEAD
+          grep -E "^RUST_(SUB_)?REVISION|^BINDGEN_REVISION|^CRUBIT_REVISION" tools/rust/update_rust.py
+
+      # 不用 apt 的 ninja-build，照 DEPS 指定的版本從原始碼編
+      - name: Build ninja
+        run: |
+          v=$(grep -oP "'ninja_version': 'version:[0-9]+@\K[0-9]+\.[0-9]+\.[0-9]+" src/DEPS)
+          git clone -q --depth 1 -b "v$v" https://github.com/ninja-build/ninja.git ninja-src
+          (cd ninja-src && CXX="$HOST_CXX" python3 configure.py --bootstrap)
+          sudo install -m755 ninja-src/ninja /usr/local/bin/ninja
+          ninja --version
+
+      - name: Checkout ci scripts
+        uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: .github/scripts
+
+      - name: Patch build scripts to refuse prebuilt downloads
+        run: python3 ci/.github/scripts/patch_toolchain_scripts.py src --rust
+
+      # cargo 裡的 curl 要 OpenSSL 3，build_rust.py 原本從 CIPD 下載的是預編譯的 1.1.1，
+      # 改成對同一個 Debian sysroot 從原始碼編 OpenSSL 3
+      - name: Build OpenSSL
+        run: |
+          sr=$(cd src/tools/clang/scripts && python3 -c "from build import DownloadDebianSysroot; print(DownloadDebianSysroot('amd64'))" | tail -n1)
+          test -d "$sr"
+          echo "sysroot: $sr"
+          git clone -q --depth 1 -b openssl-3.5.0 https://github.com/openssl/openssl.git openssl-src
+          cd openssl-src
+          ./Configure linux-x86_64 no-shared no-tests no-docs \
+            --prefix="$GITHUB_WORKSPACE/openssl" --libdir=lib \
+            CC="$HOST_CC" CFLAGS="--sysroot=$sr -O2 -fPIC" LDFLAGS="--sysroot=$sr"
+          make -j"$(nproc)" > /dev/null
+          make install_sw > /dev/null
+          ls "$GITHUB_WORKSPACE/openssl/lib"
+          echo "OWN_OPENSSL_DIR=$GITHUB_WORKSPACE/openssl" >> "$GITHUB_ENV"
+
+      # 照 tools/rust/package_rust.py 的做法，但不編 crubit（Android 版用不到）、不跑測試
+      - name: Build rust
+        run: python3 src/tools/rust/build_rust.py --build-bindgen --skip-test
+
+      - name: Pack rust
+        run: |
+          d=src/third_party/rust-toolchain
+          cat "$d/VERSION"
+          for f in "$d"/bin/*; do [ -L "$f" ] || strip "$f" || true; done
+          "$d/bin/rustc" -vV
+          mkdir -p pkg
+          tar -C src -cf - third_party/rust-toolchain | zstd -T0 -6 > pkg/rust.tar.zst
+          ls -lh pkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chromium-tc-rust
+          path: pkg/
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+          if-no-files-found: error
+
+  tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - name: Host compiler
+        run: |
+          need=""
+          for p in clang-18 lld-18 llvm-18; do dpkg -s "$p" > /dev/null 2>&1 || need="$need $p"; done
+          if [ -n "$need" ]; then
+            for i in 1 2 3 4 5; do
+              sudo apt-get update -q -o Acquire::Retries=5 && \
+                sudo apt-get install -y -q -o Acquire::Retries=5 $need && break
+              echo "apt 失敗，60 秒後重試 ($i/5)"; sleep 60
+            done
+            for p in $need; do dpkg -s "$p" > /dev/null; done
+          fi
+          echo /usr/lib/llvm-18/bin >> "$GITHUB_PATH"
+
+      - name: Read pinned versions
+        run: |
+          base="https://chromium.googlesource.com/chromium/src/+/refs/tags/$VERSION"
+          curl -fsSL "$base/DEPS?format=TEXT" | base64 -d > DEPS
+          curl -fsSL "$base/third_party/node/update_node_binaries?format=TEXT" | base64 -d > update_node_binaries
+          gn_rev=$(grep -oP "'gn_version': 'git_revision:\K[0-9a-f]+" DEPS)
+          ninja_ver=$(grep -oP "'ninja_version': 'version:[0-9]+@\K[0-9]+\.[0-9]+\.[0-9]+" DEPS)
+          node_ver=$(grep -oP '^NODE_VERSION="\Kv[0-9.]+' update_node_binaries)
+          echo "gn $gn_rev / ninja $ninja_ver / node $node_ver"
+          test -n "$gn_rev" && test -n "$ninja_ver" && test -n "$node_ver"
+          {
+            echo "GN_REV=$gn_rev"
+            echo "NINJA_VER=$ninja_ver"
+            echo "NODE_VER=$node_ver"
+          } >> "$GITHUB_ENV"
+
+      - name: Build ninja
+        run: |
+          git clone -q --depth 1 -b "v$NINJA_VER" https://github.com/ninja-build/ninja.git ninja-src
+          cd ninja-src
+          CXX="$HOST_CXX" python3 configure.py --bootstrap
+          ./ninja --version
+          install -D -m755 ninja "$GITHUB_WORKSPACE/out/third_party/ninja/ninja"
+
+      - name: Build gn
+        run: |
+          git clone -q https://gn.googlesource.com/gn gn-src
+          cd gn-src
+          git checkout -q "$GN_REV"
+          # gn 用到 C++23 的 std::expected，clang-18 配 Ubuntu 的 libstdc++ 用不了，改用 gcc-13
+          extra=""
+          python3 build/gen.py --help | grep -q -- --allow-warnings && extra=--allow-warnings
+          CC=gcc CXX=g++ AR=ar CXXFLAGS=-Wno-comment python3 build/gen.py $extra
+          "$GITHUB_WORKSPACE/out/third_party/ninja/ninja" -C out gn
+          out/gn --version
+          install -D -m755 out/gn "$GITHUB_WORKSPACE/out/buildtools/linux64/gn"
+
+      - name: Build node
+        run: |
+          curl -fsSL "https://nodejs.org/dist/$NODE_VER/node-$NODE_VER.tar.gz" | tar -xz
+          cd "node-$NODE_VER"
+          prefix="$GITHUB_WORKSPACE/out/third_party/node/linux/node-linux-x64"
+          ./configure --prefix="$prefix"
+          make -j"$(nproc)" install
+          # 和 Chromium 的 update_node_binaries 一樣拿掉 corepack
+          rm -f "$prefix/bin/corepack"
+          "$prefix/bin/node" --version
+
+      - name: Pack tools
+        run: |
+          mkdir -p pkg
+          tar -C out -cf - . | zstd -T0 -6 > pkg/tools.tar.zst
+          ls -lh pkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chromium-tc-tools
+          path: pkg/
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+          if-no-files-found: error

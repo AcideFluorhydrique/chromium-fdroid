@@ -95,9 +95,16 @@ def main():
 
     replace_dir(src, staged, CLANG)
     # Our clang build keeps every LLVM tool; keep only the ones Google ships.
+    # Symlinks Google ships (clang -> clang-24 in our build) keep their targets.
     bin_dir = os.path.join(src, CLANG, 'bin')
+    keep = {n for n in os.listdir(bin_dir) if f'bin/{n}' in google_clang}
+    for n in list(keep):
+        p = os.path.join(bin_dir, n)
+        while os.path.islink(p):
+            p = os.path.join(bin_dir, os.readlink(p))
+            keep.add(os.path.basename(p))
     for n in os.listdir(bin_dir):
-        if f'bin/{n}' not in google_clang:
+        if n not in keep:
             os.remove(os.path.join(bin_dir, n))
     replace_dir(src, staged, RUST)
     replace_dir(src, staged, NODE)

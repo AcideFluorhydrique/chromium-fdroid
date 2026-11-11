@@ -11,6 +11,7 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 - `version`：Chromium 版本 tag，留空就用最新的 Android Stable。
 - `own_toolchain`：clang / lld、rust / bindgen、gn、ninja、node 全部自己從原始碼編，不用 Google 預編譯的。
 - `package_name`：預設 `org.chromium.chrome.fdroidtest`，可以和正式發布的版本同時安裝。
+- `toolchain_from`：直接用之前某次 run 編好的工具鏈（`owner/repo/run_id`），省掉約 2.5 小時。artifact 保留 7 天。
 
 免費 runner 單一 job 最多 6 小時，所以分成幾段：
 

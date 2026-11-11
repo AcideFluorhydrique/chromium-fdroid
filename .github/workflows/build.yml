@@ -37,6 +37,16 @@ on:
         required: false
         default: true
         type: boolean
+      toolchain_from:
+        description: "直接用之前某次 run 編好的工具鏈，格式 owner/repo/run_id（留空 = 重新編，約 2.5 小時）"
+        required: false
+        default: ""
+        type: string
+
+# 從別的 run 下載工具鏈 artifact 需要 actions: read
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   resolve:
@@ -64,7 +74,7 @@ jobs:
 
   toolchain:
     needs: resolve
-    if: inputs.own_toolchain
+    if: inputs.own_toolchain && inputs.toolchain_from == ''
     uses: ./.github/workflows/toolchain.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -80,6 +90,7 @@ jobs:
       package_name: ${{ inputs.package_name }}
       official: ${{ inputs.official || false }}
       own_toolchain: ${{ inputs.own_toolchain || false }}
+      toolchain_from: ${{ inputs.toolchain_from }}
 
   stage2:
     needs: [resolve, stage1]

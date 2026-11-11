@@ -12,6 +12,9 @@ on:
         default: ""
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   scan:
     runs-on: ubuntu-24.04
@@ -78,7 +81,23 @@ jobs:
       - name: Scan
         run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION"
 
+      # 報告直接存進 repo 的 reports/<版本>/，方便大家在 GitHub 上看，也不怕 artifact 服務出問題
+      - name: Commit report
+        run: |
+          git clone -q --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" repo
+          d="repo/reports/$VERSION"
+          mkdir -p "$d"
+          cp "scan-$VERSION/summary.md" "$d/fdroid-scan.md"
+          gzip -9c "scan-$VERSION/findings.tsv" > "$d/fdroid-scan-findings.tsv.gz"
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports
+          git commit -q -m "Add fdroid scanner report for Chromium $VERSION" || { echo "沒有變化"; exit 0; }
+          for i in 1 2 3; do git pull -q --rebase && git push -q && break; sleep 10; done
+
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: fdroid-scan-${{ env.VERSION }}
           path: scan-${{ env.VERSION }}/

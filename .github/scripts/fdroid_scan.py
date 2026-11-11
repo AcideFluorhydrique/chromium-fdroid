@@ -25,6 +25,54 @@ def group_of(path):
     return '/'.join(parts[: min(depth, len(parts) - 1)]) or parts[0]
 
 
+TOOLCHAIN_PREFIXES = (
+    'build/linux/',
+    'buildtools/',
+    'third_party/android_build_tools/',
+    'third_party/android_sdk/',
+    'third_party/android_system_sdk/',
+    'third_party/android_toolchain/',
+    'third_party/aosp_dalvik/',
+    'third_party/depot_tools/',
+    'third_party/jdk/',
+    'third_party/jdk11/',
+    'third_party/kotlinc/',
+    'third_party/llvm-build/',
+    'third_party/llvm-libclang/',
+    'third_party/ninja/',
+    'third_party/node/',
+    'third_party/r8/',
+    'third_party/rust-toolchain/',
+    'third_party/turbine/',
+)
+JAVA_PREFIXES = ('third_party/android_deps/', 'third_party/androidx/')
+TEST_RE = re.compile(
+    r'(^|/)(tests?|testdata|test_data|testing|fuzz|fuzzers?|corpus|'
+    r'web_tests|perf_tests|webpagereplay|webgpu-cts|jetstream|speedometer|'
+    r'benchmarks?|examples?|samples?|docs?)(/|$)|(^|/)net/data/|_test(data)?(/|$)'
+)
+CATEGORIES = (
+    ('nonfree', 'Non-free dependency references (Play services, Firebase, ML Kit, unknown Maven repos)'),
+    ('java', 'Prebuilt Java/Android libraries (androidx, android_deps)'),
+    ('toolchain', 'Toolchains, SDKs and build tools'),
+    ('test', 'Test, fuzzing, benchmark and example data'),
+    ('other', 'Other'),
+)
+
+
+def category(kind, path):
+    if kind.startswith('usual suspect') or kind.startswith('unknown maven repo'):
+        return 'nonfree'
+    p = path + '/'
+    if p.startswith(JAVA_PREFIXES):
+        return 'java'
+    if p.startswith(TOOLCHAIN_PREFIXES):
+        return 'toolchain'
+    if TEST_RE.search(path):
+        return 'test'
+    return 'other'
+
+
 def md(text):
     return text.replace('|', '\\|')
 
@@ -64,9 +112,22 @@ def main():
         rows.append((kind, path, size))
     rows.sort(key=lambda r: r[1])
     with open(os.path.join(out, 'findings.tsv'), 'w') as f:
-        f.write('kind\tpath\tbytes\n')
+        f.write('category\tkind\tpath\tbytes\n')
         for r in rows:
-            f.write(f'{r[0]}\t{r[1]}\t{r[2]}\n')
+            f.write(f'{category(r[0], r[1])}\t{r[0]}\t{r[1]}\t{r[2]}\n')
+
+    by_cat = collections.Counter()
+    cat_size = collections.Counter()
+    other_groups = collections.defaultdict(lambda: [0, 0, collections.Counter()])
+    for kind, path, size in rows:
+        c = category(kind, path)
+        by_cat[c] += 1
+        cat_size[c] += size
+        if c == 'other':
+            g = other_groups[group_of(path)]
+            g[0] += 1
+            g[1] += size
+            g[2][kind] += 1
 
     by_kind = collections.Counter()
     kind_size = collections.Counter()
@@ -82,6 +143,25 @@ def main():
     lines = [
         f'## fdroid scanner: {len(rows)} findings ({problems} problems reported)',
         '',
+        '| category | count | size |',
+        '|---|---:|---:|',
+    ]
+    for c, title in CATEGORIES:
+        lines.append(f'| {title} | {by_cat[c]} | {human(cat_size[c])} |')
+    lines += [
+        '',
+        '### "Other" by directory (top 60 by count)',
+        '',
+        '| directory | count | size | kinds |',
+        '|---|---:|---:|---|',
+    ]
+    for name, (n, size, kinds) in sorted(other_groups.items(), key=lambda kv: -kv[1][0])[:60]:
+        k = ', '.join(f'{md(x)} {c}' for x, c in kinds.most_common(3))
+        lines.append(f'| `{name}` | {n} | {human(size)} | {k} |')
+    lines += [
+        '',
+        '### By kind',
+        '',
         '| kind | count | size |',
         '|---|---:|---:|',
     ]
@@ -89,7 +169,7 @@ def main():
         lines.append(f'| {md(kind)} | {n} | {human(kind_size[kind])} |')
     lines += [
         '',
-        '### By directory (top 60 by count)',
+        '### All findings by directory (top 60 by count)',
         '',
         '| directory | count | size | kinds |',
         '|---|---:|---:|---|',

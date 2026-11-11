@@ -21,11 +21,27 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 
 | 項目 | 狀態 |
 |---|---|
-| 工具鏈從原始碼編（clang、rust、gn、ninja、node） | 測試中 |
-| `fdroid scanner` 掃描原始碼，列出剩下的預編譯檔 | 未開始 |
+| 工具鏈從原始碼編（clang、rust、gn、ninja、node） | 都編得出來（clang 1h42m、rust 2h25m、gn/ninja/node 2h）；用它們編 APK 測試中 |
+| `fdroid scanner` 掃描原始碼，列出剩下的預編譯檔 | 157 版完成，見 [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md) |
 | Android 編譯工具改用 `sdkmanager` / Maven 的版本（aapt2、bundletool、kotlinc、protoc 等），r8 從原始碼編 | 未開始 |
 | `third_party/android_deps` 和 `androidx` 的 443 個 Maven 套件 | 未開始，可以分批 |
 | 拿掉不開源的 Play 服務、Firebase、ML Kit、ARCore 等 | 未開始 |
+
+## 掃描結果（157.0.8103.50）
+
+`gclient sync` 完的原始碼被標記了 70,988 個檔案，大部分不會進 APK：
+
+| 類別 | 數量 | 大小 | 處理方式 |
+|---|---:|---:|---|
+| 測試、fuzz、benchmark 資料 | 62,637 | 1.4 GB | 用 F-Droid metadata 的 `scandelete` 按目錄刪掉 |
+| 工具鏈、SDK、編譯工具 | 4,638 | 5.4 GB | 工具鏈自己編；SDK/NDK/JDK 改用 `sdkmanager` 和 Debian 的版本 |
+| 其他：只在測試或開發時用到的工具（robolectric、espresso、CTS、apache、cpython3、luci-go 等） | 161 | 8.1 GB | 不同步或刪掉 |
+| 其他：小於 64KB 的資料檔（電話號碼資料、測試向量等） | 2,728 | 4.7 MB | 逐一確認後 `scanignore` |
+| 其他：較大的檔案（devtools-frontend、openscreen、dawn、angle 等） | 341 | 1.2 GB | 要逐一看 |
+| Java 套件（androidx、android_deps） | 360 | 178 MB | 改從 Maven 拿，或從原始碼編 |
+| 不開源依賴的引用（Play 服務、Firebase、ML Kit、未知 Maven repo） | 123 | 3.6 MB | 打補丁拿掉 |
+
+完整清單：[`fdroid-scan-findings.tsv.gz`](reports/157.0.8103.50/fdroid-scan-findings.tsv.gz)（欄位：類別、種類、路徑、大小）。
 
 ## 和 Chromium 官方工具鏈的差異
 

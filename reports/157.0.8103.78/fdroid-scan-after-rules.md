@@ -1,6 +1,6 @@
-## fdroid scanner: 5275 findings (5016 problems reported)
+## fdroid scanner: 5268 findings (5009 problems reported)
 
-167 scandelete rules applied, 65713 files deleted.
+167 scandelete rules applied, 65713 files deleted; 5 scanignore rules applied, 7 files accepted.
 
 | category | count | size |
 |---|---:|---:|
@@ -8,23 +8,19 @@
 | Prebuilt Java/Android libraries (androidx, android_deps) | 360 | 177.5 MB |
 | Toolchains, SDKs and build tools | 4638 | 5.4 GB |
 | Test, fuzzing, benchmark and example data | 135 | 245.8 MB |
-| Other | 19 | 175.5 MB |
+| Other | 12 | 175.5 MB |
 
 ### "Other" by directory (top 60 by count)
 
 | directory | count | size | kinds |
 |---|---:|---:|---|
 | `third_party/devtools-frontend/src` | 4 | 36.2 MB | executable binary, possibly code 3, binary 1 |
-| `components/language` | 3 | 18.0 KB | binary 3 |
-| `base/android` | 2 | 19.9 KB | DexClassLoader 2 |
-| `package.json` | 1 | 452 B | dependency file without lock 1 |
 | `third_party/arcore-android-sdk-client/cipd` | 1 | 359.5 KB | Android AAR library 1 |
 | `third_party/cpython3/host` | 1 | 56.6 MB | executable binary, possibly code 1 |
 | `third_party/cpython3/linux-amd64` | 1 | 56.6 MB | executable binary, possibly code 1 |
 | `third_party/crashpad/crashpad` | 1 | 164.3 KB | executable binary, possibly code 1 |
 | `third_party/gperf/cipd` | 1 | 481.5 KB | binary 1 |
 | `third_party/kotlin_stdlib/cipd` | 1 | 1.8 MB | Java JAR file 1 |
-| `third_party/rust/chromium_crates_io` | 1 | 1.0 KB | binary 1 |
 | `third_party/tflite/src` | 1 | 339.8 KB | executable binary, possibly code 1 |
 | `third_party/typescript/linux-amd64` | 1 | 23.0 MB | binary 1 |
 
@@ -35,7 +31,7 @@
 | shared library | 3838 | 1.7 GB |
 | Java JAR file | 317 | 758.2 MB |
 | executable binary, possibly code | 264 | 551.1 MB |
-| binary | 263 | 2.4 GB |
+| binary | 259 | 2.4 GB |
 | Android AAR library | 256 | 119.4 MB |
 | static library | 191 | 347.7 MB |
 | usual suspect '(?<!org.microg.gms:)play-services' | 50 | 1.5 MB |
@@ -43,9 +39,8 @@
 | gzip file archive | 8 | 62.1 MB |
 | usual suspect 'com.google.mlkit' | 8 | 225.6 KB |
 | usual suspect 'com(\.google)?\.firebase[.:](?!firebase-jobdispatcher\|geofire-java)' | 7 | 222.7 KB |
-| dependency file without lock | 6 | 3.0 KB |
 | ZIP file archive | 5 | 107.4 MB |
-| DexClassLoader | 2 | 19.9 KB |
+| dependency file without lock | 5 | 2.6 KB |
 | usual suspect 'com.google.android.libraries(?!.mapsplatform.secrets-gradle-plugin)' | 2 | 73.6 KB |
 | usual suspect 'com.google.android.play:app-update' | 2 | 73.6 KB |
 | usual suspect 'com.google.android.play:feature-delivery' | 2 | 73.6 KB |
@@ -87,9 +82,7 @@
 | `third_party/libaddressinput/src` | 4 | 4.6 KB | usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' 2, usual suspect '(?<!org.microg.gms:)play-services' 2 |
 | `third_party/litert/src` | 4 | 13.4 MB | executable binary, possibly code 4 |
 | `buildtools/android` | 3 | 6.3 MB | Java JAR file 2, binary 1 |
-| `components/language` | 3 | 18.0 KB | binary 3 |
 | `third_party/android_build_tools/bazel_tools` | 3 | 514.5 KB | binary 3 |
-| `base/android` | 2 | 19.9 KB | DexClassLoader 2 |
 | `components/zucchini` | 2 | 26.2 KB | executable binary, possibly code 2 |
 | `third_party/android_system_sdk/cipd` | 2 | 52.2 MB | Java JAR file 2 |
 | `third_party/node/linux` | 2 | 166.6 MB | gzip file archive 1, binary 1 |
@@ -102,7 +95,6 @@
 | `buildtools/linux64` | 1 | 8.7 MB | binary 1 |
 | `buildtools/third_party` | 1 | 40.6 MB | binary 1 |
 | `components/test` | 1 | 1.0 KB | executable binary, possibly code 1 |
-| `package.json` | 1 | 452 B | dependency file without lock 1 |
 | `third_party/android_build_tools/aapt2` | 1 | 6.1 MB | binary 1 |
 | `third_party/android_build_tools/apkanalyzer` | 1 | 39.9 MB | Java JAR file 1 |
 | `third_party/android_build_tools/bundletool` | 1 | 31.0 MB | Java JAR file 1 |
@@ -120,3 +112,6 @@
 | `third_party/crashpad/crashpad` | 1 | 164.3 KB | executable binary, possibly code 1 |
 | `third_party/depot_tools` | 1 | 25.2 MB | binary 1 |
 | `third_party/gperf/cipd` | 1 | 481.5 KB | binary 1 |
+| `third_party/kotlin_stdlib/cipd` | 1 | 1.8 MB | Java JAR file 1 |
+| `third_party/libwebp/src` | 1 | 11.4 KB | unknown maven repo 'https://jcenter.bintray.com' 1 |
+| `third_party/llvm-libclang/lib` | 1 | 103.0 MB | shared library 1 |

@@ -16,7 +16,7 @@
 |---|---:|---:|---|
 | `components/language` | 3 | 18.0 KB | binary 3 |
 | `base/android` | 2 | 19.9 KB | DexClassLoader 2 |
-| `` | 1 | 452 B | dependency file without lock 1 |
+| `(top level)` | 1 | 452 B | dependency file without lock 1 |
 | `third_party/arcore-android-sdk-client/cipd` | 1 | 359.5 KB | Android AAR library 1 |
 | `third_party/devtools-frontend/src` | 1 | 15.2 MB | binary 1 |
 | `third_party/gperf/cipd` | 1 | 481.5 KB | binary 1 |

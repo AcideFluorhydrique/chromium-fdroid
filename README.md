@@ -29,6 +29,7 @@ GitHub Actions free runners have a maximum execution time of 6 hours per job, so
 | Build toolchain from source (clang, Rust, GN, Ninja, Node) | All components build successfully (clang: 1h42m, Rust: 2h25m, GN/Ninja/Node: 2h). Testing APK builds with these toolchains is ongoing. |
 | Scan source tree with `fdroid scanner` and identify remaining prebuilt binaries | Completed for version 157.0.8103.50. See [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md). |
 | Generate `scandelete` rules from the build graph ([#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)) | 167 rules generated. Reduced 70,988 findings to 5,275 after applying the rules. See [build-graph.md](reports/157.0.8103.50/build-graph.md) and [scan-rules.txt](reports/157.0.8103.50/scan-rules.txt). |
+| Review the flagged files the build reads ([#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)) | Done. 7 accepted in [`fdroid/scanignore.txt`](fdroid/scanignore.txt); 5 must be replaced and are assigned to #5, #6 and #8. See [`fdroid/build-graph-review.md`](fdroid/build-graph-review.md). |
 | Replace prebuilt Android build tools with versions from `sdkmanager` / Maven (aapt2, bundletool, kotlinc, protoc, etc.); build R8 from source | Not started. |
 | Replace the 443 Maven packages in `third_party/android_deps` and `androidx` | Not started. Can be handled in batches. |
 | Remove non-open-source dependencies, including Google Play services, Firebase, ML Kit, and ARCore | Not started. |
@@ -51,25 +52,25 @@ The complete findings are available in [`fdroid-scan-findings.tsv.gz`](reports/1
 
 Columns include category, type, path, size, and whether the file is accessed during the build.
 
-### After Applying `scandelete` Rules
+### After Applying `scandelete` and `scanignore` Rules
 
 `scan.yml` first runs `ninja -t inputs chrome_public_apk` to enumerate the files required to build the APK.
 
-Files flagged by the scanner but not accessed during the build are automatically grouped into [167 `scandelete` rules](reports/157.0.8103.50/scan-rules.txt). The scanner is then run again against the reduced source tree.
+Files flagged by the scanner but not accessed during the build are automatically grouped into [167 `scandelete` rules](reports/157.0.8103.50/scan-rules.txt). Flagged files the build does read were reviewed by hand (#7); the ones accepted as source or data are listed in [`fdroid/scanignore.txt`](fdroid/scanignore.txt). The scanner is then run again with both lists applied. Numbers below are for 157.0.8103.78; 157.0.8103.50 gives the same rules and counts.
 
 | Category | Before | After |
 |---|---:|---:|
 | Test, fuzzing, and benchmark data | 62,637 | 135 |
-| Other | 3,230 | 19 |
+| Other | 3,230 | 12 |
 | Toolchains, SDKs, and build tools | 4,638 | 4,638 |
 | Java packages | 360 | 360 |
 | References to non-open-source dependencies | 123 | 123 |
-| **Total** | **70,988** | **5,275** |
+| **Total** | **70,988** | **5,268** |
 
 Notes:
 
 - The remaining 135 test/benchmark findings are all `executable binary, possibly code` warnings. They do not prevent the build.
-- Of the 19 remaining files in the "Other" category, 12 are accessed during compilation and require individual review. See [#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7).
+- Of the 12 remaining files in the "Other" category, 7 are `executable binary, possibly code` warnings. The other 5 are prebuilt tools and libraries the build needs (TypeScript `tsc`, esbuild, gperf, `kotlin-stdlib-jdk8`, ARCore), listed in [`fdroid/build-graph-review.md`](fdroid/build-graph-review.md).
 - Of the 360 Java package findings, 165 are not even required by `chrome_public_apk`.
 
 **Important limitation:** `ninja -t inputs` only reports inputs explicitly declared in the GN build graph. Executables invoked directly by build scripts may not appear in its output. Therefore, this method is only used to determine whether test data and files in the "Other" category are actually needed. It is not used to exclude toolchains or build tools.

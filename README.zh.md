@@ -25,6 +25,7 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 | 工具鏈從原始碼編（clang、rust、gn、ninja、node） | 都編得出來（clang 1h42m、rust 2h25m、gn/ninja/node 2h）；用它們編 APK 測試中 |
 | `fdroid scanner` 掃描原始碼，列出剩下的預編譯檔 | 157 版完成，見 [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md) |
 | 用編譯圖產生 `scandelete` 規則（[#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)） | 167 條規則，套用後 70,988 筆降到 5,275 筆，見 [build-graph.md](reports/157.0.8103.50/build-graph.md)、[scan-rules.txt](reports/157.0.8103.50/scan-rules.txt) |
+| 人工檢查編譯會讀到的檔案（[#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)） | 完成：7 個放行（[`fdroid/scanignore.txt`](fdroid/scanignore.txt)），5 個要換掉，已分派到 #5、#6、#8（[`fdroid/build-graph-review.md`](fdroid/build-graph-review.md)） |
 | Android 編譯工具改用 `sdkmanager` / Maven 的版本（aapt2、bundletool、kotlinc、protoc 等），r8 從原始碼編 | 未開始 |
 | `third_party/android_deps` 和 `androidx` 的 443 個 Maven 套件 | 未開始，可以分批 |
 | 拿掉不開源的 Play 服務、Firebase、ML Kit、ARCore 等 | 未開始 |
@@ -45,14 +46,14 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 
 完整清單：[`fdroid-scan-findings.tsv.gz`](reports/157.0.8103.50/fdroid-scan-findings.tsv.gz)（欄位：類別、種類、路徑、大小、編譯是否會讀到）。
 
-### 套用 scandelete 規則之後
+### 套用 scandelete 和 scanignore 規則之後
 
 `scan.yml` 先用 `ninja -t inputs chrome_public_apk` 列出編 APK 會讀到的檔案。被標記、但編譯不會讀到的檔案，自動合併成 [167 條 `scandelete` 規則](reports/157.0.8103.50/scan-rules.txt)；套用後再掃一次：
 
 | 類別 | 套用前 | 套用後 |
 |---|---:|---:|
 | 測試、fuzz、benchmark 資料 | 62,637 | 135（都是 `executable binary, possibly code` 警告，不會擋編譯） |
-| 其他 | 3,230 | 19（12 個是編譯會讀到的，要逐一判斷，見 [#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)） |
+| 其他 | 3,230 | 12（7 個是警告；5 個是編譯需要、要換掉的工具和套件，見 [build-graph-review.md](fdroid/build-graph-review.md)） |
 | 工具鏈、SDK、編譯工具 | 4,638 | 4,638 |
 | Java 套件 | 360 | 360（其中 165 個 chrome_public_apk 根本用不到） |
 | 不開源依賴的引用 | 123 | 123 |

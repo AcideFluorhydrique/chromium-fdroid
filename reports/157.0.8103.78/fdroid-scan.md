@@ -1,6 +1,6 @@
 ## fdroid scanner: 70988 findings (69388 problems reported)
 
-No scandelete rules applied.
+No scandelete or scanignore rules applied.
 
 | category | count | size |
 |---|---:|---:|

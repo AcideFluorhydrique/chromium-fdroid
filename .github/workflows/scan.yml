@@ -73,6 +73,28 @@ jobs:
           gclient sync --no-history -j 8
           du -sh src
 
+      # 用 chrome_public_apk 的編譯圖（不編譯）判斷哪些被標記的檔案真的會被編譯用到
+      - name: Install build deps
+        run: sudo src/build/install-build-deps.sh --android --no-prompt --no-chromeos-fonts --no-syms --no-arm --no-nacl
+
+      - name: Build graph inputs of chrome_public_apk
+        run: |
+          mkdir -p src/out/Default
+          cat > src/out/Default/args.gn <<'ARGS'
+          target_os = "android"
+          target_cpu = "arm64"
+          is_debug = false
+          is_component_build = false
+          symbol_level = 0
+          treat_warnings_as_errors = false
+          android_static_analysis = "off"
+          use_siso = false
+          ARGS
+          (cd src && buildtools/linux64/gn gen out/Default)
+          src/third_party/ninja/ninja -C src/out/Default -t inputs chrome_public_apk > build-inputs.txt
+          wc -l build-inputs.txt
+          rm -rf src/out
+
       - name: Install fdroidserver
         run: |
           python3 -m venv fd
@@ -81,6 +103,13 @@ jobs:
       - name: Scan
         run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION"
 
+      - name: Generate scandelete rules
+        run: python3 -I ci/.github/scripts/scan_rules.py "scan-$VERSION/findings.tsv" build-inputs.txt "scan-$VERSION"
+
+      # 照 F-Droid 編譯伺服器的做法套用規則（刪掉規則底下被標記的檔案）再掃一次，看還剩什麼
+      - name: Scan again with the rules
+        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION/after-rules" --rules "scan-$VERSION/scan-rules.txt"
+
       # 報告直接存進 repo 的 reports/<版本>/，方便大家在 GitHub 上看，也不怕 artifact 服務出問題
       - name: Commit report
         run: |
@@ -88,7 +117,11 @@ jobs:
           d="repo/reports/$VERSION"
           mkdir -p "$d"
           cp "scan-$VERSION/summary.md" "$d/fdroid-scan.md"
-          gzip -9c "scan-$VERSION/findings.tsv" > "$d/fdroid-scan-findings.tsv.gz"
+          gzip -9c "scan-$VERSION/findings-build.tsv" > "$d/fdroid-scan-findings.tsv.gz"
+          cp "scan-$VERSION/scan-rules.txt" "$d/scan-rules.txt"
+          cp "scan-$VERSION/build-graph.md" "$d/build-graph.md"
+          cp "scan-$VERSION/after-rules/summary.md" "$d/fdroid-scan-after-rules.md"
+          gzip -9c "scan-$VERSION/after-rules/findings.tsv" > "$d/fdroid-scan-after-rules-findings.tsv.gz"
           cd repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

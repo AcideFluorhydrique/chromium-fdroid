@@ -122,7 +122,7 @@ def main():
             s[1] += size
             if cat not in KEEP_CATEGORIES:
                 parts = path.split('/')
-                g = '/'.join(parts[: min(min_depth(path), len(parts) - 1)])
+                g = '/'.join(parts[: min(min_depth(path), len(parts) - 1)]) or '(top level)'
                 review[g][0] += 1
                 review[g][1] += size
                 review[g][2][kind] += 1

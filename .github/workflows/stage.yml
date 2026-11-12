@@ -276,9 +276,10 @@ jobs:
       - name: Restore
         if: inputs.stage > 1
         run: |
-          cat pkg-src/src.tar.zst.* | zstd -d -T0 | tar -xf -
+          # 邊解壓邊刪掉讀完的分片，不然壓縮檔（約 17GB）和解開的原始碼會同時佔著磁碟
+          for f in pkg-src/src.tar.zst.*; do cat "$f"; rm "$f"; done | zstd -d -T0 | tar -xf -
           rm -rf pkg-src
-          cat pkg-out/out.tar.zst.* | zstd -d -T0 | tar -xf -
+          for f in pkg-out/out.tar.zst.*; do cat "$f"; rm "$f"; done | zstd -d -T0 | tar -xf -
           rm -rf pkg-out
           df -h .
 

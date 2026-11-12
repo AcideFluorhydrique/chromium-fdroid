@@ -3,9 +3,11 @@
 what it flags.
 
 Usage: fdroid_scan.py <src dir> <output dir> [--rules scan-rules.txt]
+                     [--ignore scanignore.txt]
 
 With --rules, the scandelete paths in the file are applied the way F-Droid's
 build server applies them: flagged files under those paths are deleted.
+With --ignore, flagged files under the scanignore paths are accepted.
 
 Writes findings.tsv (kind, path, bytes), summary.md and scanner.log.
 """
@@ -102,11 +104,14 @@ def main():
     parser.add_argument('src')
     parser.add_argument('out')
     parser.add_argument('--rules')
+    parser.add_argument('--ignore')
     args = parser.parse_args()
     src, out = os.path.abspath(args.src), os.path.abspath(args.out)
     build = metadata.Build()
     if args.rules:
         build.scandelete = read_rules(os.path.abspath(args.rules))
+    if args.ignore:
+        build.scanignore = read_rules(os.path.abspath(args.ignore))
     os.makedirs(out, exist_ok=True)
     logging.getLogger().setLevel(logging.ERROR)
     os.chdir(src)
@@ -119,7 +124,8 @@ def main():
                 log.write(f'{level}\t{msg}\n')
 
     records = []
-    deleted = len(store.infos)
+    deleted = sum(1 for msg, _ in store.infos if msg.startswith('Removing '))
+    ignored = sum(1 for msg, _ in store.infos if msg.startswith('Ignoring '))
     for msg, path in store.errors + store.warnings:
         m = FOUND.match(msg)
         records.append((m['kind'] if m else msg, path))
@@ -165,9 +171,10 @@ def main():
     lines = [
         f'## fdroid scanner: {len(rows)} findings ({problems} problems reported)',
         '',
-        f'{len(build.scandelete)} scandelete rules applied, {deleted} files deleted.'
-        if args.rules
-        else 'No scandelete rules applied.',
+        f'{len(build.scandelete)} scandelete rules applied, {deleted} files deleted; '
+        f'{len(build.scanignore)} scanignore rules applied, {ignored} files accepted.'
+        if args.rules or args.ignore
+        else 'No scandelete or scanignore rules applied.',
         '',
         '| category | count | size |',
         '|---|---:|---:|',

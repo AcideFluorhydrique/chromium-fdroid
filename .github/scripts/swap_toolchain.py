@@ -8,6 +8,7 @@ Usage: swap_toolchain.py <chromium src dir> <dir with *.tar.zst artifacts>
 
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -76,6 +77,37 @@ def replace_file(src, staged, rel):
     os.chmod(dst, 0o755)
 
 
+CRUBIT_GIT = 'https://chromium.googlesource.com/external/github.com/google/crubit'
+
+
+def add_crubit_support(src):
+    """Chromium's GN files load Crubit's support library from the Rust
+    toolchain directory. It is plain source that build_crubit.py copies from
+    the Crubit repository, so fetch it at the pinned revision instead of
+    building the Crubit binaries, which Chromium for Android does not use."""
+    dst = os.path.join(src, RUST, 'lib', 'third_party', 'crubit')
+    if os.path.isdir(os.path.join(dst, 'support')):
+        return
+    with open(os.path.join(src, 'tools/rust/update_rust.py')) as f:
+        rev = re.search(r"^CRUBIT_REVISION = '([0-9a-f]+)'", f.read(), re.M)[1]
+    checkout = os.path.join(src, '..', 'crubit-src')
+    for cmd in (
+        ['git', 'init', '-q', checkout],
+        ['git', '-C', checkout, 'fetch', '-q', '--depth', '1', CRUBIT_GIT, rev],
+        ['git', '-C', checkout, 'checkout', '-q', 'FETCH_HEAD'],
+    ):
+        subprocess.run(cmd, check=True)
+    os.makedirs(dst, exist_ok=True)
+    for item in ('BUILD.gn', 'LICENSE', 'crubit.gni', 'support'):
+        s = os.path.join(checkout, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, os.path.join(dst, item), dirs_exist_ok=True)
+        else:
+            shutil.copy2(s, os.path.join(dst, item))
+    shutil.rmtree(checkout)
+    print(f'added Crubit support library at {rev}')
+
+
 def main():
     src, tc = sys.argv[1], sys.argv[2]
     staged = os.path.join(tc, 'staged')
@@ -107,6 +139,7 @@ def main():
         if n not in keep:
             os.remove(os.path.join(bin_dir, n))
     replace_dir(src, staged, RUST)
+    add_crubit_support(src)
     replace_dir(src, staged, NODE)
     replace_file(src, staged, GN)
     replace_file(src, staged, NINJA)

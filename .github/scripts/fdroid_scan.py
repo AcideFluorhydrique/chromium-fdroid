@@ -2,7 +2,10 @@
 """Run fdroidserver's source scanner over a Chromium checkout and summarize
 what it flags.
 
-Usage: fdroid_scan.py <src dir> <output dir>
+Usage: fdroid_scan.py <src dir> <output dir> [--rules scan-rules.txt]
+
+With --rules, the scandelete paths in the file are applied the way F-Droid's
+build server applies them: flagged files under those paths are deleted.
 
 Writes findings.tsv (kind, path, bytes), summary.md and scanner.log.
 """
@@ -14,7 +17,7 @@ import os
 import re
 import sys
 
-from fdroidserver import common, scanner
+from fdroidserver import common, metadata, scanner
 
 FOUND = re.compile(r"^Found (?P<kind>.+?) at (?P<path>.+)$")
 
@@ -84,20 +87,39 @@ def human(n):
         n /= 1024
 
 
+def read_rules(path):
+    rules = []
+    with open(path) as f:
+        for line in f:
+            line = line.split('#', 1)[0].strip()
+            if line:
+                rules.append(line)
+    return rules
+
+
 def main():
-    src, out = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('src')
+    parser.add_argument('out')
+    parser.add_argument('--rules')
+    args = parser.parse_args()
+    src, out = os.path.abspath(args.src), os.path.abspath(args.out)
+    build = metadata.Build()
+    if args.rules:
+        build.scandelete = read_rules(os.path.abspath(args.rules))
     os.makedirs(out, exist_ok=True)
     logging.getLogger().setLevel(logging.ERROR)
     os.chdir(src)
     common.options = argparse.Namespace(json=True, verbose=False)
     store = scanner.MessageStore()
-    problems = scanner.scan_source('.', json_per_build=store)
+    problems = scanner.scan_source(src, build=build, json_per_build=store)
     with open(os.path.join(out, 'scanner.log'), 'w') as log:
         for level in ('errors', 'warnings', 'infos'):
             for msg, path in getattr(store, level):
                 log.write(f'{level}\t{msg}\n')
 
     records = []
+    deleted = len(store.infos)
     for msg, path in store.errors + store.warnings:
         m = FOUND.match(msg)
         records.append((m['kind'] if m else msg, path))
@@ -142,6 +164,10 @@ def main():
 
     lines = [
         f'## fdroid scanner: {len(rows)} findings ({problems} problems reported)',
+        '',
+        f'{len(build.scandelete)} scandelete rules applied, {deleted} files deleted.'
+        if args.rules
+        else 'No scandelete rules applied.',
         '',
         '| category | count | size |',
         '|---|---:|---:|',

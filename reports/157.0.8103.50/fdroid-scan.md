@@ -1,5 +1,7 @@
 ## fdroid scanner: 70988 findings (69388 problems reported)
 
+No scandelete rules applied.
+
 | category | count | size |
 |---|---:|---:|
 | Non-free dependency references (Play services, Firebase, ML Kit, unknown Maven repos) | 123 | 3.6 MB |

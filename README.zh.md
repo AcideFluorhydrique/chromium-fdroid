@@ -1,8 +1,19 @@
 # chromium-fdroid
 
-測試 Chromium for Android 能不能照 [F-Droid 的收錄規則](https://f-droid.org/docs/Inclusion_Policy/) 從原始碼編譯，結果回報到 [fdroiddata#3911](https://gitlab.com/fdroid/fdroiddata/-/work_items/3911)。
+讓 Chromium for Android 能照 [F-Droid 的收錄規則](https://f-droid.org/docs/Inclusion_Policy/) 從原始碼編譯。
 
-這裡只做試驗，不發布 APK。平常用的 Chromium 在 [AcideFluorhydrique/chromium](https://github.com/AcideFluorhydrique/chromium) 發布。
+## 目標
+
+最終目標是和 F-Droid 社群一起，把 Chromium for Android 送進 F-Droid 的軟體庫，追蹤在 [fdroiddata#3911](https://gitlab.com/fdroid/fdroiddata/-/work_items/3911)。符合規則的 Chromium 編譯流程，也能成為之後收錄其他 Chromium 分支、以及其他 app 用到的元件（WebRTC、PDFium、Cronet）的基礎。
+
+步驟：
+
+1. **先在這裡測試（目前階段）**：在免費的 GitHub Actions runner 上，找出編譯流程的哪些部分能從原始碼編、或換成 F-Droid 接受的來源，並把所有東西都做成這個 repo 裡可以重跑的 workflow、腳本和報告。
+2. **到 fdroiddata#3911 回報，和 F-Droid 討論做法**：分享結果，和維護者討論還沒定的問題：`scandelete`/`scanignore` 規則、Maven 上的 Java 套件怎麼處理、fdroidserver 需要支援什麼。
+3. **找到足夠的算力**：目前完整編一次，在 4 核 16GB 的 runner 上，工具鏈約 2.5 小時、APK 約 12 小時，還要拆成每段 6 小時以內。F-Droid 是在自己的編譯伺服器上一次編完，所以要和 F-Droid 社群討論：有沒有更大的編譯資源、能不能用其他人提供的算力（例如 fdroiddata#3911 討論串裡有人主動提過），以及能不能透過可重現編譯（reproducible builds），讓 F-Droid 驗證在別處編出來的 APK。
+4. **向 fdroiddata 提交 app 的 metadata。**
+
+**這個 repo 不發布 APK。**平常用的 Chromium 在 [AcideFluorhydrique/chromium](https://github.com/AcideFluorhydrique/chromium) 發布。
 
 ## 怎麼跑
 

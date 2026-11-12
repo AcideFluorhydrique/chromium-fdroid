@@ -15,7 +15,8 @@ Workflow inputs:
 - `version`: Chromium version tag. Leave empty to use the latest Android Stable release.
 - `own_toolchain`: Build clang/lld, Rust/bindgen, GN, Ninja, and Node from source instead of using Google's prebuilt toolchains.
 - `package_name`: Android package name. Defaults to `org.chromium.chrome.fdroidtest`, allowing the test build to be installed alongside the regular release.
-- `toolchain_from`: Reuse a toolchain built by a previous workflow run, specified as `owner/repo/run_id`. Saves approximately 2.5 hours. Artifacts are retained for 7 days.
+- `toolchain_from`: Reuse a toolchain built by previous workflow runs, as `owner/repo/run_id`. Several runs can be given, separated by spaces; later ones take precedence. Saves approximately 2.5 hours. Artifacts are retained for 7 days.
+  Current complete toolchain for 157.0.8103.50 (until 2026-11-18): `AcideFluorhydrique/chromium/43082253964 AcideFluorhydrique/chromium-fdroid/43129945973` (clang and tools from the first run, Rust with Crubit from the second).
 
 GitHub Actions free runners have a maximum execution time of 6 hours per job, so the build is split into multiple workflows:
 

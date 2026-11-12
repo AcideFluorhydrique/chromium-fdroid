@@ -1,10 +1,19 @@
 # chromium-fdroid
 
-An experimental project to investigate whether Chromium for Android can be built from source in compliance with [F-Droid's Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/).
+Working towards building Chromium for Android from source in compliance with [F-Droid's Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/).
 
-The findings and progress are reported in [fdroiddata#3911](https://gitlab.com/fdroid/fdroiddata/-/work_items/3911).
+## Goal
 
-**This repository is for experimentation only. It does not distribute APKs.** Regular Chromium builds are published at [AcideFluorhydrique/chromium](https://github.com/AcideFluorhydrique/chromium).
+The goal is to get Chromium for Android into the F-Droid repository, together with the F-Droid community, as tracked in [fdroiddata#3911](https://gitlab.com/fdroid/fdroiddata/-/work_items/3911). A policy-compliant Chromium build would also be a base for packaging Chromium-based forks and the components other apps use (WebRTC, PDFium, Cronet).
+
+Plan:
+
+1. **Test here first (current phase).** Work out, on free GitHub Actions runners, which parts of the build can be done from source or replaced with sources F-Droid accepts, and keep everything reproducible as workflows, scripts and reports in this repository.
+2. **Report and agree on the approach on fdroiddata#3911.** Share the results and discuss the open questions with F-Droid maintainers: the `scandelete`/`scanignore` rules, how the Java libraries from Maven should be handled, and what fdroidserver would need to support.
+3. **Find enough build capacity.** A full build currently needs about 2.5 hours for the toolchain plus about 12 hours for the APK on 4-core, 16 GB runners, split into 6-hour jobs. F-Droid builds an app in a single run on its own build server, so this needs to be discussed with the F-Droid community: whether larger build resources are available, whether offers of compute from others (such as in the fdroiddata#3911 thread) can be used, and whether reproducible builds could let F-Droid verify an APK built elsewhere.
+4. **Submit the app metadata to fdroiddata.**
+
+**This repository does not distribute APKs.** Regular Chromium builds are published at [AcideFluorhydrique/chromium](https://github.com/AcideFluorhydrique/chromium).
 
 ## Running a Build
 

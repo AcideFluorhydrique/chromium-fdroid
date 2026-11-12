@@ -38,7 +38,7 @@ on:
         default: true
         type: boolean
       toolchain_from:
-        description: "直接用之前某次 run 編好的工具鏈，格式 owner/repo/run_id（留空 = 重新編，約 2.5 小時）"
+        description: "直接用之前 run 編好的工具鏈：owner/repo/run_id，可以填好幾個（空白分隔，後面的優先）；留空 = 重新編，約 2.5 小時"
         required: false
         default: ""
         type: string

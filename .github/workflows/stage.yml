@@ -167,26 +167,25 @@ jobs:
           du -sh src
 
       # toolchain.yml 自己從原始碼編的 clang / rust / gn / ninja / node
-      - name: Parse toolchain_from
-        id: tcfrom
+      # toolchain_from 可以填好幾個 run（空白或逗號分隔），依序下載，後面的蓋過前面的同名檔案，
+      # 例如 clang/tools 取一個 run、rust 取另一個 run
+      - name: Download own toolchain from other runs
         if: inputs.stage == 1 && inputs.own_toolchain && inputs.toolchain_from != ''
         env:
           FROM: ${{ inputs.toolchain_from }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          [[ "$FROM" =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/([0-9]+)$ ]] || { echo "toolchain_from 格式要是 owner/repo/run_id: '$FROM'"; exit 1; }
-          echo "repo=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
-          echo "run=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
-
-      - name: Download own toolchain from another run
-        if: inputs.stage == 1 && inputs.own_toolchain && inputs.toolchain_from != ''
-        uses: actions/download-artifact@v4
-        with:
-          pattern: chromium-tc-*
-          path: tc
-          merge-multiple: true
-          repository: ${{ steps.tcfrom.outputs.repo }}
-          run-id: ${{ steps.tcfrom.outputs.run }}
-          github-token: ${{ github.token }}
+          mkdir -p tc
+          i=0
+          for src in ${FROM//,/ }; do
+            [[ "$src" =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/([0-9]+)$ ]] || { echo "toolchain_from 格式要是 owner/repo/run_id: '$src'"; exit 1; }
+            i=$((i + 1))
+            echo "下載 $src"
+            gh run download "${BASH_REMATCH[2]}" -R "${BASH_REMATCH[1]}" -p 'chromium-tc-*' -D "tc-dl/$i"
+            find "tc-dl/$i" -name '*.tar.zst' -exec mv -f -t tc {} +
+          done
+          rm -rf tc-dl
+          ls -lh tc
 
       # 這次 run 自己編的部分最後下載，蓋過 toolchain_from 的同名檔案
       - name: Download own toolchain

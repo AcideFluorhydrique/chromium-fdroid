@@ -139,7 +139,7 @@ jobs:
           git init src
           cd src
           git remote add origin https://chromium.googlesource.com/chromium/src.git
-          git fetch --depth 1 origin "refs/tags/$VERSION"
+          for i in 1 2 3 4; do git fetch -q --depth 1 origin "refs/tags/$VERSION" && break; echo "fetch 失敗，$((i * 60)) 秒後重試 ($i/4)"; sleep $((i * 60)); done
           git checkout --quiet FETCH_HEAD
           git log -1 --format='%H %cd %s'
 

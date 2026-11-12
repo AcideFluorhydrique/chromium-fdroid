@@ -42,6 +42,11 @@ on:
         required: false
         default: ""
         type: string
+      rebuild_only:
+        description: "配合 toolchain_from：其中哪些要重編（clang、rust、tools，逗號分隔；留空 = 全部沿用）"
+        required: false
+        default: ""
+        type: string
 
 # 從別的 run 下載工具鏈 artifact 需要 actions: read
 permissions:
@@ -74,10 +79,11 @@ jobs:
 
   toolchain:
     needs: resolve
-    if: inputs.own_toolchain && inputs.toolchain_from == ''
+    if: inputs.own_toolchain && (inputs.toolchain_from == '' || inputs.rebuild_only != '')
     uses: ./.github/workflows/toolchain.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
+      components: ${{ inputs.toolchain_from == '' && 'clang,rust,tools' || inputs.rebuild_only }}
 
   stage1:
     needs: [resolve, toolchain]
@@ -91,6 +97,7 @@ jobs:
       official: ${{ inputs.official || false }}
       own_toolchain: ${{ inputs.own_toolchain || false }}
       toolchain_from: ${{ inputs.toolchain_from }}
+      rebuild_only: ${{ inputs.rebuild_only }}
 
   stage2:
     needs: [resolve, stage1]

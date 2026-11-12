@@ -43,7 +43,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: ci
-          sparse-checkout: .github/scripts
+          sparse-checkout: |
+            .github/scripts
+            fdroid
 
       - name: Get depot_tools
         run: |
@@ -106,9 +108,10 @@ jobs:
       - name: Generate scandelete rules
         run: python3 -I ci/.github/scripts/scan_rules.py "scan-$VERSION/findings.tsv" build-inputs.txt "scan-$VERSION"
 
-      # 照 F-Droid 編譯伺服器的做法套用規則（刪掉規則底下被標記的檔案）再掃一次，看還剩什麼
+      # 照 F-Droid 編譯伺服器的做法套用規則再掃一次，看還剩什麼：
+      # scandelete 是自動產生的（編譯不會讀到），scanignore 是人工確認過的（fdroid/scanignore.txt）
       - name: Scan again with the rules
-        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION/after-rules" --rules "scan-$VERSION/scan-rules.txt"
+        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION/after-rules" --rules "scan-$VERSION/scan-rules.txt" --ignore ci/fdroid/scanignore.txt
 
       # 報告直接存進 repo 的 reports/<版本>/，方便大家在 GitHub 上看，也不怕 artifact 服務出問題
       - name: Commit report

@@ -1,0 +1,21 @@
+# scanignore paths: files fdroid scanner flags that chrome_public_apk reads,
+# reviewed by hand and accepted as source or data (issue #7).
+# Each path is a glob, matched as a prefix, in fdroidserver metadata syntax.
+
+# Java source, not a binary. BaseDexClassLoader is only used to find the
+# native libraries of the app's own splits (findLibrary); no code is loaded.
+base/android/java/src/org/chromium/base/BundleUtils.java
+base/android/java/src/org/chromium/base/WrappedClassLoader.java
+
+# Serialized S2 quadtrees mapping locations to language codes (3-10 KB each).
+# Data, not code; the CSV form of the same data is in
+# components/test/data/language/celltolang-data_rank*.csv.
+components/language/content/browser/ulp_language_code_locator/geolanguage-data_rank*.bin
+
+# Declares no dependencies; only sets "type": "module" for the TypeScript
+# compiler (see the comments in the file).
+package.json
+
+# 32x32 dither matrix included with include_bytes! in the jxl crate, as
+# published on crates.io (https://github.com/libjxl/jxl-rs).
+third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin

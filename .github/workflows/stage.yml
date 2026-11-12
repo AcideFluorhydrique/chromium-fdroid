@@ -27,6 +27,9 @@ on:
       toolchain_from:
         type: string
         default: ""
+      rebuild_only:
+        type: string
+        default: ""
     outputs:
       done:
         value: ${{ jobs.build.outputs.done }}
@@ -164,14 +167,6 @@ jobs:
           du -sh src
 
       # toolchain.yml 自己從原始碼編的 clang / rust / gn / ninja / node
-      - name: Download own toolchain
-        if: inputs.stage == 1 && inputs.own_toolchain && inputs.toolchain_from == ''
-        uses: actions/download-artifact@v4
-        with:
-          pattern: chromium-tc-*
-          path: tc
-          merge-multiple: true
-
       - name: Parse toolchain_from
         id: tcfrom
         if: inputs.stage == 1 && inputs.own_toolchain && inputs.toolchain_from != ''
@@ -192,6 +187,15 @@ jobs:
           repository: ${{ steps.tcfrom.outputs.repo }}
           run-id: ${{ steps.tcfrom.outputs.run }}
           github-token: ${{ github.token }}
+
+      # 這次 run 自己編的部分最後下載，蓋過 toolchain_from 的同名檔案
+      - name: Download own toolchain
+        if: inputs.stage == 1 && inputs.own_toolchain && (inputs.toolchain_from == '' || inputs.rebuild_only != '')
+        uses: actions/download-artifact@v4
+        with:
+          pattern: chromium-tc-*
+          path: tc
+          merge-multiple: true
 
       - name: Swap in own toolchain
         if: inputs.stage == 1 && inputs.own_toolchain

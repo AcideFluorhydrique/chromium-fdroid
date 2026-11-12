@@ -54,6 +54,13 @@ def main():
             "        '--host-cc=' + os.environ['HOST_CC'],\n"
             "        '--host-cxx=' + os.environ['HOST_CXX'],\n",
         )
+        # Chromium only needs cc_bindings_from_rs; rs_bindings_from_cc also
+        # needs Abseil and nothing in Chromium uses it yet.
+        patch(
+            os.path.join(src, 'tools/rust/build_crubit.py'),
+            'ENABLE_BUILDING_RS_BINDINGS_FROM_CC = True\n',
+            'ENABLE_BUILDING_RS_BINDINGS_FROM_CC = False\n',
+        )
         # The prebuilt OpenSSL 1.1.1 from CIPD is older than what curl-sys
         # in cargo needs; use the OpenSSL 3 that chromium-toolchain.yml
         # builds from source against the same Debian sysroot.

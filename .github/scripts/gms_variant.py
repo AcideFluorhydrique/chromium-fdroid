@@ -10,7 +10,9 @@ Usage: gms_variant.py <src dir> <spec>
   gms=drop       Same directory, but every target is empty.
   drop=GROUPS    Turn the targets of these groups in
                  //third_party/android_deps into empty java_groups. Groups:
-                 playcore, mlkit, impress.
+                 playcore, mlkit, impress. impress also removes the XR
+                 feature module, which packages impress's and ARCore's native
+                 libraries and is added regardless of enable_arcore/enable_vr.
 
 Prints the GN args the spec needs (google_play_services_package) to stdout.
 An empty java_group keeps GN happy, so javac then reports every place in
@@ -181,6 +183,17 @@ def drop_android_deps(src, groups):
     print(f'android_deps: dropped {len(dropped)} targets: {" ".join(dropped)}', file=sys.stderr)
 
 
+def drop_xr_module(src):
+    path = os.path.join(src, 'chrome/android/modules/chrome_feature_modules.gni')
+    s = open(path).read()
+    new = re.sub(r'^\s*xr_module_desc,\n', '', s, count=1, flags=re.M)
+    if new == s:
+        sys.exit(f'{path}: xr_module_desc not found in chrome_module_descs')
+    with open(path, 'w') as f:
+        f.write(new)
+    print('chrome_feature_modules.gni: removed the XR feature module', file=sys.stderr)
+
+
 def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
@@ -194,6 +207,8 @@ def main():
             groups = value.split(',')
             assert all(g in DROP_GROUPS for g in groups), item
             drop_android_deps(src, groups)
+            if 'impress' in groups:
+                drop_xr_module(src)
         else:
             sys.exit(f'unknown spec item {item}')
     print('\n'.join(args))

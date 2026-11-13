@@ -1,0 +1,198 @@
+dir	group	name	version	nonfree	found_in	target
+android_deps	com.airbnb.android	lottie	6.7.1	no	central	
+android_deps	com.google.android.datatransport	transport-api	5.0.0	no	google	
+android_deps	com.google.android.datatransport	transport-backend-cct	5.0.0	no	google	
+android_deps	com.google.android.datatransport	transport-runtime	5.0.0	no	google	
+android_deps	com.google.android.gms	play-services-auth-api-phone	18.3.1	yes	google	//third_party/android_deps:google_play_services_auth_api_phone_J__unpack_aar
+android_deps	com.google.android.gms	play-services-auth-base	18.3.0	yes	google	//third_party/android_deps:google_play_services_auth_base_J__unpack_aar
+android_deps	com.google.android.gms	play-services-base	18.11.1	yes	google	//third_party/android_deps:google_play_services_base_J__unpack_aar
+android_deps	com.google.android.gms	play-services-basement	18.12.0	yes	google	//third_party/android_deps:google_play_services_basement_J__unpack_aar
+android_deps	com.google.android.gms	play-services-cast	22.2.0	yes	google	//third_party/android_deps:google_play_services_cast_J__unpack_aar
+android_deps	com.google.android.gms	play-services-cast-framework	22.2.0	yes	google	//third_party/android_deps:google_play_services_cast_framework_J__unpack_aar
+android_deps	com.google.android.gms	play-services-clearcut	17.0.0	yes	google	//third_party/android_deps:google_play_services_clearcut_J__unpack_aar
+android_deps	com.google.android.gms	play-services-cloud-messaging	17.4.0	yes	google	//third_party/android_deps:google_play_services_cloud_messaging_J__unpack_aar
+android_deps	com.google.android.gms	play-services-flags	18.1.0	yes	google	//third_party/android_deps:google_play_services_flags_J__unpack_aar
+android_deps	com.google.android.gms	play-services-gcm	17.0.0	yes	google	//third_party/android_deps:google_play_services_gcm_J__unpack_aar
+android_deps	com.google.android.gms	play-services-identity-credentials	16.0.0-alpha12	yes	google	//third_party/android_deps:google_play_services_identity_credentials_J__unpack_aar
+android_deps	com.google.android.gms	play-services-iid	17.0.0	yes	google	//third_party/android_deps:google_play_services_iid_J__unpack_aar
+android_deps	com.google.android.gms	play-services-location	21.4.0	yes	google	//third_party/android_deps:google_play_services_location_J__unpack_aar
+android_deps	com.google.android.gms	play-services-phenotype	17.0.0	yes	google	//third_party/android_deps:google_play_services_phenotype_J__unpack_aar
+android_deps	com.google.android.gms	play-services-stats	17.0.2	yes	google	//third_party/android_deps:google_play_services_stats_J__unpack_aar
+android_deps	com.google.android.gms	play-services-tasks	18.4.1	yes	google	//third_party/android_deps:google_play_services_tasks_J__unpack_aar
+android_deps	com.google.android.gms	play-services-vision	20.1.3	yes	google	//third_party/android_deps:google_play_services_vision_J__unpack_aar
+android_deps	com.google.android.gms	play-services-vision-common	19.1.3	yes	google	//third_party/android_deps:google_play_services_vision_common_J__unpack_aar
+android_deps	com.google.android.material	material	1.14.0	no	google	
+android_deps	com.google.android.play	app-update	2.1.0	yes	google	//third_party/android_deps:com_google_android_play_app_update_J__unpack_aar
+android_deps	com.google.android.play	core-common	2.0.4	yes	google	//third_party/android_deps:com_google_android_play_core_common_J__unpack_aar
+android_deps	com.google.android.play	feature-delivery	2.1.0	yes	google	//third_party/android_deps:com_google_android_play_feature_delivery_J__unpack_aar
+android_deps	com.google.android.play	review	2.0.2	yes	google	//third_party/android_deps:com_google_android_play_review_J__unpack_aar
+android_deps	com.google.ar	impress	0.0.12	yes	google	//third_party/android_deps:com_google_ar_impress_J__unpack_aar
+android_deps	com.google.auto.service	auto-service-annotations	1.1.1	no	central	
+android_deps	com.google.code.findbugs	jsr305	3.0.2	no	central	
+android_deps	com.google.errorprone	error_prone_annotations	2.51.0	no	central	
+android_deps	com.google.firebase	firebase-annotations	18.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_annotations_java__dex
+android_deps	com.google.firebase	firebase-common	23.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_common_J__unpack_aar
+android_deps	com.google.firebase	firebase-components	20.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_components_J__unpack_aar
+android_deps	com.google.firebase	firebase-datatransport	21.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_datatransport_J__unpack_aar
+android_deps	com.google.firebase	firebase-encoders	18.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_encoders_java__dex
+android_deps	com.google.firebase	firebase-encoders-json	19.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_encoders_json_J__unpack_aar
+android_deps	com.google.firebase	firebase-encoders-proto	17.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_encoders_proto_java__dex
+android_deps	com.google.firebase	firebase-iid-interop	17.1.0	yes	google	//third_party/android_deps:google_firebase_firebase_iid_interop_J__unpack_aar
+android_deps	com.google.firebase	firebase-installations	20.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_installations_J__unpack_aar
+android_deps	com.google.firebase	firebase-installations-interop	18.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_installations_interop_J__unpack_aar
+android_deps	com.google.firebase	firebase-measurement-connector	19.0.0	yes	google	//third_party/android_deps:google_firebase_firebase_measurement_connector_J__unpack_aar
+android_deps	com.google.firebase	firebase-messaging	26.0.1	yes	google	//third_party/android_deps:google_firebase_firebase_messaging_J__unpack_aar
+android_deps	com.google.guava	failureaccess	1.0.3	no	central	
+android_deps	com.google.guava	guava	33.7.2-jre	no	central	
+android_deps	com.google.j2objc	j2objc-annotations	3.1	no	central	
+android_deps	com.google.mlkit	common	18.11.0	yes	google	//third_party/android_deps:com_google_mlkit_common_J__unpack_aar
+android_deps	com.google.mlkit	genai-common	1.0.0-beta4	yes	google	//third_party/android_deps:com_google_mlkit_genai_common_J__unpack_aar
+android_deps	com.google.mlkit	genai-prompt	1.0.0-beta4	yes	google	//third_party/android_deps:com_google_mlkit_genai_prompt_J__unpack_aar
+android_deps	com.google.mlkit	genai-schema	1.0.0-alpha1	yes	google	//third_party/android_deps:com_google_mlkit_genai_schema_java__dex
+android_deps	com.google.protobuf	protobuf-javalite	4.37.0-RC1	no	central	
+android_deps	com.squareup.okio	okio-jvm	3.18.2	no	central	
+android_deps	javax.inject	javax.inject	1	no	central	
+android_deps	org.jetbrains.kotlin	kotlin-stdlib	2.5.0-Beta2	no	central	
+android_deps	org.jetbrains.kotlinx	atomicfu-jvm	0.33.0	no	central	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-android	1.11.0	no	central	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-core-jvm	1.11.0	no	central	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-guava	1.11.0	no	central	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-play-services	1.10.2	no	central	
+android_deps	org.jetbrains.kotlinx	kotlinx-serialization-core-jvm	1.12.0	no	central	
+android_deps	org.jetbrains	annotations	23.0.0	no	central	
+android_deps	org.jspecify	jspecify	1.0.1	no	central	
+android_deps	org.ow2.asm	asm	9.11.1	no	central	
+android_deps	org.ow2.asm	asm-commons	9.11.1	no	central	
+android_deps	org.ow2.asm	asm-tree	9.11.1	no	central	
+androidx	androidx.activity	activity	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.activity	activity-compose	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.activity	activity-ktx	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.annotation	annotation-experimental	1.6.0	no	google	
+androidx	androidx.annotation	annotation-jvm	1.11.0	no	google	
+androidx	androidx.appcompat	appcompat	1.8.0	no	google	
+androidx	androidx.appcompat	appcompat-resources	1.8.0	no	google	
+androidx	androidx.appsearch	appsearch	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.appsearch	appsearch-builtin-types	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.appsearch	appsearch-platform-storage	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.arch.core	core-common	2.3.0-SNAPSHOT	no	-	
+androidx	androidx.arch.core	core-runtime	2.3.0-SNAPSHOT	no	-	
+androidx	androidx.autofill	autofill	1.4.0-SNAPSHOT	no	-	
+androidx	androidx.biometric	biometric	1.4.0-SNAPSHOT	no	-	
+androidx	androidx.browser	browser	1.11.0-SNAPSHOT	no	-	
+androidx	androidx.cardview	cardview	1.0.0	no	google	
+androidx	androidx.collection	collection-jvm	1.8.0-SNAPSHOT	no	-	
+androidx	androidx.collection	collection-ktx	1.8.0-SNAPSHOT	no	-	
+androidx	androidx.compose.animation	animation-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.animation	animation-core-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.foundation	foundation-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.foundation	foundation-layout-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.material3	material3-android	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.compose.material3	material3-ripple-android	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.compose.material	material-ripple-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.runtime	runtime-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.runtime	runtime-annotation-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.runtime	runtime-retain-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.runtime	runtime-saveable-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-geometry-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-graphics-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-text-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-unit-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.compose.ui	ui-util-android	1.14.0-SNAPSHOT	no	-	
+androidx	androidx.concurrent	concurrent-futures	1.4.0-SNAPSHOT	no	-	
+androidx	androidx.constraintlayout	constraintlayout	2.3.0-SNAPSHOT	no	-	
+androidx	androidx.constraintlayout	constraintlayout-core	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.coordinatorlayout	coordinatorlayout	1.4.0-SNAPSHOT	no	-	
+androidx	androidx.core	core	1.20.0-SNAPSHOT	no	-	
+androidx	androidx.core	core-animation	1.0.0	no	google	
+androidx	androidx.core	core-ktx	1.20.0-SNAPSHOT	no	-	
+androidx	androidx.core	core-pip	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.core	core-viewtree	1.1.0-SNAPSHOT	no	-	
+androidx	androidx.credentials	credentials	1.7.0-SNAPSHOT	no	-	
+androidx	androidx.cursoradapter	cursoradapter	1.0.0	no	google	
+androidx	androidx.customview	customview	1.2.0	no	google	
+androidx	androidx.customview	customview-poolingcontainer	1.1.0	no	google	
+androidx	androidx.datastore	datastore-android	1.3.0	no	google	
+androidx	androidx.datastore	datastore-core-android	1.3.0	no	google	
+androidx	androidx.datastore	datastore-core-okio-jvm	1.3.0	no	google	
+androidx	androidx.datastore	datastore-preferences-android	1.3.0	no	google	
+androidx	androidx.datastore	datastore-preferences-core-android	1.3.0	no	google	
+androidx	androidx.datastore	datastore-preferences-external-protobuf	1.3.0	no	google	
+androidx	androidx.datastore	datastore-preferences-proto	1.3.0	no	google	
+androidx	androidx.documentfile	documentfile	1.1.0	no	google	
+androidx	androidx.drawerlayout	drawerlayout	1.3.0-SNAPSHOT	no	-	
+androidx	androidx.dynamicanimation	dynamicanimation	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.emoji2	emoji2	1.8.0-SNAPSHOT	no	-	
+androidx	androidx.emoji2	emoji2-views-helper	1.8.0-SNAPSHOT	no	-	
+androidx	androidx.exifinterface	exifinterface	1.5.0-SNAPSHOT	no	-	
+androidx	androidx.fragment	fragment	1.10.0-SNAPSHOT	no	-	
+androidx	androidx.fragment	fragment-ktx	1.10.0-SNAPSHOT	no	-	
+androidx	androidx.graphics	graphics-core	1.0.4	no	google	
+androidx	androidx.graphics	graphics-path	1.1.0	no	google	
+androidx	androidx.graphics	graphics-shapes-android	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.gridlayout	gridlayout	1.1.0	no	google	
+androidx	androidx.ink	ink-authoring-android	1.1.0-alpha03	no	google	
+androidx	androidx.ink	ink-brush-android	1.1.0-alpha03	no	google	
+androidx	androidx.ink	ink-geometry-android	1.1.0-alpha03	no	google	
+androidx	androidx.ink	ink-nativeloader-android	1.1.0-alpha03	no	google	
+androidx	androidx.ink	ink-rendering-android	1.1.0-alpha03	no	google	
+androidx	androidx.ink	ink-strokes-android	1.1.0-alpha03	no	google	
+androidx	androidx.input	input-motionprediction	1.0.0	no	google	
+androidx	androidx.legacy	legacy-support-core-utils	1.0.0	no	google	
+androidx	androidx.lifecycle	lifecycle-common-java8	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-common-jvm	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-livedata-core	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-process	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-runtime-android	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-runtime-compose-android	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-runtime-ktx-android	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-viewmodel-android	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-viewmodel-ktx	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.lifecycle	lifecycle-viewmodel-savedstate-android	2.12.0-SNAPSHOT	no	-	
+androidx	androidx.loader	loader	1.2.0	no	google	
+androidx	androidx.localbroadcastmanager	localbroadcastmanager	1.0.0	no	google	
+androidx	androidx.media	media	1.8.0	no	google	
+androidx	androidx.mediarouter	mediarouter	1.9.0-SNAPSHOT	no	-	
+androidx	androidx.navigationevent	navigationevent-android	1.2.0	no	google	
+androidx	androidx.navigationevent	navigationevent-compose-android	1.2.0	no	google	
+androidx	androidx.palette	palette	1.1.0	no	google	
+androidx	androidx.pdf	pdf-core	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.pdf	pdf-document-service	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.pdf	pdf-ink	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.pdf	pdf-viewer	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.pdf	pdf-viewer-fragment	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.preference	preference	1.3.0-SNAPSHOT	no	-	
+androidx	androidx.print	print	1.1.0	no	google	
+androidx	androidx.privacysandbox.ads	ads-adservices	1.1.0-beta11	no	google	
+androidx	androidx.privacysandbox.ads	ads-adservices-java	1.1.0-beta11	no	google	
+androidx	androidx.recyclerview	recyclerview	1.5.0-SNAPSHOT	no	-	
+androidx	androidx.resourceinspection	resourceinspection-annotation	1.1.0-SNAPSHOT	no	-	
+androidx	androidx.savedstate	savedstate-android	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.savedstate	savedstate-compose-android	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.savedstate	savedstate-ktx	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.slidingpanelayout	slidingpanelayout	1.3.0-SNAPSHOT	no	-	
+androidx	androidx.startup	startup-runtime	1.2.0	no	google	
+androidx	androidx.swiperefreshlayout	swiperefreshlayout	1.2.0	no	google	
+androidx	androidx.test.espresso	espresso-idling-resource	3.8.0-alpha01	no	google	
+androidx	androidx.tracing	tracing-android	2.1.0-SNAPSHOT	no	-	
+androidx	androidx.transition	transition	1.8.0-SNAPSHOT	no	-	
+androidx	androidx.vectordrawable	vectordrawable	1.2.0	no	google	
+androidx	androidx.vectordrawable	vectordrawable-animated	1.2.0	no	google	
+androidx	androidx.versionedparcelable	versionedparcelable	1.2.1	no	google	
+androidx	androidx.viewpager2	viewpager2	1.2.0-SNAPSHOT	no	-	
+androidx	androidx.viewpager	viewpager	1.1.0	no	google	
+androidx	androidx.window.sidecar	sidecar	1.0.0-SNAPSHOT	no	-	
+androidx	androidx.window	window	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.window	window-core-android	1.6.0-SNAPSHOT	no	-	
+androidx	androidx.xr.arcore	arcore	1.0.0-alpha12	no	google	
+androidx	androidx.xr.arcore	arcore-openxr	1.0.0-alpha12	no	google	
+androidx	androidx.xr.arcore	arcore-projected	1.0.0-alpha12	no	google	
+androidx	androidx.xr.arcore	arcore-runtime	1.0.0-alpha12	no	google	
+androidx	androidx.xr.runtime	runtime	1.0.0-alpha12	no	google	
+androidx	androidx.xr.runtime	runtime-interfaces	1.0.0-alpha12	no	google	
+androidx	androidx.xr.runtime	runtime-manifest	1.0.0-alpha12	no	google	
+androidx	androidx.xr.runtime	runtime-openxr	1.0.0-alpha12	no	google	
+androidx	androidx.xr.scenecore	scenecore	1.0.0-alpha13	no	google	
+androidx	androidx.xr.scenecore	scenecore-runtime	1.0.0-alpha13	no	google	
+androidx	androidx.xr.scenecore	scenecore-spatial-core	1.0.0-alpha13	no	google	
+androidx	androidx.xr.scenecore	scenecore-spatial-rendering	1.0.0-alpha13	no	google	

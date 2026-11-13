@@ -34,7 +34,7 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 
 | 項目 | 狀態 |
 |---|---|
-| 工具鏈從原始碼編（clang、rust、gn、ninja、node） | 都編得出來（clang 1h42m、rust 2h25m、gn/ninja/node 2h）；用它們編 APK 測試中 |
+| 工具鏈從原始碼編（clang、rust、gn、ninja、node） | 完成：全部都能從原始碼編（clang 1h42m、含 crubit 的 rust 2h25m、gn/ninja/node 2h），用它們編 157.0.8103.50 的 `chrome_public_apk` 也成功：四棒、編譯約 18 小時、沒有錯誤、APK 490MB（[run 43129945973](https://github.com/AcideFluorhydrique/chromium-fdroid/actions/runs/43129945973)） |
 | `fdroid scanner` 掃描原始碼，列出剩下的預編譯檔 | 157 版完成，見 [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md) |
 | 用編譯圖產生 `scandelete` 規則（[#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)） | 167 條規則，套用後 70,988 筆降到 5,275 筆，見 [build-graph.md](reports/157.0.8103.50/build-graph.md)、[scan-rules.txt](reports/157.0.8103.50/scan-rules.txt) |
 | 人工檢查編譯會讀到的檔案（[#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)） | 完成：7 個放行（[`fdroid/scanignore.txt`](fdroid/scanignore.txt)），5 個要換掉，已分派到 #5、#6、#8（[`fdroid/build-graph-review.md`](fdroid/build-graph-review.md)） |

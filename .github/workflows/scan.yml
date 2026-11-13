@@ -108,10 +108,13 @@ jobs:
       - name: Generate scandelete rules
         run: python3 -I ci/.github/scripts/scan_rules.py "scan-$VERSION/findings.tsv" build-inputs.txt "scan-$VERSION"
 
-      # 照 F-Droid 編譯伺服器的做法套用規則再掃一次，看還剩什麼：
-      # scandelete 是自動產生的（編譯不會讀到），scanignore 是人工確認過的（fdroid/scanignore.txt）
-      - name: Scan again with the rules
-        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION/after-rules" --rules "scan-$VERSION/scan-rules.txt" --ignore ci/fdroid/scanignore.txt
+      # 照 F-Droid 編譯伺服器的流程：準備階段先用 prune 腳本刪掉編譯用不到的二進位檔，
+      # 再套用人工確認過的 scanignore（fdroid/scanignore.txt）掃一次，看還剩什麼
+      - name: Prune binaries
+        run: python3 -I ci/fdroid/prune_binaries.py src "scan-$VERSION/prune-list.txt"
+
+      - name: Scan again after pruning
+        run: fd/bin/python -I ci/.github/scripts/fdroid_scan.py src "scan-$VERSION/after-rules" --ignore ci/fdroid/scanignore.txt
 
       # 報告直接存進 repo 的 reports/<版本>/，方便大家在 GitHub 上看，也不怕 artifact 服務出問題
       - name: Commit report
@@ -122,6 +125,7 @@ jobs:
           cp "scan-$VERSION/summary.md" "$d/fdroid-scan.md"
           gzip -9c "scan-$VERSION/findings-build.tsv" > "$d/fdroid-scan-findings.tsv.gz"
           cp "scan-$VERSION/scan-rules.txt" "$d/scan-rules.txt"
+          gzip -9c "scan-$VERSION/prune-list.txt" > "$d/prune-list.txt.gz"
           cp "scan-$VERSION/build-graph.md" "$d/build-graph.md"
           cp "scan-$VERSION/after-rules/summary.md" "$d/fdroid-scan-after-rules.md"
           gzip -9c "scan-$VERSION/after-rules/findings.tsv" > "$d/fdroid-scan-after-rules-findings.tsv.gz"

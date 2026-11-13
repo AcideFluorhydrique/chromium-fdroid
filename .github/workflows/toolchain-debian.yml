@@ -1,0 +1,78 @@
+name: Build the toolchain in Debian
+
+# Same toolchain as toolchain.yml, but built inside a debian:trixie container
+# from Debian's compilers and libraries, the way F-Droid's build server would:
+# Debian clang/gcc as the host compiler, the NDK from Debian's sdkmanager
+# (F-Droid's implementation), Debian's OpenSSL 3 and ncursesw for the Rust build.
+# The artifacts have the same names as toolchain.yml, so a build can use them
+# with toolchain_from=<owner/repo>/<this run id>.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chromium 版本 tag（留空 = 最新 Android Stable）"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          v="$INPUT_VERSION"
+          if [ -z "$v" ]; then
+            v=$(curl -fsSL "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Android&num=1" | jq -r '.[0].version')
+          fi
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "版本格式不對: '$v'"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: resolve
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [clang, rust, tools]
+    env:
+      VERSION: ${{ needs.resolve.outputs.version }}
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af > /dev/null || true
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: .github/scripts
+
+      - name: Fetch chromium/src at tag
+        run: |
+          git init -q src
+          cd src
+          git remote add origin https://chromium.googlesource.com/chromium/src.git
+          for i in 1 2 3 4; do git fetch -q --depth 1 origin "refs/tags/$VERSION" && break; echo "fetch 失敗，$((i * 60)) 秒後重試 ($i/4)"; sleep $((i * 60)); done
+          git checkout -q FETCH_HEAD
+
+      - name: Build ${{ matrix.part }} in debian:trixie
+        run: |
+          docker run --rm -e VERSION -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" \
+            debian:trixie bash ci/.github/scripts/toolchain_debian.sh "${{ matrix.part }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chromium-tc-${{ matrix.part }}
+          path: pkg/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error

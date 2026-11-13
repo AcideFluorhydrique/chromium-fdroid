@@ -1,3 +1,8 @@
+[🇬🇧English](./README.md)  |  [🇹🇼中文](./README.zh.md)
+
+---
+
+
 # chromium-fdroid
 
 讓 Chromium for Android 能照 [F-Droid 的收錄規則](https://f-droid.org/docs/Inclusion_Policy/) 從原始碼編譯。

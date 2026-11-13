@@ -1,3 +1,8 @@
+[🇬🇧English](./README.md)  |  [🇹🇼中文](./README.zh.md)
+
+---
+
+
 # chromium-fdroid
 
 Working towards building Chromium for Android from source in compliance with [F-Droid's Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/).

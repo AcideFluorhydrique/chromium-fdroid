@@ -1,0 +1,81 @@
+name: Test generated stubs
+
+# 快速檢查 fdroid/gen_stubs.py：下載 Google 的 jar、產生 stub，用 javac 對 android.jar、microG、
+# Kotlin 和 androidx 編一次。幾分鐘，不用同步 Chromium。
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifacts:
+        description: "空白分隔的 group:name:version[:Class,...]"
+        required: false
+        default: >-
+          com.google.android.gms:play-services-cast:22.2.0
+          com.google.android.gms:play-services-cast-framework:22.2.0
+          com.google.android.gms:play-services-identity-credentials:16.0.0-alpha12
+          com.google.android.gms:play-services-basement:18.12.0:com.google.android.gms.common.internal.GmsClient
+          com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: microG libraries without Cast
+        run: |
+          mkdir -p t/src
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, '.github/scripts')
+          import gms_variant as g
+          libs = ['play-services-auth-api-phone', 'play-services-auth-base', 'play-services-base',
+                  'play-services-basement', 'play-services-clearcut', 'play-services-fido',
+                  'play-services-location', 'play-services-phenotype', 'play-services-tasks',
+                  'play-services-vision', 'play-services-vision-common']
+          g.microg_jars(libs, 't/microg.jar')
+          PY
+
+      - name: Classpath jars
+        run: |
+          get() { curl -fsSL "$1" -o "$2"; }
+          cd t
+          get https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar kotlin.jar
+          for a in androidx/mediarouter/mediarouter/1.7.0 androidx/core/core/1.13.1 androidx/fragment/fragment/1.8.5 androidx/appcompat/appcompat/1.7.0 androidx/annotation/annotation-jvm/1.9.1; do
+            n=$(basename $(dirname $a))-$(basename $a)
+            base="https://dl.google.com/dl/android/maven2/$a/$(basename $(dirname $a))-$(basename $a)"
+            if curl -fsSL "$base.aar" -o "$n.aar"; then unzip -q -p "$n.aar" classes.jar > "$n.jar"; else get "$base.jar" "$n.jar"; fi
+          done
+          ls -la
+          echo "ANDROID_JAR=$(ls -d $ANDROID_HOME/platforms/android-*/android.jar | sort -V | tail -1)" >> "$GITHUB_ENV"
+
+      - name: Generate
+        env:
+          ARTIFACTS: ${{ inputs.artifacts }}
+        run: |
+          args=()
+          for a in $ARTIFACTS; do args+=(--artifact "$a"); done
+          python3 fdroid/gen_stubs.py --out t/gen --exclude-jar t/microg.jar "${args[@]}"
+          find t/gen -name '*.java' | wc -l
+
+      - name: Compile
+        run: |
+          cp=$ANDROID_JAR:t/microg.jar:$(ls t/*.jar | grep -v microg | tr '\n' ':')
+          set +e
+          javac -nowarn -Xmaxerrs 500 -cp "$cp" -d t/cls $(find t/gen fdroid/stubs -name '*.java') > javac.log 2>&1
+          rc=$?
+          set -e
+          grep -c ' error: ' javac.log || true
+          grep ' error: ' javac.log | sed -E 's/:[0-9]+: error:/: error:/' | sort | uniq -c | sort -rn | head -40
+          grep -A2 ' error: ' javac.log | head -120
+          exit $rc
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stubgen
+          path: |
+            t/gen
+            javac.log
+          retention-days: 7

@@ -84,7 +84,6 @@ GEN_DEPS = [
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_java'),
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_jvm_java'),
     ('third_party/kotlin_stdlib/BUILD.gn', '//third_party/kotlin_stdlib', 'kotlin_stdlib_java'),
-    ('third_party/android_deps/BUILD.gn', '//third_party/android_deps', 'org_jetbrains_kotlin_kotlin_stdlib_java'),
 ]
 GN_ARGS = [
     'use_mlkit_for_aicore = false',

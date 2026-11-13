@@ -46,6 +46,18 @@ def main():
         "['aarch64', 'arm', 'i686', 'x86_64']",
     )
 
+    # With OWN_HOST_SYSROOT set (toolchain_debian.sh sets it to / for the
+    # Rust build), host tools are built against that system instead of
+    # Chromium's prebuilt Debian sysroot, so Debian's own static libraries
+    # (OpenSSL, ncursesw) link.
+    patch(
+        build_py,
+        'def DownloadDebianSysroot(platform_name, skip_download=False):\n',
+        'def DownloadDebianSysroot(platform_name, skip_download=False):\n'
+        "  if platform_name == 'amd64' and os.environ.get('OWN_HOST_SYSROOT'):\n"
+        "    return os.environ['OWN_HOST_SYSROOT']\n",
+    )
+
     if '--rust' in sys.argv[2:]:
         patch(
             os.path.join(src, 'tools/rust/build_rust.py'),

@@ -192,7 +192,7 @@ class Generator:
 
     def resolvable(self, t):
         for n in type_names(t):
-            if OBFUSCATED.search(n):
+            if OBFUSCATED.search(n) or n.startswith('kotlin.jvm.internal.'):
                 return False
             if n in self.known or n in self.generated:
                 continue

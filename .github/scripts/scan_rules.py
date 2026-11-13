@@ -13,6 +13,7 @@ Writes:
   build-graph.md       summary, and the flagged files the build reads, which
                        need a decision by hand
   findings-build.tsv   findings.tsv plus an in_build column
+  prune-list.txt       the same files one per line, for fdroid/prune_binaries.py
 """
 
 import collections
@@ -107,6 +108,12 @@ def main():
         for name, (n, size, kinds) in sorted(merged.items()):
             k = ', '.join(f'{x} {c}' for x, c in kinds.most_common(2))
             f.write(f'{glob.escape(name)}  # {n} files, {human(size)}: {k}\n')
+
+    with open(os.path.join(out, 'prune-list.txt'), 'w') as f:
+        f.write('# Flagged files chrome_public_apk does not read; for fdroid/prune_binaries.py.\n')
+        for cat, kind, path, size, in_build in rows:
+            if not in_build and cat not in KEEP_CATEGORIES:
+                f.write(path + '\n')
 
     with open(os.path.join(out, 'findings-build.tsv'), 'w') as f:
         f.write('category\tkind\tpath\tbytes\tin_build\n')

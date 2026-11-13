@@ -61,6 +61,15 @@ def main():
             'ENABLE_BUILDING_RS_BINDINGS_FROM_CC = True\n',
             'ENABLE_BUILDING_RS_BINDINGS_FROM_CC = False\n',
         )
+        # With OWN_NCURSESW_DIR set (e.g. to Debian's libncurses-dev, see
+        # toolchain_debian.sh), use it instead of the CIPD static build.
+        patch(
+            os.path.join(src, 'tools/rust/build_bindgen.py'),
+            'def FetchNcurseswLibrary():\n',
+            'def FetchNcurseswLibrary():\n'
+            "    if os.environ.get('OWN_NCURSESW_DIR'):\n"
+            "        return os.environ['OWN_NCURSESW_DIR']\n",
+        )
         # The prebuilt OpenSSL 1.1.1 from CIPD is older than what curl-sys
         # in cargo needs; use the OpenSSL 3 that chromium-toolchain.yml
         # builds from source against the same Debian sysroot.

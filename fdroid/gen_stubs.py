@@ -290,6 +290,10 @@ class Generator:
                     init = init.rstrip('fF') + 'f'
                 if t == 'double' and m.value is not None:
                     init = init.rstrip('dD')
+                if t in ('double', 'float') and m.value is not None:
+                    w = 'Double' if t == 'double' else 'Float'
+                    init = {'Infinity': f'{w}.POSITIVE_INFINITY', '-Infinity': f'{w}.NEGATIVE_INFINITY',
+                            'NaN': f'{w}.NaN'}.get(init.rstrip('fF'), init)
                 out.append(f'{indent}  {" ".join(mm)} {t} {m.name}' + (f' = {init};' if init is not None else ';'))
                 continue
             params = ', '.join(f'{dotted(p)} p{i}' for i, p in enumerate(m.params))

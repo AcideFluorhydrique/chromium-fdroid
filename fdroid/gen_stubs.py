@@ -12,8 +12,9 @@ only those classes (and their nested classes) are generated. Classes that the
 --exclude-jar jars already provide (e.g. microG's libraries) are skipped.
 
 The stubs only let Chromium's Java compile without the non-free libraries;
-the code paths that would call them are switched off separately, so their
-bodies never run. Members whose types cannot be resolved are left out.
+the code paths that would call them are switched off separately, and every
+method throws UnsupportedOperationException (Chromium already catches Exception
+around most of these calls). Members whose types cannot be resolved are left out.
 
 --roots is a file of class names (e.g. everything matching com.google.android.gms.*
 in Chromium's Java): only those classes and the classes their kept signatures
@@ -316,8 +317,7 @@ class Generator:
             if body_less:
                 out.append(f'{indent}  {" ".join(mm)} {tp + " " if tp else ""}{rt} {m.name}({params}){throws};')
             else:
-                val = self.default_value(rt)
-                body = '{}' if val is None else f'{{ return {val}; }}'
+                body = '{ throw new UnsupportedOperationException("not available in this build"); }'
                 out.append(f'{indent}  {" ".join(mm)} {tp + " " if tp else ""}{rt} {m.name}({params}){throws} {body}')
         if k.kind == 'class' and not is_enum and not is_annotation and not has_noarg:
             out.append(f'{indent}  protected {simple}() {{{sup_call} }}')

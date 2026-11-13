@@ -17,10 +17,17 @@ Usage: gms_variant.py <src dir> <spec>
   stubs          Build fdroid/stubs (Play Core, Firebase and InstanceID API
                  surface implemented as "not available") as //fdroid_stubs and
                  use it for those targets instead of empty groups.
+  genstubs       Also generate stubs (fdroid/gen_stubs.py) from Google's own
+                 jars for the APIs microG does not publish (Cast,
+                 identity credentials), only the classes Chromium's Java uses,
+                 into //fdroid_stubs. microG's Cast libraries are left out.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
                  and ARCore/VR/OpenXR/Cardboard.
   patch=NAMES    Small source edits: cast (CastOptions without the Builder
-                 microG lacks), shape (Shape Detection without the Vision API).
+                 microG lacks), shape (Shape Detection without the Vision API),
+                 castoff (never add the Cast route providers, so the Cast
+                 stubs never run), status (no Status.getConnectionResult(),
+                 which microG lacks).
 
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
@@ -48,6 +55,37 @@ STUB_TARGETS = {
     'google_firebase_firebase_messaging_java',
 }
 STUBS_LABEL = '//fdroid_stubs:fdroid_stubs_java'
+GEN_STUB_TARGETS = {
+    'google_play_services_cast_java': 'play-services-cast',
+    'google_play_services_cast_framework_java': 'play-services-cast-framework',
+    'google_play_services_identity_credentials_java': 'play-services-identity-credentials',
+}
+GEN_ARTIFACTS = [
+    'com.google.android.gms:play-services-cast:22.2.0',
+    'com.google.android.gms:play-services-cast-framework:22.2.0',
+    'com.google.android.gms:play-services-identity-credentials:16.0.0-alpha12',
+    'com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall',
+]
+# Compile-time classpath for the generated stubs (Maven, the versions are not critical).
+GEN_CLASSPATH = [
+    ('https://repo1.maven.org/maven2', 'org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20', '.jar'),
+    ('https://dl.google.com/dl/android/maven2', 'androidx/mediarouter/mediarouter/1.7.0/mediarouter-1.7.0', '.aar'),
+    ('https://dl.google.com/dl/android/maven2', 'androidx/core/core/1.13.1/core-1.13.1', '.aar'),
+    ('https://dl.google.com/dl/android/maven2', 'androidx/fragment/fragment/1.8.5/fragment-1.8.5', '.aar'),
+    ('https://dl.google.com/dl/android/maven2', 'androidx/appcompat/appcompat/1.7.0/appcompat-1.7.0', '.aar'),
+    ('https://dl.google.com/dl/android/maven2', 'androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1', '.jar'),
+]
+# GN targets the generated stubs depend on, if they exist in this checkout.
+GEN_DEPS = [
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_mediarouter_mediarouter_java'),
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_core_core_java'),
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_fragment_fragment_java'),
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_appcompat_appcompat_java'),
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_java'),
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_jvm_java'),
+    ('third_party/kotlin_stdlib/BUILD.gn', '//third_party/kotlin_stdlib', 'kotlin_stdlib_java'),
+    ('third_party/android_deps/BUILD.gn', '//third_party/android_deps', 'org_jetbrains_kotlin_kotlin_stdlib_java'),
+]
 GN_ARGS = [
     'use_mlkit_for_aicore = false',
     'enable_arcore = false',
@@ -140,13 +178,54 @@ def referenced_gms_targets(src):
     return sorted(names)
 
 
-def write_stubs(src):
+def gen_stubs(src, microg_jar, out_dir):
+    import subprocess
+    import tempfile
+    here = os.path.dirname(os.path.abspath(__file__))
+    tmp = tempfile.mkdtemp()
+    sdk = os.path.join(src, 'third_party/android_sdk/public/platforms')
+    android_jar = sorted(os.path.join(sdk, d, 'android.jar') for d in os.listdir(sdk)
+                         if os.path.exists(os.path.join(sdk, d, 'android.jar')))[-1]
+    cp = [android_jar, microg_jar]
+    for repo, path, ext in GEN_CLASSPATH:
+        data = fetch(f'{repo}/{path}{ext}')
+        jar = os.path.join(tmp, os.path.basename(path) + '.jar')
+        with open(jar, 'wb') as f:
+            f.write(zipfile.ZipFile(io.BytesIO(data)).read('classes.jar') if ext == '.aar' else data)
+        cp.append(jar)
+    roots = subprocess.run(['git', '-C', src, 'grep', '-ohE', r'com\.google\.android\.gms\.[A-Za-z0-9_.]+',
+                            '--', '*.java'], capture_output=True, text=True).stdout
+    roots_file = os.path.join(tmp, 'roots.txt')
+    with open(roots_file, 'w') as f:
+        f.write('\n'.join(sorted(set(roots.split()))))
+    cmd = [sys.executable, os.path.join(here, '..', '..', 'fdroid', 'gen_stubs.py'), '--out', out_dir,
+           '--exclude-jar', microg_jar, '--classpath', ':'.join(cp), '--roots', roots_file]
+    for a in GEN_ARTIFACTS:
+        cmd += ['--artifact', a]
+    subprocess.run(cmd, check=True, stdout=sys.stderr)
+
+
+def gen_deps(src):
+    out = []
+    for path, label, name in GEN_DEPS:
+        p = os.path.join(src, path)
+        if os.path.exists(p) and re.search(rf'\("{name}"\)', open(p).read()):
+            out.append(f'{label}:{name}')
+    return out
+
+
+def write_stubs(src, generated=False):
     here = os.path.dirname(os.path.abspath(__file__))
     stubs = os.path.join(here, '..', '..', 'fdroid', 'stubs', 'java')
     dst = os.path.join(src, 'fdroid_stubs')
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(stubs, os.path.join(dst, 'java'))
+    deps = ['$google_play_services_package:google_play_services_tasks_java']
+    if generated:
+        gen_stubs(src, os.path.join(src, 'fdroid_gms', 'microg.jar'), os.path.join(dst, 'java', 'src'))
+        deps += ['$google_play_services_package:google_play_services_base_java',
+                 '$google_play_services_package:google_play_services_basement_java'] + gen_deps(src)
     sources = sorted(
         os.path.relpath(os.path.join(r, f), dst)
         for r, _, fs in os.walk(os.path.join(dst, 'java')) for f in fs if f.endswith('.java'))
@@ -158,7 +237,9 @@ def write_stubs(src):
         f.write('  sources = [\n')
         f.writelines(f'    "{x}",\n' for x in sources)
         f.write('  ]\n')
-        f.write('  deps = [ "$google_play_services_package:google_play_services_tasks_java" ]\n')
+        f.write('  deps = [\n')
+        f.writelines(f'    "{x}",\n' for x in deps)
+        f.write('  ]\n')
         f.write('}\n')
     print(f'fdroid_stubs: {len(sources)} classes', file=sys.stderr)
 
@@ -197,9 +278,19 @@ def apply_patches(src, names):
                    'TextDetection impl = TextDetectionImpl.create();',
                    'TextDetection impl = null;')
         print('patched shape_detection: no Vision API', file=sys.stderr)
+    if 'castoff' in names:
+        path = os.path.join(src, 'components/media_router/browser/android/java/src/org/chromium/components/media_router/BrowserMediaRouter.java')
+        patch_file(path, 'public void addProviders(MediaRouteManager manager) {\n',
+                   'public void addProviders(MediaRouteManager manager) {\n'
+                   '                    if (true) return; // F-Droid build: no Cast.\n')
+        print('patched BrowserMediaRouter: no Cast route providers', file=sys.stderr)
+    if 'status' in names:
+        path = os.path.join(src, 'chrome/browser/password_manager/android/java/src/org/chromium/chrome/browser/password_manager/PasswordManagerAndroidBackendUtil.java')
+        patch_file(path, '((ApiException) exception).getStatus().getConnectionResult();', 'null;')
+        print('patched PasswordManagerAndroidBackendUtil: no getConnectionResult()', file=sys.stderr)
 
 
-def write_gms_dir(src, mode, stubs=False):
+def write_gms_dir(src, mode, stubs=False, genstubs=False):
     names = referenced_gms_targets(src)
     d = os.path.join(src, 'fdroid_gms')
     os.makedirs(d, exist_ok=True)
@@ -211,6 +302,8 @@ def write_gms_dir(src, mode, stubs=False):
         wanted = {}
         for n in names:
             m = re.match(r'^google_play_services_(.+)_java$', n)
+            if genstubs and n in GEN_STUB_TARGETS:
+                continue
             if m and 'play-services-' + m[1].replace('_', '-') in available:
                 wanted[n] = 'play-services-' + m[1].replace('_', '-')
         provided = microg_jars(sorted(set(wanted.values())), os.path.join(d, 'microg.jar'))
@@ -227,7 +320,7 @@ def write_gms_dir(src, mode, stubs=False):
     for n in names:
         if n in wanted:
             lines += [f'java_group("{n}") {{', '  deps = [ ":microg_java" ]', '}', '']
-        elif stubs and n in STUB_TARGETS:
+        elif stubs and (n in STUB_TARGETS or (genstubs and n in GEN_STUB_TARGETS)):
             lines += [f'java_group("{n}") {{', f'  deps = [ "{STUBS_LABEL}" ]', '}', '']
         else:
             lines += [f'java_group("{n}") {{', '  deps = []', '}', '']
@@ -295,14 +388,15 @@ def set_gms_package(src):
 def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
-    stubs = 'stubs' in spec
-    if stubs:
-        write_stubs(src)
+    stubs = 'stubs' in spec or 'genstubs' in spec
+    genstubs = 'genstubs' in spec
+    if genstubs and 'gms=microg' not in spec:
+        sys.exit('genstubs needs gms=microg (it compiles against the microG jar)')
     for item in spec:
         key, _, value = item.partition('=')
         if key == 'gms':
             assert value in ('microg', 'drop'), item
-            write_gms_dir(src, value, stubs)
+            write_gms_dir(src, value, stubs, genstubs)
             set_gms_package(src)
         elif key == 'drop':
             groups = value.split(',')
@@ -310,7 +404,7 @@ def main():
             drop_android_deps(src, groups, stubs)
             if 'impress' in groups:
                 drop_xr_module(src)
-        elif key == 'stubs':
+        elif key in ('stubs', 'genstubs'):
             pass
         elif key == 'gnargs':
             args += GN_ARGS
@@ -318,6 +412,8 @@ def main():
             apply_patches(src, value.split(','))
         else:
             sys.exit(f'unknown spec item {item}')
+    if stubs:
+        write_stubs(src, genstubs)
     print('\n'.join(args))
 
 

@@ -91,6 +91,7 @@ def gn_owner(src, out, path):
 
 def main():
     src, out, inputs_file, report_dir = sys.argv[1:5]
+    src = os.path.abspath(src)
     os.makedirs(report_dir, exist_ok=True)
 
     used = collections.defaultdict(dict)

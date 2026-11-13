@@ -16,6 +16,11 @@ on:
           com.google.android.gms:play-services-basement:18.12.0:com.google.android.gms.common.internal.GmsClient
           com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall
         type: string
+      version:
+        description: "Chromium 版本 tag，用來找它的 Java 實際用到哪些類"
+        required: false
+        default: "158.0.8127.36"
+        type: string
 
 jobs:
   test:
@@ -50,13 +55,26 @@ jobs:
           ls -la
           echo "ANDROID_JAR=$(ls -d $ANDROID_HOME/platforms/android-*/android.jar | sort -V | tail -1)" >> "$GITHUB_ENV"
 
+      - name: Classes Chromium's Java uses
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git clone -q --depth 1 --filter=blob:none --no-checkout -b "$VERSION" https://github.com/chromium/chromium.git cr
+          cd cr
+          git sparse-checkout set --no-cone '*.java'
+          git checkout -q
+          git grep -ohE 'com\.google\.android\.gms\.[A-Za-z0-9_.]+' -- '*.java' | sort -u > ../t/roots.txt
+          wc -l ../t/roots.txt
+
       - name: Generate
         env:
           ARTIFACTS: ${{ inputs.artifacts }}
         run: |
           args=()
           for a in $ARTIFACTS; do args+=(--artifact "$a"); done
-          python3 fdroid/gen_stubs.py --out t/gen --exclude-jar t/microg.jar "${args[@]}"
+          cp=$ANDROID_JAR:t/microg.jar:$(ls t/*.jar | grep -v microg | tr '\n' ':')
+          python3 fdroid/gen_stubs.py --out t/gen --exclude-jar t/microg.jar --classpath "$cp" \
+            --roots t/roots.txt "${args[@]}"
           find t/gen -name '*.java' | wc -l
 
       - name: Compile

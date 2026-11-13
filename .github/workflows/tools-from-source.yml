@@ -1,0 +1,40 @@
+name: Build the prebuilt tools from source
+
+# #7/#8：chrome_public_apk 用到的幾個預編譯工具（gperf、esbuild、TypeScript 7 的 tsc），
+# 在 debian:trixie 裡照 Chromium 指定的版本從原始碼編。
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chromium 版本 tag"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [gperf, esbuild, tsc]
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: .github/scripts
+
+      - name: Build ${{ matrix.tool }} in debian:trixie
+        run: |
+          docker run --rm -e VERSION -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" \
+            debian:trixie bash ci/.github/scripts/tools_from_source.sh "${{ matrix.tool }}"
+          { echo "| tool | version | sha256 |"; echo "|---|---|---|"; cat "pkg/${{ matrix.tool }}.md"; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tool-${{ matrix.tool }}
+          path: pkg/${{ matrix.tool }}
+          retention-days: 14

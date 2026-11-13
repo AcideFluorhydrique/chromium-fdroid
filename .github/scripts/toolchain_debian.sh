@@ -36,7 +36,7 @@ clang)
   echo "NDK $ndk"
   export ANDROID_HOME=$ws/android-sdk
   mkdir -p "$ANDROID_HOME"
-  yes | sdkmanager --sdk_root="$ANDROID_HOME" "ndk;$ndk"
+  sdkmanager --sdk_root="$ANDROID_HOME" "ndk;$ndk"
   mkdir -p src/third_party/android_toolchain
   rm -rf src/third_party/android_toolchain/ndk
   ln -s "$ANDROID_HOME/ndk/$ndk" src/third_party/android_toolchain/ndk

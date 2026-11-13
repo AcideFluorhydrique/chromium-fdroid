@@ -14,6 +14,14 @@ Usage: gms_variant.py <src dir> <spec>
                  feature module, which packages impress's and ARCore's native
                  libraries and is added regardless of enable_arcore/enable_vr.
 
+  stubs          Build fdroid/stubs (Play Core, Firebase and InstanceID API
+                 surface implemented as "not available") as //fdroid_stubs and
+                 use it for those targets instead of empty groups.
+  gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
+                 and ARCore/VR/OpenXR/Cardboard.
+  patch=NAMES    Small source edits: cast (CastOptions without the Builder
+                 microG lacks), shape (Shape Detection without the Vision API).
+
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
 that file, as Cromite does. Nothing is printed for args.gn any more.
@@ -22,6 +30,7 @@ Chromium that still uses the removed library.
 """
 
 import io
+import shutil
 import os
 import re
 import sys
@@ -32,6 +41,20 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 MAVEN = 'https://repo1.maven.org/maven2'
+STUB_TARGETS = {
+    'google_play_services_iid_java',
+    'google_firebase_firebase_common_java',
+    'google_firebase_firebase_installations_java',
+    'google_firebase_firebase_messaging_java',
+}
+STUBS_LABEL = '//fdroid_stubs:fdroid_stubs_java'
+GN_ARGS = [
+    'use_mlkit_for_aicore = false',
+    'enable_arcore = false',
+    'enable_vr = false',
+    'enable_openxr = false',
+    'enable_cardboard = false',
+]
 DROP_GROUPS = {
     'playcore': re.compile(r'^com_google_android_play_'),
     'mlkit': re.compile(r'mlkit'),
@@ -117,7 +140,66 @@ def referenced_gms_targets(src):
     return sorted(names)
 
 
-def write_gms_dir(src, mode):
+def write_stubs(src):
+    here = os.path.dirname(os.path.abspath(__file__))
+    stubs = os.path.join(here, '..', '..', 'fdroid', 'stubs', 'java')
+    dst = os.path.join(src, 'fdroid_stubs')
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
+    shutil.copytree(stubs, os.path.join(dst, 'java'))
+    sources = sorted(
+        os.path.relpath(os.path.join(r, f), dst)
+        for r, _, fs in os.walk(os.path.join(dst, 'java')) for f in fs if f.endswith('.java'))
+    with open(os.path.join(dst, 'BUILD.gn'), 'w') as f:
+        f.write('import("//build/config/android/config.gni")\n')
+        f.write('import("//build/config/android/rules.gni")\n\n')
+        f.write('android_library("fdroid_stubs_java") {\n')
+        f.write('  chromium_code = false\n')
+        f.write('  sources = [\n')
+        f.writelines(f'    "{x}",\n' for x in sources)
+        f.write('  ]\n')
+        f.write('  deps = [ "$google_play_services_package:google_play_services_tasks_java" ]\n')
+        f.write('}\n')
+    print(f'fdroid_stubs: {len(sources)} classes', file=sys.stderr)
+
+
+def patch_file(path, old, new, count=1):
+    s = open(path).read()
+    if s.count(old) != count:
+        sys.exit(f'{path}: expected {count} occurrence(s) of {old!r}')
+    with open(path, 'w') as f:
+        f.write(s.replace(old, new))
+
+
+def apply_patches(src, names):
+    if 'cast' in names:
+        path = os.path.join(src, 'components/media_router/browser/android/java/src/org/chromium/components/media_router/caf/CastOptionsProvider.java')
+        s = open(path).read()
+        new = re.sub(r'return new CastOptions\.Builder\(\).*?\.build\(\);', 'return new CastOptions();', s, count=1, flags=re.S)
+        if new == s:
+            sys.exit(f'{path}: CastOptions.Builder chain not found')
+        with open(path, 'w') as f:
+            f.write(new)
+        print('patched CastOptionsProvider: new CastOptions()', file=sys.stderr)
+    if 'shape' in names:
+        d = os.path.join(src, 'services/shape_detection')
+        gn = os.path.join(d, 'BUILD.gn')
+        for line in ('      "android/java/src/org/chromium/shape_detection/FaceDetectionImplGmsCore.java",\n',
+                     '      "android/java/src/org/chromium/shape_detection/TextDetectionImpl.java",\n',
+                     '      "$google_play_services_package:google_play_services_vision_common_java",\n',
+                     '      "$google_play_services_package:google_play_services_vision_java",\n'):
+            patch_file(gn, line, '')
+        j = os.path.join(d, 'android/java/src/org/chromium/shape_detection')
+        patch_file(os.path.join(j, 'FaceDetectionProviderImpl.java'),
+                   'FaceDetection.MANAGER.bind(new FaceDetectionImplGmsCore(options), request);',
+                   'FaceDetection.MANAGER.bind(new FaceDetectionImpl(options), request);')
+        patch_file(os.path.join(j, 'InterfaceRegistrar.java'),
+                   'TextDetection impl = TextDetectionImpl.create();',
+                   'TextDetection impl = null;')
+        print('patched shape_detection: no Vision API', file=sys.stderr)
+
+
+def write_gms_dir(src, mode, stubs=False):
     names = referenced_gms_targets(src)
     d = os.path.join(src, 'fdroid_gms')
     os.makedirs(d, exist_ok=True)
@@ -145,6 +227,8 @@ def write_gms_dir(src, mode):
     for n in names:
         if n in wanted:
             lines += [f'java_group("{n}") {{', '  deps = [ ":microg_java" ]', '}', '']
+        elif stubs and n in STUB_TARGETS:
+            lines += [f'java_group("{n}") {{', f'  deps = [ "{STUBS_LABEL}" ]', '}', '']
         else:
             lines += [f'java_group("{n}") {{', '  deps = []', '}', '']
     with open(os.path.join(d, 'BUILD.gn'), 'w') as f:
@@ -155,7 +239,7 @@ def write_gms_dir(src, mode):
         print('  ' + p, file=sys.stderr)
 
 
-def drop_android_deps(src, groups):
+def drop_android_deps(src, groups, stubs=False):
     path = os.path.join(src, 'third_party/android_deps/BUILD.gn')
     s = open(path).read()
     target = re.compile(r'\b(android_aar_prebuilt|java_prebuilt|java_group|android_library)\("([a-z0-9_]+)"\)\s*\{')
@@ -176,7 +260,8 @@ def drop_android_deps(src, groups):
                     break
             i += 1
         out.append(s[pos:m.start()])
-        out.append(f'java_group("{name}") {{\n    deps = []\n  }}')
+        dep = f'"{STUBS_LABEL}"' if stubs and DROP_GROUPS['playcore'].search(name) else ''
+        out.append(f'java_group("{name}") {{\n    deps = [ {dep} ]\n  }}')
         pos = i + 1
         dropped.append(name)
     out.append(s[pos:])
@@ -210,18 +295,27 @@ def set_gms_package(src):
 def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
+    stubs = 'stubs' in spec
+    if stubs:
+        write_stubs(src)
     for item in spec:
         key, _, value = item.partition('=')
         if key == 'gms':
             assert value in ('microg', 'drop'), item
-            write_gms_dir(src, value)
+            write_gms_dir(src, value, stubs)
             set_gms_package(src)
         elif key == 'drop':
             groups = value.split(',')
             assert all(g in DROP_GROUPS for g in groups), item
-            drop_android_deps(src, groups)
+            drop_android_deps(src, groups, stubs)
             if 'impress' in groups:
                 drop_xr_module(src)
+        elif key == 'stubs':
+            pass
+        elif key == 'gnargs':
+            args += GN_ARGS
+        elif key == 'patch':
+            apply_patches(src, value.split(','))
         else:
             sys.exit(f'unknown spec item {item}')
     print('\n'.join(args))

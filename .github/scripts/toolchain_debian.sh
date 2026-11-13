@@ -59,17 +59,20 @@ clang)
   ;;
 
 rust)
-  apt_install libssl-dev libncurses-dev
-  # Debian's OpenSSL 3 and ncursesw instead of the CIPD prebuilts. Only the
-  # static libraries and their headers are exposed, so nothing else from the
-  # host leaks into the build, which links against Chromium's Debian sysroot.
+  apt_install libssl-dev libncurses-dev libzstd-dev
+  # Debian's OpenSSL 3 and ncursesw instead of the CIPD prebuilts.
   multiarch=$(gcc -print-multiarch)
   ssl=$ws/debian-openssl
   rm -rf "$ssl" && mkdir -p "$ssl/lib" "$ssl/include"
-  cp /usr/lib/$multiarch/libssl.a /usr/lib/$multiarch/libcrypto.a "$ssl/lib/"
+  cp /usr/lib/$multiarch/libssl.a /usr/lib/$multiarch/libcrypto.a /usr/lib/$multiarch/libzstd.a "$ssl/lib/"
   cp -r /usr/include/openssl "$ssl/include/"
   cp /usr/include/$multiarch/openssl/* "$ssl/include/openssl/"
-  export OWN_OPENSSL_DIR=$ssl OPENSSL_STATIC=1
+  # Debian's libcrypto.a is built with zstd support.
+  export OWN_OPENSSL_DIR=$ssl OPENSSL_STATIC=1 OPENSSL_LIBS=ssl:crypto:zstd
+  # Build the Rust host tools against this Debian system rather than
+  # Chromium's prebuilt Debian 11 sysroot: Debian trixie's static libraries
+  # need its glibc 2.41 (e.g. __isoc23_strtol).
+  export OWN_HOST_SYSROOT=/
   nc=$ws/debian-ncursesw
   rm -rf "$nc" && mkdir -p "$nc/lib" "$nc/include"
   cp /usr/lib/$multiarch/libncursesw.a /usr/lib/$multiarch/libtinfo.a "$nc/lib/"

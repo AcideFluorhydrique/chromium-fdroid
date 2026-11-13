@@ -36,7 +36,7 @@ GitHub Actions free runners have a maximum execution time of 6 hours per job, so
 
 | Task | Status |
 |---|---|
-| Build toolchain from source (clang, Rust, GN, Ninja, Node) | All components build successfully (clang: 1h42m, Rust: 2h25m, GN/Ninja/Node: 2h). Testing APK builds with these toolchains is ongoing. |
+| Build toolchain from source (clang, Rust, GN, Ninja, Node) | Done. All components build from source (clang: 1h42m, Rust with Crubit: 2h25m, GN/Ninja/Node: 2h), and `chrome_public_apk` 157.0.8103.50 builds with them: 4 stages, about 18 hours of compiling, no errors, 490 MB APK ([run 43129945973](https://github.com/AcideFluorhydrique/chromium-fdroid/actions/runs/43129945973)). |
 | Scan source tree with `fdroid scanner` and identify remaining prebuilt binaries | Completed for version 157.0.8103.50. See [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md). |
 | Generate `scandelete` rules from the build graph ([#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)) | 167 rules generated. Reduced 70,988 findings to 5,275 after applying the rules. See [build-graph.md](reports/157.0.8103.50/build-graph.md) and [scan-rules.txt](reports/157.0.8103.50/scan-rules.txt). |
 | Review the flagged files the build reads ([#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)) | Done. 7 accepted in [`fdroid/scanignore.txt`](fdroid/scanignore.txt); 5 must be replaced and are assigned to #5, #6 and #8. See [`fdroid/build-graph-review.md`](fdroid/build-graph-review.md). |

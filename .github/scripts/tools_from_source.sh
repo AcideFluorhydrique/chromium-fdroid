@@ -31,7 +31,7 @@ gperf)
 esbuild)
   rev=$(grep -oP "'devtools_frontend_revision': '\K[0-9a-f]+" <<<"$deps")
   ddeps=$(gitiles "devtools/devtools-frontend/+/$rev/DEPS")
-  v=$(grep -B2 -A12 "esbuild" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9.]+" | head -1)
+  v=$(grep -B2 -A12 "esbuild" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+\.[0-9]+" | head -1)
   echo "devtools-frontend $rev, esbuild $v"
   git clone -q --depth 1 -b "v$v" https://github.com/evanw/esbuild.git esbuild-src
   (cd esbuild-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -o ../pkg/esbuild ./cmd/esbuild)
@@ -40,7 +40,7 @@ esbuild)
 tsc)
   v=$(grep -A10 "'src/third_party/typescript/linux-amd64/src'" <<<"$deps" | grep -oP "version:\d+@\K[0-9.]+" | head -1)
   echo "typescript $v"
-  tag=$(git ls-remote --tags https://github.com/microsoft/typescript-go | grep -oP "refs/tags/\Kv?${v//./\\.}$" | head -1 || true)
+  tag=$(git ls-remote --tags https://github.com/microsoft/typescript-go | grep -oP "refs/tags/\K(typescript/)?v?${v//./\\.}$" | head -1 || true)
   [ -n "$tag" ] || { echo "no typescript-go tag for $v; tags:"; git ls-remote --tags https://github.com/microsoft/typescript-go | tail -20; exit 1; }
   git clone -q --depth 1 -b "$tag" https://github.com/microsoft/typescript-go.git tsgo-src
   (cd tsgo-src && go version && grep -E '^(go|toolchain) ' go.mod \

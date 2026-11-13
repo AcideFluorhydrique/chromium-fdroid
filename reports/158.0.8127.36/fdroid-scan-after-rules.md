@@ -1,26 +1,22 @@
-## fdroid scanner: 5147 findings (4916 problems reported)
+## fdroid scanner: 5033 findings (4909 problems reported)
 
-168 scandelete rules applied, 65691 files deleted; 5 scanignore rules applied, 7 files accepted.
+0 scandelete rules applied, 0 files deleted; 5 scanignore rules applied, 7 files accepted.
 
 | category | count | size |
 |---|---:|---:|
 | Non-free dependency references (Play services, Firebase, ML Kit, unknown Maven repos) | 123 | 3.6 MB |
 | Prebuilt Java/Android libraries (androidx, android_deps) | 361 | 178.7 MB |
 | Toolchains, SDKs and build tools | 4545 | 5.4 GB |
-| Test, fuzzing, benchmark and example data | 107 | 84.5 MB |
-| Other | 11 | 173.7 MB |
+| Test, fuzzing, benchmark and example data | 0 | 0 B |
+| Other | 4 | 39.0 MB |
 
 ### "Other" by directory (top 60 by count)
 
 | directory | count | size | kinds |
 |---|---:|---:|---|
-| `third_party/devtools-frontend/src` | 4 | 36.2 MB | executable binary, possibly code 3, binary 1 |
 | `third_party/arcore-android-sdk-client/cipd` | 1 | 359.5 KB | Android AAR library 1 |
-| `third_party/cpython3/host` | 1 | 56.6 MB | executable binary, possibly code 1 |
-| `third_party/cpython3/linux-amd64` | 1 | 56.6 MB | executable binary, possibly code 1 |
-| `third_party/crashpad/crashpad` | 1 | 164.3 KB | executable binary, possibly code 1 |
+| `third_party/devtools-frontend/src` | 1 | 15.2 MB | binary 1 |
 | `third_party/gperf/cipd` | 1 | 481.5 KB | binary 1 |
-| `third_party/tflite/src` | 1 | 339.8 KB | executable binary, possibly code 1 |
 | `third_party/typescript/linux-amd64` | 1 | 23.0 MB | binary 1 |
 
 ### By kind
@@ -31,8 +27,8 @@
 | Java JAR file | 317 | 702.1 MB |
 | binary | 261 | 2.5 GB |
 | Android AAR library | 256 | 119.4 MB |
-| executable binary, possibly code | 236 | 389.8 MB |
 | static library | 192 | 348.0 MB |
+| executable binary, possibly code | 122 | 170.6 MB |
 | usual suspect '(?<!org.microg.gms:)play-services' | 50 | 1.4 MB |
 | usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' | 44 | 1.3 MB |
 | gzip file archive | 8 | 62.1 MB |
@@ -65,36 +61,24 @@
 | `third_party/depot_tools/.cipd_bin` | 64 | 773.3 MB | binary 62, executable binary, possibly code 2 |
 | `third_party/kotlinc/current` | 55 | 188.0 MB | Java JAR file 54, binary 1 |
 | `third_party/android_deps` | 46 | 1.6 MB | usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' 18, usual suspect '(?<!org.microg.gms:)play-services' 18, usual suspect 'com.google.mlkit' 3 |
-| `content/test` | 40 | 58.2 MB | executable binary, possibly code 40 |
 | `third_party/rust-toolchain/lib` | 30 | 628.0 MB | shared library 21, dependency file without lock 5, static library 2 |
-| `third_party/breakpad/breakpad` | 18 | 1.3 MB | executable binary, possibly code 18 |
-| `chrome/test` | 12 | 1.2 MB | executable binary, possibly code 12 |
 | `third_party/rust-toolchain/bin` | 11 | 244.3 MB | binary 11 |
 | `third_party/arcore-android-sdk/src` | 10 | 20.5 KB | usual suspect '(?<!org.microg.gms:)play-services' 4, usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' 3, usual suspect 'com.google.mlkit' 2 |
-| `base/test` | 7 | 432.0 KB | executable binary, possibly code 7 |
-| `third_party/jetstream/main` | 7 | 5.0 MB | executable binary, possibly code 7 |
-| `third_party/jetstream/v3.0` | 7 | 5.0 MB | executable binary, possibly code 7 |
-| `third_party/tflite/src` | 7 | 353.6 KB | executable binary, possibly code 6, unknown maven repo 'http://oss.sonatype.org/content/repositories/snapshots' 1 |
 | `third_party/cardboard/src` | 6 | 17.1 KB | usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' 3, usual suspect '(?<!org.microg.gms:)play-services' 3 |
 | `third_party/androidx` | 4 | 132.4 KB | usual suspect '(?<!org.microg.gms:)play-services' 2, usual suspect 'androidx.credentials:credentials-play-services-auth' 1, unknown maven repo 'https://androidx.dev/snapshots/builds/16718948/artifacts/repository' 1 |
-| `third_party/devtools-frontend/src` | 4 | 36.2 MB | executable binary, possibly code 3, binary 1 |
 | `third_party/libaddressinput/src` | 4 | 4.6 KB | usual suspect 'com.google.android.gms(?!.(oss-licenses-plugin\|strict-version-matcher-plugin))' 2, usual suspect '(?<!org.microg.gms:)play-services' 2 |
-| `third_party/litert/src` | 4 | 13.4 MB | executable binary, possibly code 4 |
 | `buildtools/android` | 3 | 6.3 MB | Java JAR file 2, binary 1 |
 | `third_party/android_build_tools/bazel_tools` | 3 | 514.5 KB | binary 3 |
 | `third_party/r8/cipd` | 3 | 76.0 MB | Java JAR file 2, binary 1 |
-| `components/zucchini` | 2 | 26.2 KB | executable binary, possibly code 2 |
 | `third_party/android_build_tools/signflinger` | 2 | 18.9 MB | binary 1, Java JAR file 1 |
 | `third_party/android_system_sdk/cipd` | 2 | 52.2 MB | Java JAR file 2 |
 | `third_party/node/linux` | 2 | 166.6 MB | gzip file archive 1, binary 1 |
 | `third_party/node/node_modules` | 2 | 12.3 MB | WebAssembly binary file 1, gzip file archive 1 |
 | `third_party/r8` | 2 | 49.6 KB | Java JAR file 2 |
 | `third_party/turbine/cipd` | 2 | 24.9 MB | binary 1, Java JAR file 1 |
-| `third_party/vulkan-loader/src` | 2 | 32.8 KB | executable binary, possibly code 2 |
 | `buildtools/linux64-format` | 1 | 3.6 MB | binary 1 |
 | `buildtools/linux64` | 1 | 8.8 MB | binary 1 |
 | `buildtools/third_party` | 1 | 40.6 MB | binary 1 |
-| `components/test` | 1 | 1.0 KB | executable binary, possibly code 1 |
 | `third_party/android_build_tools/aapt2` | 1 | 6.2 MB | binary 1 |
 | `third_party/android_build_tools/bundletool` | 1 | 31.0 MB | Java JAR file 1 |
 | `third_party/android_build_tools/error_prone` | 1 | 16.8 MB | Java JAR file 1 |
@@ -105,12 +89,12 @@
 | `third_party/android_build_tools/protoc` | 1 | 10.0 MB | binary 1 |
 | `third_party/aosp_dalvik/cipd` | 1 | 912.4 KB | Java JAR file 1 |
 | `third_party/arcore-android-sdk-client/cipd` | 1 | 359.5 KB | Android AAR library 1 |
-| `third_party/cpython3/host` | 1 | 56.6 MB | executable binary, possibly code 1 |
-| `third_party/cpython3/linux-amd64` | 1 | 56.6 MB | executable binary, possibly code 1 |
-| `third_party/crashpad/crashpad` | 1 | 164.3 KB | executable binary, possibly code 1 |
 | `third_party/depot_tools` | 1 | 25.2 MB | binary 1 |
+| `third_party/devtools-frontend/src` | 1 | 15.2 MB | binary 1 |
 | `third_party/gperf/cipd` | 1 | 481.5 KB | binary 1 |
 | `third_party/libwebp/src` | 1 | 11.4 KB | unknown maven repo 'https://jcenter.bintray.com' 1 |
 | `third_party/llvm-libclang/lib` | 1 | 103.7 MB | shared library 1 |
 | `third_party/ninja` | 1 | 406.7 KB | binary 1 |
-| `third_party/ots/src` | 1 | 1002 B | executable binary, possibly code 1 |
+| `third_party/rust-toolchain/libexec` | 1 | 2.0 MB | binary 1 |
+| `third_party/tflite/src` | 1 | 3.8 KB | unknown maven repo 'http://oss.sonatype.org/content/repositories/snapshots' 1 |
+| `third_party/typescript/linux-amd64` | 1 | 23.0 MB | binary 1 |

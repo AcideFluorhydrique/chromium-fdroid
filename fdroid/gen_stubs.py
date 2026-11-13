@@ -87,6 +87,7 @@ def dotted(t):
 Member = collections.namedtuple('Member', 'kind mods tparams type name params throws value')
 Klass = collections.namedtuple('Klass', 'name mods kind tparams extends implements members')
 
+SKIPPED = []
 HEADER = re.compile(
     r'^(?P<mods>(?:(?:public|protected|private|static|final|abstract|sealed|non-sealed)\s+)*)'
     r'(?P<kind>class|interface)\s+(?P<name>[\w.$]+)(?P<tparams><.*?>)?'
@@ -147,8 +148,11 @@ def parse_javap(text):
             cur.members.append(Member(kind, mods, tparams, rtype, name,
                                       split_top(params_s), throws, None))
         else:
-            ftype, name = rest.rsplit(' ', 1)
-            cur.members.append(Member('field', mods, '', ftype, name, [], [], value))
+            parts = rest.rsplit(' ', 1)
+            if len(parts) != 2:
+                SKIPPED.append(raw.strip())
+                continue
+            cur.members.append(Member('field', mods, '', parts[0], parts[1], [], [], value))
     return classes
 
 
@@ -315,6 +319,10 @@ def main():
             f.write(f'package {pkg};\n\n{body}\n')
     print(f'generated {len(tops)} files ({len(parsed)} classes), dropped {gen.dropped} members '
           'with unresolvable types', file=sys.stderr)
+    if SKIPPED:
+        print(f'skipped {len(SKIPPED)} javap lines it could not parse, e.g.:', file=sys.stderr)
+        for line in SKIPPED[:10]:
+            print('  ' + line, file=sys.stderr)
 
 
 if __name__ == '__main__':

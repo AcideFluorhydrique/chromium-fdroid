@@ -14,7 +14,9 @@ Usage: gms_variant.py <src dir> <spec>
                  feature module, which packages impress's and ARCore's native
                  libraries and is added regardless of enable_arcore/enable_vr.
 
-Prints the GN args the spec needs (google_play_services_package) to stdout.
+google_play_services_package is not a GN build argument (it is set with
+if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
+that file, as Cromite does. Nothing is printed for args.gn any more.
 An empty java_group keeps GN happy, so javac then reports every place in
 Chromium that still uses the removed library.
 """
@@ -194,6 +196,17 @@ def drop_xr_module(src):
     print('chrome_feature_modules.gni: removed the XR feature module', file=sys.stderr)
 
 
+def set_gms_package(src):
+    path = os.path.join(src, 'build/config/android/config.gni')
+    s = open(path).read()
+    old = 'google_play_services_package = "//third_party/android_deps"'
+    if s.count(old) != 1:
+        sys.exit(f'{path}: default google_play_services_package not found')
+    with open(path, 'w') as f:
+        f.write(s.replace(old, 'google_play_services_package = "//fdroid_gms"'))
+    print('config.gni: google_play_services_package = //fdroid_gms', file=sys.stderr)
+
+
 def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
@@ -202,7 +215,7 @@ def main():
         if key == 'gms':
             assert value in ('microg', 'drop'), item
             write_gms_dir(src, value)
-            args.append('google_play_services_package = "//fdroid_gms"')
+            set_gms_package(src)
         elif key == 'drop':
             groups = value.split(',')
             assert all(g in DROP_GROUPS for g in groups), item

@@ -15,6 +15,11 @@ on:
         required: false
         default: ""
         type: string
+      parts:
+        description: '要編哪些，JSON 陣列，例如 ["clang"]'
+        required: false
+        default: '["clang","rust","tools"]'
+        type: string
 
 jobs:
   resolve:
@@ -40,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [clang, rust, tools]
+        part: ${{ fromJSON(inputs.parts) }}
     env:
       VERSION: ${{ needs.resolve.outputs.version }}
     steps:

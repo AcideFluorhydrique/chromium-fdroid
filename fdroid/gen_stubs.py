@@ -2,8 +2,8 @@
 """Generate compile-only Java stubs from the public API of Maven artifacts.
 
 Usage:
-  gen_stubs.py --out DIR [--exclude-jar JAR ...]
-               --artifact group:name:version[:Class,Class...] ...
+  gen_stubs.py --out DIR [--exclude-jar JAR ...] [--classpath JAR:JAR...]
+               [--roots FILE] --artifact group:name:version[:Class,Class...] ...
 
 For each artifact (Google Maven, then Maven Central), the public classes are
 read with javap and written as Java sources with the same signatures and empty
@@ -14,6 +14,13 @@ only those classes (and their nested classes) are generated. Classes that the
 The stubs only let Chromium's Java compile without the non-free libraries;
 the code paths that would call them are switched off separately, so their
 bodies never run. Members whose types cannot be resolved are left out.
+
+--roots is a file of class names (e.g. everything matching com.google.android.gms.*
+in Chromium's Java): only those classes and the classes their kept signatures
+need are generated. --classpath lists the jars the stubs compile against
+(android.jar, androidx, Kotlin); with it, only classes they really contain count
+as resolvable, and constructors call a superclass constructor that exists.
+Obfuscated classes (zza, zzbt, ...) are never generated.
 """
 
 import argparse
@@ -156,23 +163,58 @@ def parse_javap(text):
     return classes
 
 
+OBFUSCATED = re.compile(r'(^|[.$])zz[a-z]{1,3}($|[.$])')
+
+
+def erase(t):
+    while '<' in t:
+        t2 = re.sub(r'<[^<>]*>', '', t)
+        if t2 == t:
+            break
+        t = t2
+    return dotted(t).replace('...', '[]').strip()
+
+
 def type_names(t):
     t = re.sub(r'\b(extends|super)\b', ' ', t)
     return {n for n in re.findall(r'[A-Za-z_][\w.$]*', t) if '.' in n}
 
 
 class Generator:
-    def __init__(self, known, generated):
+    def __init__(self, known, generated, classpath=None, cp_classes=None):
         self.known = known          # classes from the exclude jars
         self.generated = generated  # classes we generate
+        self.classpath = classpath
+        self.cp_classes = cp_classes
         self.dropped = 0
+        self._ctors = {}
 
     def resolvable(self, t):
         for n in type_names(t):
-            if n.startswith(PLATFORM_PREFIXES) or n in self.known or n in self.generated:
+            if OBFUSCATED.search(n):
+                return False
+            if n in self.known or n in self.generated:
+                continue
+            if self.cp_classes is not None:
+                if n in self.cp_classes or n.startswith('java.'):
+                    continue
+            elif n.startswith(PLATFORM_PREFIXES):
                 continue
             return False
         return True
+
+    def super_args(self, sup):
+        """Arguments for a super(...) call when the superclass has no no-arg constructor."""
+        sup = erase(sup)
+        if sup in self.generated or not self.classpath or sup == 'java.lang.Object':
+            return ''
+        if sup not in self._ctors:
+            r = subprocess.run(['javap', '-public', '-protected', '-cp', self.classpath, sup],
+                               capture_output=True, text=True)
+            ctors = [m for k in parse_javap(r.stdout) for m in k.members if m.kind == 'ctor']
+            ctors.sort(key=lambda m: len(m.params))
+            self._ctors[sup] = ctors[0].params if ctors else []
+        return ', '.join(f'({erase(p)}) {self.default_value(erase(p))}' for p in self._ctors[sup])
 
     def default_value(self, t):
         t = t.strip()
@@ -210,11 +252,22 @@ class Generator:
                 head += (' extends ' if k.kind == 'interface' else ' implements ') + ', '.join(sups)
             out.append(head + ' {')
         has_noarg = False
-        for m in k.members:
+        sup_call = ''
+        if k.kind == 'class' and not is_enum and k.extends and self.resolvable(k.extends):
+            a = self.super_args(k.extends)
+            if a:
+                sup_call = f' super({a});'
+        seen = set()
+        members = sorted(k.members, key=lambda m: m.kind != 'field' and m.type == 'java.lang.Object')
+        for m in members:
             sig_types = [m.type or ''] + m.params + m.throws
             if not all(self.resolvable(t) for t in sig_types if t):
                 self.dropped += 1
                 continue
+            key = (m.kind, m.name, tuple(erase(p) for p in m.params))
+            if m.kind != 'field' and key in seen:
+                continue
+            seen.add(key)
             mm = [x for x in m.mods if x in ('public', 'protected', 'static', 'abstract', 'default')]
             if m.kind == 'field':
                 if is_enum and dotted(m.type) == dotted(k.name):
@@ -247,7 +300,7 @@ class Generator:
                     continue
                 has_noarg |= not m.params
                 vis = 'public' if 'public' in mm else 'protected'
-                out.append(f'{indent}  {vis} {tp + " " if tp else ""}{simple}({params}){throws} {{}}')
+                out.append(f'{indent}  {vis} {tp + " " if tp else ""}{simple}({params}){throws} {{{sup_call} }}')
                 continue
             if is_annotation:
                 out.append(f'{indent}  {dotted(m.type)} {m.name}();')
@@ -263,11 +316,48 @@ class Generator:
                 body = '{}' if val is None else f'{{ return {val}; }}'
                 out.append(f'{indent}  {" ".join(mm)} {tp + " " if tp else ""}{rt} {m.name}({params}){throws} {body}')
         if k.kind == 'class' and not is_enum and not is_annotation and not has_noarg:
-            out.append(f'{indent}  protected {simple}() {{}}')
+            out.append(f'{indent}  protected {simple}() {{{sup_call} }}')
         for n in nested.get(k.name, []):
             out += self.emit(n, nested, indent + '  ')
         out.append(f'{indent}}}')
         return out
+
+
+def reachable(parsed, tokens, known):
+    by_dotted = {dotted(n): n for n in parsed}
+    todo = []
+    for t in tokens:
+        t = t.rstrip('.;')
+        while t and t not in by_dotted:
+            t = t.rsplit('.', 1)[0] if '.' in t else ''
+        if t:
+            todo.append(by_dotted[t])
+    keep = set()
+    while todo:
+        n = todo.pop()
+        if n in keep:
+            continue
+        keep.add(n)
+        k = parsed[n]
+        refs = set()
+        for t in [k.extends, k.implements, k.tparams]:
+            refs |= type_names(t)
+        for m in k.members:
+            for t in [m.type or '', m.tparams] + m.params + m.throws:
+                refs |= type_names(t)
+        if '$' in n:
+            refs.add(dotted(n.rsplit('$', 1)[0]))
+        for r in refs:
+            if r in by_dotted and r not in known:
+                todo.append(by_dotted[r])
+    # Nested classes are emitted inside their outer class, so keep the outers.
+    for n in list(keep):
+        while '$' in n:
+            n = n.rsplit('$', 1)[0]
+            if n in parsed:
+                keep.add(n)
+    print(f'{len(keep)} of {len(parsed)} classes reachable from the roots', file=sys.stderr)
+    return {n: parsed[n] for n in keep}
 
 
 def main():
@@ -275,7 +365,16 @@ def main():
     ap.add_argument('--out', required=True)
     ap.add_argument('--exclude-jar', action='append', default=[])
     ap.add_argument('--artifact', action='append', required=True)
+    ap.add_argument('--classpath')
+    ap.add_argument('--roots')
     args = ap.parse_args()
+
+    cp_classes = None
+    if args.classpath:
+        cp_classes = set()
+        for j in args.classpath.split(':'):
+            if j:
+                cp_classes |= {dotted(n) for n in jar_classes(j)}
 
     known = set()
     for j in args.exclude_jar:
@@ -300,8 +399,11 @@ def main():
                     parsed[k.name] = k
         print(f'{":".join(coord)}: {len(names)} classes read', file=sys.stderr)
 
+    parsed = {n: k for n, k in parsed.items() if not OBFUSCATED.search(n)}
+    if args.roots:
+        parsed = reachable(parsed, open(args.roots).read().split(), known)
     generated = {dotted(n) for n in parsed}
-    gen = Generator(known, generated)
+    gen = Generator(known, generated, args.classpath, cp_classes)
     nested = collections.defaultdict(list)
     tops = []
     for name, k in parsed.items():

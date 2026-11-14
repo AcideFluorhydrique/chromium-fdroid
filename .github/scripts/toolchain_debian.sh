@@ -3,7 +3,7 @@
 # Debian's packages as the starting point (F-Droid's build server runs Debian).
 #
 # Usage (from the workspace that holds src/ and ci/):
-#   toolchain_debian.sh clang|rust|tools
+#   toolchain_debian.sh clang|rust|rust-rustup|tools
 #
 # Writes pkg/<part>.tar.zst, the same artifact layout as toolchain.yml.
 set -euo pipefail
@@ -58,8 +58,25 @@ clang)
     "third_party/llvm-build/Release+Asserts/cr_build_revision" | zstd -T0 -6 > pkg/clang.tar.zst
   ;;
 
-rust)
+rust|rust-rustup)
   apt_install libssl-dev libncurses-dev libzstd-dev
+  if [ "$part" = rust-rustup ]; then
+    # Stage0 (the beta rustc/cargo that bootstraps Rust) from Debian's rustup
+    # instead of the tarballs build_rust.py and x.py download themselves.
+    apt_install rustup
+    rev=$(grep -oP "^RUST_REVISION = '\K[0-9a-f]+" src/tools/rust/update_rust.py)
+    stage0=$(curl -fsSL "https://raw.githubusercontent.com/rust-lang/rust/$rev/src/stage0")
+    date=$(grep -oP '^compiler_date=\K.+' <<<"$stage0")
+    ver=$(grep -oP '^compiler_version=\K.+' <<<"$stage0")
+    tc=$([ "$ver" = beta ] && echo "beta-$date" || echo "$ver")
+    echo "stage0: $tc (rust $rev)"
+    rustup --version
+    rustup toolchain install "$tc" --profile minimal \
+      --target aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+    export OWN_STAGE0_DIR=$(rustup run "$tc" rustc --print sysroot)
+    "$OWN_STAGE0_DIR/bin/rustc" -vV
+    "$OWN_STAGE0_DIR/bin/cargo" -V
+  fi
   # Debian's OpenSSL 3 and ncursesw instead of the CIPD prebuilts.
   multiarch=$(gcc -print-multiarch)
   ssl=$ws/debian-openssl
@@ -89,6 +106,10 @@ rust)
   "$d/bin/rustc" -vV
   mkdir -p pkg
   tar -C src -cf - third_party/rust-toolchain | zstd -T0 -6 > pkg/rust.tar.zst
+  if [ -n "${OWN_STAGE0_DIR:-}" ]; then
+    # Show that the stage0 x.py used was the rustup one, not a download.
+    ls src/third_party/rust-src/build/cache 2>/dev/null || echo "no x.py download cache"
+  fi
   ;;
 
 tools)

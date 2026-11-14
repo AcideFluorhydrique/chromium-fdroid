@@ -92,6 +92,29 @@ def main():
             "    os.environ['OPENSSL_DIR'] = os.environ['OWN_OPENSSL_DIR']\n\n\n"
             'def _UnusedAddOpenSSLToEnv():\n',
         )
+        # With OWN_STAGE0_DIR set (a rustup toolchain, e.g. from Debian's
+        # rustup, at the version in src/stage0), use it as the stage0 compiler
+        # and the beta sysroot instead of downloading Rust's tarballs.
+        if os.environ.get('OWN_STAGE0_DIR'):
+            br = os.path.join(src, 'tools/rust/build_rust.py')
+            patch(br, "def FetchBetaPackage(name, triple=None):\n",
+                  "def FetchBetaPackage(name, triple=None):\n"
+                  "    if os.environ.get('OWN_STAGE0_DIR'):\n"
+                  "        return None\n"
+                  "    return _UnusedFetchBetaPackage(name, triple)\n\n\n"
+                  "def _UnusedFetchBetaPackage(name, triple=None):\n")
+            patch(br, "def InstallRustBetaSysroot(target_triples):\n",
+                  "def InstallRustBetaSysroot(target_triples):\n"
+                  "    if os.environ.get('OWN_STAGE0_DIR'):\n"
+                  "        if os.path.exists(RUST_BETA_SYSROOT_DIR):\n"
+                  "            RmTree(RUST_BETA_SYSROOT_DIR)\n"
+                  "        shutil.copytree(os.environ['OWN_STAGE0_DIR'], RUST_BETA_SYSROOT_DIR, symlinks=True)\n"
+                  "        return\n")
+            patch(br, "            cargo_bin = os.path.join(path, 'cargo', 'bin', 'cargo')\n",
+                  "            cargo_bin = os.path.join(os.environ['OWN_STAGE0_DIR'], 'bin', 'cargo')\n")
+            d = os.environ['OWN_STAGE0_DIR']
+            patch(os.path.join(src, 'tools/rust/config.toml.template'), '[build]\n',
+                  f'[build]\nrustc = "{d}/bin/rustc"\ncargo = "{d}/bin/cargo"\n')
 
 
 if __name__ == '__main__':

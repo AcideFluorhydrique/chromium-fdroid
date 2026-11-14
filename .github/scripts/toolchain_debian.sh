@@ -23,6 +23,9 @@ apt_install() {
 apt_install ca-certificates curl git python3 python3-setuptools xz-utils zstd file \
   build-essential clang lld llvm cmake ninja-build pkg-config zlib1g-dev
 export HOST_CC=/usr/bin/clang HOST_CXX=/usr/bin/clang++
+# No compiler-rt for desktop Linux on other CPUs, so their prebuilt sysroots
+# are not downloaded (see patch_toolchain_scripts.py).
+export OWN_NO_LINUX_RUNTIMES=1
 # The checkout belongs to the runner user; git runs as root in the container.
 git config --global --add safe.directory '*'
 clang --version | head -1

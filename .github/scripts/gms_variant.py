@@ -353,6 +353,15 @@ def apply_patches(src, names):
         patch_fido(os.path.join(src, 'components/webauthn/android/java/src/org/chromium/components/webauthn/Fido2ApiCall.java'))
 
 
+# Constants Chromium uses from androidx snapshots that no published release has
+# yet; javac inlines String constants, so the literal behaves identically.
+ANDROIDX_CONSTANTS = [
+    ('chrome/android/java/src/org/chromium/chrome/browser/contextmenu/ChromeContextMenuPopulator.java',
+     'CustomTabsIntent.EXTRA_CONTEXT_PAGE_TITLE',
+     '"androidx.browser.customtabs.extra.CONTEXT_PAGE_TITLE"'),
+]
+
+
 def androidx_releases(src):
     import json
     google = 'https://dl.google.com/dl/android/maven2'
@@ -394,6 +403,13 @@ def androidx_releases(src):
             with open(path, 'wb') as out:
                 out.write(data)
         done.append(f'{g}:{n} {v} -> {rel}')
+    for path, old, new in ANDROIDX_CONSTANTS:
+        path = os.path.join(src, path)
+        text = open(path).read()
+        if old in text:
+            with open(path, 'w') as f:
+                f.write(text.replace(old, new))
+            print(f'androidx: {os.path.basename(path)}: {old} -> {new}', file=sys.stderr)
     print(f'androidx: {len(done)} snapshots replaced with releases, {len(missing)} not on Google Maven',
           file=sys.stderr)
     for x in done + [f'{m} (kept the snapshot)' for m in missing]:

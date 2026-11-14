@@ -27,7 +27,8 @@ Usage: gms_variant.py <src dir> <spec>
                  microG lacks), shape (Shape Detection without the Vision API),
                  castoff (never add the Cast route providers, so the Cast
                  stubs never run), status (no Status.getConnectionResult(),
-                 which microG lacks).
+                 which microG lacks), fido (Fido2ApiCall's private Play
+                 services Binder calls fail instead of using GmsClient).
 
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
@@ -262,6 +263,50 @@ def patch_file(path, old, new, count=1):
         f.write(s.replace(old, new))
 
 
+def block_end(s, start):
+    """Index just past the brace block that starts at the first '{' after start."""
+    i = s.index('{', start)
+    depth = 0
+    while True:
+        if s[i] == '{':
+            depth += 1
+        elif s[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+
+
+def patch_fido(path):
+    """Fido2ApiCall talks to Play services' private FIDO2 Binder service through
+    Google's internal GmsClient/TaskApiCall API, which microG's GoogleApi and
+    Api.Client do not match. Keep its constants and result classes, make every
+    call fail (callers already handle a failed Task), and reduce FidoClient to a
+    placeholder type for the static Api objects."""
+    s = open(path).read()
+    head = '    private static final class FidoClient extends GmsClient<Interface> {'
+    if s.count(head) != 1:
+        sys.exit(f'{path}: FidoClient not found')
+    i = s.index(head)
+    s = s[:i] + (
+        '    private abstract static class FidoClient implements Api.Client {\n'
+        '        public static class Builder\n'
+        '                extends Api.AbstractClientBuilder<FidoClient, ApiOptions.NoOptions> {\n'
+        '            Builder(String descriptor, String startServiceAction, int apiId) {}\n'
+        '        }\n'
+        '    }') + s[block_end(s, i):]
+    run = s.index('        return doRead(\n')
+    end = s.index('.build());\n', run) + len('.build());\n')
+    s = s[:run] + ('        args.recycle();\n'
+                   '        return com.google.android.gms.tasks.Tasks.forException(\n'
+                   '                new UnsupportedOperationException("FIDO2 API not available in this build"));\n') + s[end:]
+    s = s.replace('        super(context, apiParams.mApi, ApiOptions.NO_OPTIONS, new ApiExceptionMapper());',
+                  '        super(context, apiParams.mApi, ApiOptions.NO_OPTIONS);')
+    with open(path, 'w') as f:
+        f.write(s)
+    print('patched Fido2ApiCall: calls fail, no GmsClient', file=sys.stderr)
+
+
 def apply_patches(src, names):
     if 'cast' in names:
         path = os.path.join(src, 'components/media_router/browser/android/java/src/org/chromium/components/media_router/caf/CastOptionsProvider.java')
@@ -298,6 +343,8 @@ def apply_patches(src, names):
         path = os.path.join(src, 'chrome/browser/password_manager/android/java/src/org/chromium/chrome/browser/password_manager/PasswordManagerAndroidBackendUtil.java')
         patch_file(path, '((ApiException) exception).getStatus().getConnectionResult();', 'null;')
         print('patched PasswordManagerAndroidBackendUtil: no getConnectionResult()', file=sys.stderr)
+    if 'fido' in names:
+        patch_fido(os.path.join(src, 'components/webauthn/android/java/src/org/chromium/components/webauthn/Fido2ApiCall.java'))
 
 
 def write_gms_dir(src, mode, stubs=False, genstubs=False):

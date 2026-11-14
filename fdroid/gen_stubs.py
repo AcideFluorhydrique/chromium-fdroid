@@ -211,7 +211,7 @@ class Generator:
         if sup in self.generated or not self.classpath or sup == 'java.lang.Object':
             return ''
         if sup not in self._ctors:
-            r = subprocess.run(['javap', '-public', '-protected', '-cp', self.classpath, sup],
+            r = subprocess.run(['javap', '-protected', '-cp', self.classpath, sup],
                                capture_output=True, text=True)
             ctors = [m for k in parse_javap(r.stdout) for m in k.members if m.kind == 'ctor']
             ctors.sort(key=lambda m: len(m.params))

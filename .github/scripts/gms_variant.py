@@ -21,6 +21,11 @@ Usage: gms_variant.py <src dir> <spec>
                  jars for the APIs microG does not publish (Cast,
                  identity credentials), only the classes Chromium's Java uses,
                  into //fdroid_stubs. microG's Cast libraries are left out.
+  androidx=release
+                 Replace every androidx -SNAPSHOT library (from androidx.dev
+                 CI builds, not on Google Maven) with its newest release on
+                 Google Maven, pre-release if there is no stable one, by
+                 overwriting the CIPD file in place.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
                  and ARCore/VR/OpenXR/Cardboard.
   patch=NAMES    Small source edits: cast (CastOptions without the Builder
@@ -347,6 +352,44 @@ def apply_patches(src, names):
         patch_fido(os.path.join(src, 'components/webauthn/android/java/src/org/chromium/components/webauthn/Fido2ApiCall.java'))
 
 
+def androidx_releases(src):
+    import json
+    google = 'https://dl.google.com/dl/android/maven2'
+    bom = json.load(open(os.path.join(src, 'third_party/androidx/bill_of_materials.json')))
+    done, missing = [], []
+    for e in bom:
+        g, n, v = e['group'], e['name'], e['version']
+        if not v.endswith('-SNAPSHOT'):
+            continue
+        d = os.path.join(src, 'third_party/androidx/cipd/libs', re.sub(r'[.\-]', '_', f'{g}_{n}'))
+        if not os.path.isdir(d):
+            continue
+        try:
+            meta = fetch(f"{google}/{g.replace('.', '/')}/{n}/maven-metadata.xml").decode()
+        except Exception:
+            missing.append(f'{g}:{n}')
+            continue
+        vs = re.findall(r'<version>([^<]+)</version>', meta)
+        stable = [x for x in vs if re.fullmatch(r'[0-9.]+', x)]
+        rel = (stable or vs)[-1]
+        for f in os.listdir(d):
+            ext = os.path.splitext(f)[1]
+            if ext not in ('.aar', '.jar'):
+                continue
+            try:
+                data = fetch(f"{google}/{g.replace('.', '/')}/{n}/{rel}/{n}-{rel}{ext}")
+            except urllib.error.HTTPError:
+                missing.append(f'{g}:{n}:{rel}{ext}')
+                continue
+            with open(os.path.join(d, f), 'wb') as out:
+                out.write(data)
+        done.append(f'{g}:{n} {v} -> {rel}')
+    print(f'androidx: {len(done)} snapshots replaced with releases, {len(missing)} not on Google Maven',
+          file=sys.stderr)
+    for x in done + [f'{m} (kept the snapshot)' for m in missing]:
+        print('  ' + x, file=sys.stderr)
+
+
 def write_gms_dir(src, mode, stubs=False, genstubs=False):
     names = referenced_gms_targets(src)
     d = os.path.join(src, 'fdroid_gms')
@@ -463,6 +506,9 @@ def main():
                 drop_xr_module(src)
         elif key in ('stubs', 'genstubs'):
             pass
+        elif key == 'androidx':
+            assert value == 'release', item
+            androidx_releases(src)
         elif key == 'gnargs':
             args += GN_ARGS
         elif key == 'patch':

@@ -23,9 +23,10 @@ Usage: gms_variant.py <src dir> <spec>
                  into //fdroid_stubs. microG's Cast libraries are left out.
   androidx=release
                  Replace every androidx -SNAPSHOT library (from androidx.dev
-                 CI builds, not on Google Maven) with its newest release on
-                 Google Maven, pre-release if there is no stable one, by
-                 overwriting the CIPD file in place.
+                 CI builds, not on Google Maven) with the closest release on
+                 Google Maven: the same version (stable or alpha/beta/rc) if
+                 published, else the newest stable one, by overwriting the
+                 CIPD file in place.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
                  and ARCore/VR/OpenXR/Cardboard.
   patch=NAMES    Small source edits: cast (CastOptions without the Builder
@@ -371,7 +372,11 @@ def androidx_releases(src):
             continue
         vs = re.findall(r'<version>([^<]+)</version>', meta)
         stable = [x for x in vs if re.fullmatch(r'[0-9.]+', x)]
-        rel = (stable or vs)[-1]
+        # Closest published release: the snapshot's own version (stable or
+        # alpha/beta/rc), else the newest stable one.
+        base = v[:-len('-SNAPSHOT')]
+        same = [x for x in vs if x == base or x.startswith(base + '-')]
+        rel = (same or stable or vs)[-1]
         for f in os.listdir(d):
             ext = os.path.splitext(f)[1]
             if ext not in ('.aar', '.jar'):

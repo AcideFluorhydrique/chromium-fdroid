@@ -1,0 +1,114 @@
+name: Compare CIPD Java libraries with Maven
+
+# 把 chrome_public_apk 用到的 android_deps / androidx 的 CIPD 檔案跟 Maven 上同版本的檔案逐一比對 sha256，
+# 證明 F-Droid 的配方可以直接從 Maven 按版本和校驗和下載。
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chromium 版本 tag（留空 = 最新 Android Stable）"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Resolve version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          v="$INPUT_VERSION"
+          if [ -z "$v" ]; then
+            v=$(curl -fsSL "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Android&num=1" | jq -r '.[0].version')
+          fi
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "版本格式不對: '$v'"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "Chromium $v"
+
+      # 新版 runner 映像只有一顆碟，清掉用不到的東西，根目錄約有 110GB
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af > /dev/null || true
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+          sparse-checkout: |
+            .github/scripts
+            fdroid
+
+      - name: Get depot_tools
+        run: |
+          git clone -q --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$GITHUB_WORKSPACE/depot_tools"
+          echo "$GITHUB_WORKSPACE/depot_tools" >> "$GITHUB_PATH"
+
+      - name: Fetch chromium/src at tag
+        run: |
+          git init -q src
+          cd src
+          git remote add origin https://chromium.googlesource.com/chromium/src.git
+          for i in 1 2 3 4; do git fetch -q --depth 1 origin "refs/tags/$VERSION" && break; echo "fetch 失敗，$((i * 60)) 秒後重試 ($i/4)"; sleep $((i * 60)); done
+          git checkout -q FETCH_HEAD
+
+      - name: gclient sync
+        run: |
+          cat > .gclient <<'GCLIENT'
+          solutions = [{
+            "name": "src",
+            "url": "https://chromium.googlesource.com/chromium/src.git",
+            "managed": False,
+            "custom_deps": {},
+            "custom_vars": {},
+          }]
+          target_os = ["android"]
+          GCLIENT
+          gclient sync --no-history -j 8
+          du -sh src
+
+      # 用 chrome_public_apk 的編譯圖（不編譯）判斷哪些被標記的檔案真的會被編譯用到
+      - name: Install build deps
+        run: sudo src/build/install-build-deps.sh --android --no-prompt --no-chromeos-fonts --no-syms --no-arm --no-nacl
+
+      - name: Build graph inputs of chrome_public_apk
+        run: |
+          mkdir -p src/out/Default
+          cat > src/out/Default/args.gn <<'ARGS'
+          target_os = "android"
+          target_cpu = "arm64"
+          is_debug = false
+          is_component_build = false
+          symbol_level = 0
+          treat_warnings_as_errors = false
+          android_static_analysis = "off"
+          use_siso = false
+          ARGS
+          cat src/out/Default/args.gn
+          (cd src && buildtools/linux64/gn gen out/Default)
+          src/third_party/ninja/ninja -C src/out/Default -t inputs chrome_public_apk > build-inputs.txt
+          wc -l build-inputs.txt
+
+      - name: Compare with Maven
+        run: python3 -I ci/.github/scripts/maven_verify.py src build-inputs.txt report
+
+      - name: Commit report
+        run: |
+          git clone -q --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" repo
+          d="repo/reports/$VERSION"
+          mkdir -p "$d"
+          cp report/maven-verify.md report/maven-verify.tsv "$d/"
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports
+          git commit -q -m "Add CIPD vs Maven comparison for Chromium $VERSION" || { echo "沒有變化"; exit 0; }
+          for i in 1 2 3; do git pull -q --rebase && git push -q && break; sleep 10; done

@@ -70,6 +70,37 @@ tsc)
   (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -o ../pkg/tsc ./cmd/tsgo)
   ver="tsc $(pkg/tsc --version 2>&1 | head -1)"
   ;;
+rollup-wasm)
+  # third_party/node/node_modules ships @rollup/wasm-node's prebuilt
+  # bindings_wasm_bg.wasm; build it from rollup's Rust source with Debian's
+  # rustc and its wasm32 std, then run rollup with it.
+  v=$(gitiles "chromium/src/+/refs/tags/$VERSION/third_party/node/package.json" | grep -oP '"@rollup/wasm-node": "\K[0-9.]+')
+  echo "@rollup/wasm-node $v"
+  for i in 1 2 3; do apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
+  rustc --version
+  git clone -q --depth 1 -b "v$v" https://github.com/rollup/rollup.git rollup-src
+  bg=$(grep -A2 'name = "wasm-bindgen"' rollup-src/rust/Cargo.lock | grep -oP 'version = "\K[^"]+')
+  echo "wasm-bindgen $bg"
+  cargo install -q --locked wasm-bindgen-cli --version "$bg" --root "$PWD/wb"
+  (cd rollup-src/rust && RUSTFLAGS="-C opt-level=z" cargo build -q --locked --release \
+    --target wasm32-unknown-unknown -p bindings_wasm)
+  wb/bin/wasm-bindgen --target nodejs --out-dir wasm-node \
+    rollup-src/rust/target/wasm32-unknown-unknown/release/bindings_wasm.wasm
+  wasm-opt -Oz wasm-node/bindings_wasm_bg.wasm -o wasm-node/bindings_wasm_bg.wasm || true
+  # Compare with the npm package and use ours in it for a real bundle.
+  mkdir npm-test && (cd npm-test && npm pack -s "@rollup/wasm-node@$v" && tar -xzf rollup-wasm-node-$v.tgz)
+  theirs=npm-test/package/dist/wasm-node/bindings_wasm_bg.wasm
+  echo "npm:  $(stat -c %s $theirs) bytes $(sha256sum $theirs | cut -c1-16)"
+  echo "ours: $(stat -c %s wasm-node/bindings_wasm_bg.wasm) bytes $(sha256sum wasm-node/bindings_wasm_bg.wasm | cut -c1-16)"
+  cp wasm-node/bindings_wasm_bg.wasm wasm-node/bindings_wasm.js npm-test/package/dist/wasm-node/
+  printf 'import {b} from "./b.js";\nconsole.log(b + 1);\n' > a.js
+  printf 'export const b = 41;\nexport const unused = 0;\n' > b.js
+  (cd npm-test/package && npm install -s --omit=dev --ignore-scripts >/dev/null 2>&1 || true)
+  node npm-test/package/dist/bin/rollup a.js --format es | tee bundle.txt
+  grep -q "41" bundle.txt && ! grep -q unused bundle.txt
+  cp wasm-node/bindings_wasm_bg.wasm pkg/rollup-wasm
+  ver="rollup $v wasm (wasm-bindgen $bg, $(rustc --version | cut -d' ' -f2)); bundles with it"
+  ;;
 esac
 file "pkg/$tool" 2>/dev/null || true
 echo "| $tool | $ver | $(sha256sum "pkg/$tool" | cut -c1-16) |" | tee "pkg/$tool.md"

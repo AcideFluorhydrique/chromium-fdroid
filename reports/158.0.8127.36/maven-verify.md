@@ -4,21 +4,15 @@
 
 | result | files |
 |---|---:|
-| identical | 120 |
+| identical | 121 |
 | same contents | 0 |
-| different | 1 |
+| different | 0 |
 | snapshot, identical | 76 |
 | snapshot, same contents | 0 |
 | snapshot, different | 0 |
 | not on Maven | 0 |
 
 Snapshots are compared with https://androidx.dev/snapshots/builds/16718948/artifacts/repository; "release" is the newest version of that artifact on Google Maven.
-
-### different
-
-| artifact | version | file | release | detail |
-|---|---|---|---|---|
-| `com.google.guava:guava` | 33.7.2-jre | guava.jar |  | 831 changed, 36 only in CIPD, 68 only on Maven; e.g. ['META-INF/MANIFEST.MF', 'META-INF/maven/com.google.guava/guava/pom.properties', 'META-INF/maven/com.google.guava/guava/pom.xml'] |
 
 ### snapshot, identical
 

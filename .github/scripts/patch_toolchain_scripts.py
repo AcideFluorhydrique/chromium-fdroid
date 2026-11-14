@@ -55,7 +55,23 @@ def main():
         'def DownloadDebianSysroot(platform_name, skip_download=False):\n',
         'def DownloadDebianSysroot(platform_name, skip_download=False):\n'
         "  if platform_name == 'amd64' and os.environ.get('OWN_HOST_SYSROOT'):\n"
-        "    return os.environ['OWN_HOST_SYSROOT']\n",
+        "    return os.environ['OWN_HOST_SYSROOT']\n"
+        "  if platform_name != 'amd64' and os.environ.get('OWN_NO_LINUX_RUNTIMES'):\n"
+        "    return None\n",
+    )
+    # With OWN_NO_LINUX_RUNTIMES set, skip compiler-rt for desktop Linux on
+    # i386/armv7/arm64/riscv64: an Android APK does not use them, and they are
+    # the only reason the other prebuilt Debian sysroots are downloaded.
+    patch(
+        build_py,
+        "  elif sys.platform == 'win32':\n"
+        "    sysroot = os.path.dirname(os.path.dirname(GetWinSDKDir()))\n",
+        "    if os.environ.get('OWN_NO_LINUX_RUNTIMES'):\n"
+        "      for t in ('i386-unknown-linux-gnu', 'armv7-unknown-linux-gnueabihf',\n"
+        "                'aarch64-unknown-linux-gnu', 'riscv64-unknown-linux-gnu'):\n"
+        "        runtimes_triples_args.pop(t, None)\n"
+        "  elif sys.platform == 'win32':\n"
+        "    sysroot = os.path.dirname(os.path.dirname(GetWinSDKDir()))\n",
     )
 
     if '--rust' in sys.argv[2:]:

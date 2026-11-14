@@ -30,6 +30,9 @@ on:
       rebuild_only:
         type: string
         default: ""
+      variant:
+        type: string
+        default: ""
     outputs:
       done:
         value: ${{ jobs.build.outputs.done }}
@@ -119,11 +122,13 @@ jobs:
         run: df -h
 
       - name: Checkout ci scripts
-        if: inputs.stage == 1 && inputs.own_toolchain
+        if: inputs.stage == 1 && (inputs.own_toolchain || inputs.variant != '')
         uses: actions/checkout@v4
         with:
           path: ci
-          sparse-checkout: .github/scripts
+          sparse-checkout: |
+            .github/scripts
+            fdroid
 
       # ---------- stage 1：抓原始碼 ----------
 
@@ -200,6 +205,13 @@ jobs:
         if: inputs.stage == 1 && inputs.own_toolchain
         run: python3 ci/.github/scripts/swap_toolchain.py src tc
 
+      # gms_variant.py：換掉不自由的 Java 函式庫（microG、stub、補丁），見 java.yml
+      - name: Apply variant
+        if: inputs.stage == 1 && inputs.variant != ''
+        env:
+          VARIANT: ${{ inputs.variant }}
+        run: python3 ci/.github/scripts/gms_variant.py src "$VARIANT" | tee variant.gn
+
       - name: gn gen
         if: inputs.stage == 1
         run: |
@@ -224,6 +236,7 @@ jobs:
           include_both_v8_snapshots = false
           ARGS
           fi
+          [ -f variant.gn ] && cat variant.gn >> src/out/Default/args.gn
           cat src/out/Default/args.gn
           cd src && buildtools/linux64/gn gen out/Default
 

@@ -64,9 +64,9 @@ GEN_ARTIFACTS = [
     'com.google.android.gms:play-services-cast:22.2.0',
     'com.google.android.gms:play-services-cast-framework:22.2.0',
     'com.google.android.gms:play-services-identity-credentials:16.0.0-alpha12',
-    'com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall,'
-    'com.google.android.gms.common.internal.GmsClient',
-    'com.google.android.gms:play-services-basement:18.12.0:com.google.android.gms.common.internal.GmsClient',
+    # Only what microG lacks and Chromium uses is generated (TaskApiCall, GmsClient, ...).
+    'com.google.android.gms:play-services-base:18.11.1',
+    'com.google.android.gms:play-services-basement:18.12.0',
 ]
 # Compile-time classpath for the generated stubs (Maven, the versions are not critical).
 GEN_CLASSPATH = [
@@ -87,7 +87,6 @@ GEN_DEPS = [
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_jvm_java'),
     # play-services-identity-credentials brings androidx.credentials along.
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_credentials_credentials_java'),
-    ('third_party/kotlin_stdlib/BUILD.gn', '//third_party/kotlin_stdlib', 'kotlin_stdlib_java'),
 ]
 GN_ARGS = [
     'use_mlkit_for_aicore = false',
@@ -196,11 +195,18 @@ def gen_stubs(src, microg_jar, out_dir):
         with open(jar, 'wb') as f:
             f.write(zipfile.ZipFile(io.BytesIO(data)).read('classes.jar') if ext == '.aar' else data)
         cp.append(jar)
-    roots = subprocess.run(['git', '-C', src, 'grep', '-ohE', r'com\.google\.android\.gms\.[A-Za-z0-9_.]+',
-                            '--', '*.java'], capture_output=True, text=True).stdout
+    files = subprocess.run(['git', '-C', src, 'grep', '-l', 'com.google.android.gms', '--', '*.java'],
+                           capture_output=True, text=True).stdout.split()
+    roots = set()
+    # Formatted code splits long qualified names over lines, so allow whitespace around dots.
+    name = re.compile(r'com\s*\.\s*google\s*\.\s*android\s*\.\s*gms(?:\s*\.\s*[A-Za-z0-9_]+)+')
+    for f in files:
+        with open(os.path.join(src, f), errors='ignore') as fh:
+            roots |= {re.sub(r'\s+', '', m) for m in name.findall(fh.read())}
     roots_file = os.path.join(tmp, 'roots.txt')
     with open(roots_file, 'w') as f:
-        f.write('\n'.join(sorted(set(roots.split()))))
+        f.write('\n'.join(sorted(roots)))
+    print(f'genstubs: {len(roots)} com.google.android.gms names in {len(files)} Java files', file=sys.stderr)
     cmd = [sys.executable, os.path.join(here, '..', '..', 'fdroid', 'gen_stubs.py'), '--out', out_dir,
            '--exclude-jar', microg_jar, '--classpath', ':'.join(cp), '--roots', roots_file]
     for a in GEN_ARTIFACTS:
@@ -209,7 +215,8 @@ def gen_stubs(src, microg_jar, out_dir):
 
 
 def gen_deps(src):
-    out = []
+    # Defined outside android_deps/BUILD.gn, but every androidx target depends on it.
+    out = ['//third_party/android_deps:kotlin_stdlib_java']
     for path, label, name in GEN_DEPS:
         p = os.path.join(src, path)
         if os.path.exists(p) and re.search(rf'\("{name}"\)', open(p).read()):

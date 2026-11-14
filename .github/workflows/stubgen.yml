@@ -13,8 +13,8 @@ on:
           com.google.android.gms:play-services-cast:22.2.0
           com.google.android.gms:play-services-cast-framework:22.2.0
           com.google.android.gms:play-services-identity-credentials:16.0.0-alpha12
-          com.google.android.gms:play-services-basement:18.12.0:com.google.android.gms.common.internal.GmsClient
-          com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall
+          com.google.android.gms:play-services-basement:18.12.0
+          com.google.android.gms:play-services-base:18.11.1
         type: string
       version:
         description: "Chromium 版本 tag，用來找它的 Java 實際用到哪些類"
@@ -63,7 +63,13 @@ jobs:
           cd cr
           git sparse-checkout set --no-cone '*.java'
           git checkout -q
-          git grep -ohE 'com\.google\.android\.gms\.[A-Za-z0-9_.]+' -- '*.java' | sort -u > ../t/roots.txt
+          git grep -l 'com.google.android.gms' -- '*.java' | python3 -c '
+          import re, sys
+          name = re.compile(r"com\s*\.\s*google\s*\.\s*android\s*\.\s*gms(?:\s*\.\s*[A-Za-z0-9_]+)+")
+          out = set()
+          for f in sys.stdin.read().split():
+              out |= {re.sub(r"\s+", "", m) for m in name.findall(open(f, errors="ignore").read())}
+          print("\n".join(sorted(out)))' > ../t/roots.txt
           wc -l ../t/roots.txt
 
       - name: Generate

@@ -47,6 +47,11 @@ on:
         required: false
         default: ""
         type: string
+      variant:
+        description: "gms_variant.py 的設定，例如 F-Droid 組合：stubs genstubs gms=microg drop=playcore,mlkit,impress gnargs patch=cast,shape,castoff,status,fido；留空 = 不改"
+        required: false
+        default: ""
+        type: string
 
 # 從別的 run 下載工具鏈 artifact 需要 actions: read
 permissions:
@@ -98,6 +103,7 @@ jobs:
       own_toolchain: ${{ inputs.own_toolchain || false }}
       toolchain_from: ${{ inputs.toolchain_from }}
       rebuild_only: ${{ inputs.rebuild_only }}
+      variant: ${{ inputs.variant }}
 
   stage2:
     needs: [resolve, stage1]

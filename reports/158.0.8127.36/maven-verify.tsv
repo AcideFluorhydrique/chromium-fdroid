@@ -1,198 +1,198 @@
-dir	group	name	version	file	status	repo	sha256	diff
-android_deps	com.airbnb.android	lottie	6.7.1	lottie.aar	identical	central	4423cb34732018f0ef7262fdf6c4ae0b5aaea0ec05f55c3eef7e90cb100f1da9	
-android_deps	com.google.android.datatransport	transport-api	5.0.0	transport-api.aar	identical	google	a42703ad653154bbf365731b91bce5e9313d75ebdc626f1f33d5be0393cf4124	
-android_deps	com.google.android.datatransport	transport-backend-cct	5.0.0	transport-backend-cct.aar	identical	google	0213d2ad87cc1e3b717f6502681fe9c43273a5d9bb5353a5a21c8df404e32d37	
-android_deps	com.google.android.datatransport	transport-runtime	5.0.0	transport-runtime.aar	identical	google	88f7db549974ddb062d039c909d60955ae8f39c3b54d0fa97021274a948dad1c	
-android_deps	com.google.android.gms	play-services-auth-api-phone	18.3.1	play-services-auth-api-phone.aar	identical	google	0a30a72786b37b64487af94614bbaefdfe8af44971cdbe5410b6f66f1f74fcb8	
-android_deps	com.google.android.gms	play-services-auth-base	18.3.0	play-services-auth-base.aar	identical	google	a435a7aae89b1977b2441d5bd24b70bf3a002d297b5796163a07c5cfc4f0958e	
-android_deps	com.google.android.gms	play-services-base	18.11.1	play-services-base.aar	identical	google	07f3a7cc24ecaed8b59b5f9ee909a7d7ced547984554ef31e84ac6efeb26b3ad	
-android_deps	com.google.android.gms	play-services-basement	18.12.0	play-services-basement.aar	identical	google	30e9df7012c15ef31a4b288b3d77eb4550b195a0581675cad121b0b4bbc47b76	
-android_deps	com.google.android.gms	play-services-cast	22.2.0	play-services-cast.aar	identical	google	cd4b488d65b78fa60daa333f690e8f6aa88c444f17f418ed0f487e5a5380e64d	
-android_deps	com.google.android.gms	play-services-cast-framework	22.2.0	play-services-cast-framework.aar	identical	google	2edf43be734420442266ae74064351c9b8cc947db2ea666ff37ca3d28a1502d0	
-android_deps	com.google.android.gms	play-services-clearcut	17.0.0	play-services-clearcut.aar	identical	google	cce72073c269c2b4cff301304751f2faa2cd1b0344fef581a59da63665f9a4b4	
-android_deps	com.google.android.gms	play-services-cloud-messaging	17.4.0	play-services-cloud-messaging.aar	identical	google	c525314ab50fb6bb915da1dab99ea71b45fdb2aeb5ea6b857e7b9562ebbb8c85	
-android_deps	com.google.android.gms	play-services-flags	18.1.0	play-services-flags.aar	identical	google	48a1a6894f964792f57f6f8f7e757ec40f83f43d12ac35158a475d7ae4ccbec0	
-android_deps	com.google.android.gms	play-services-gcm	17.0.0	play-services-gcm.aar	identical	google	646cbef62cf237f2847b462d1cd696a7755a60483c35ceaa44cb5404b3cc06af	
-android_deps	com.google.android.gms	play-services-identity-credentials	16.0.0-alpha12	play-services-identity-credentials.aar	identical	google	01473583a0da70dc775735f1c5bde91ec21bdcd82861574bde2180dc7f16ca87	
-android_deps	com.google.android.gms	play-services-iid	17.0.0	play-services-iid.aar	identical	google	d7ddceac8612de5b091371651279eb461f5cf6f9b66d9d95d07c383b81991869	
-android_deps	com.google.android.gms	play-services-location	21.4.0	play-services-location.aar	identical	google	d01c5cbb18c46309b1980535acd7b9d49062537a0c666ab2946c9aabc6b4dcbd	
-android_deps	com.google.android.gms	play-services-phenotype	17.0.0	play-services-phenotype.aar	identical	google	53d40a205e48ad4e35923a01f04d9850acbd7403b3d30fb388e586fad1540ece	
-android_deps	com.google.android.gms	play-services-stats	17.0.2	play-services-stats.aar	identical	google	dd4314a53f49a378ec146103d36232b96c75454d29526336ccbdf132941764d3	
-android_deps	com.google.android.gms	play-services-tasks	18.4.1	play-services-tasks.aar	identical	google	e8e3a012e50209f80ce2d988ad3b31927d20fee155d0b6538859bc0d903673d2	
-android_deps	com.google.android.gms	play-services-vision	20.1.3	play-services-vision.aar	identical	google	d70173ca5a87fa29c679443de1bc6b03b6ee92379aeecb48463403a42ec99303	
-android_deps	com.google.android.gms	play-services-vision-common	19.1.3	play-services-vision-common.aar	identical	google	1ff6a6a52d14a400f27e3c19191f3b4e185c07bf35ab6a396b29d50077ec7562	
-android_deps	com.google.android.material	material	1.14.0	material.aar	identical	google	19e8fab43df6870f8e4322059624384be0279da56dc910529ff591dc674008cd	
-android_deps	com.google.android.play	app-update	2.1.0	app-update.aar	identical	google	1565e9ef014f7cb7193f0462e4d817480aff4b333fc7f7e0052bb932cc28820d	
-android_deps	com.google.android.play	core-common	2.0.4	core-common.aar	identical	google	36400824014fc61d9379b13dd1ab13f6514847fb04347c0fdfe618bace78f3ed	
-android_deps	com.google.android.play	feature-delivery	2.1.0	feature-delivery.aar	identical	google	085bd4632ccf96ceafcbfb10219ae57d604c5f680a2ea3bf860fe2b289afe5ad	
-android_deps	com.google.android.play	review	2.0.2	review.aar	identical	google	1602026678231dba0f7482d1244e45ff83d9ff22fc8b6d6be8961228ac7a32dd	
-android_deps	com.google.ar	impress	0.0.12	impress.aar	identical	google	77585ba0977c7cc90d23a91e1ae9c024f46f50999e0ea977ca10e97c6f3eb1ca	
-android_deps	com.google.auto.service	auto-service-annotations	1.1.1	auto-service-annotations.jar	identical	central	16a76dd00a2650568447f5d6e3a9e2c809d9a42367d56b45215cfb89731f4d24	
-android_deps	com.google.code.findbugs	jsr305	3.0.2	jsr305.jar	identical	central	766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7	
-android_deps	com.google.errorprone	error_prone_annotations	2.51.0	error_prone_annotations.jar	identical	central	51a6d8348c7e307e47183859c07597dc8a2899c5d1b6f18a471bccaa3203d5cf	
-android_deps	com.google.firebase	firebase-annotations	18.0.0	firebase-annotations.jar	identical	google	cdb20e14f4f77463f6bb6d339cf95efe132a4196eb9592bf3c4dc83856e2670d	
-android_deps	com.google.firebase	firebase-common	23.0.0	firebase-common.aar	identical	google	f8595dd404aa37bb4a92824ffd7b0325428432079ce4908ea3f97af1c6b33f0f	
-android_deps	com.google.firebase	firebase-components	20.0.0	firebase-components.aar	identical	google	1a39e0a88fe34ee4c911cb10da88488c487714692cbdfacac6015ddeffa0029b	
-android_deps	com.google.firebase	firebase-datatransport	21.0.0	firebase-datatransport.aar	identical	google	72b3a3265676439b21331477653023274bce4f3fb94d8b32b6d1cb0ad335b2eb	
-android_deps	com.google.firebase	firebase-encoders	18.0.0	firebase-encoders.jar	identical	google	2f2badbf47d46a3812084f535ad6df378392c6320376bcb846b98a8351ec0f48	
-android_deps	com.google.firebase	firebase-encoders-json	19.0.0	firebase-encoders-json.aar	identical	google	f72d65dfd4a6f3850ac93cacf720433adbe932179884455fa7c5dd5db5a475c4	
-android_deps	com.google.firebase	firebase-encoders-proto	17.0.0	firebase-encoders-proto.jar	identical	google	0ca5fbf8ecd57fca9bd31c652e0c308c708bfa7ed5abb5f13ea55f1a23ac426d	
-android_deps	com.google.firebase	firebase-iid-interop	17.1.0	firebase-iid-interop.aar	identical	google	0b7c3721c84b62e70415307239ed4a7f998989084bf2833f90b9f5bea3095a05	
-android_deps	com.google.firebase	firebase-installations	20.0.0	firebase-installations.aar	identical	google	30b9c50a81e706bbe7fcac0f112a11cb151afd74f339b522631b8fd2b485e82e	
-android_deps	com.google.firebase	firebase-installations-interop	18.0.0	firebase-installations-interop.aar	identical	google	fab7f3633204dd1c889a2ea419bfc1937e0e3766aae236a4b9d3c665d59765eb	
-android_deps	com.google.firebase	firebase-measurement-connector	19.0.0	firebase-measurement-connector.aar	identical	google	dba74d6bf94647ee397bf7afb2ab07f6fe8d13157e56785fa540a2a13ed82c99	
-android_deps	com.google.firebase	firebase-messaging	26.0.1	firebase-messaging.aar	identical	google	2f9b97a0f5646d428d53fef82e4ec9568af6bbe3f7c3e4299f399a8751dbef44	
-android_deps	com.google.guava	failureaccess	1.0.3	failureaccess.jar	identical	central	cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb	
-android_deps	com.google.guava	guava	33.7.2-jre	guava.jar	different	central	b949fe975a32421c1a2633c07a4f1578b462f2f467668aa0a4023c5ff7c4a808	831 changed, 36 only in CIPD, 68 only on Maven; e.g. ['META-INF/MANIFEST.MF', 'META-INF/maven/com.google.guava/guava/pom.properties', 'META-INF/maven/com.google.guava/guava/pom.xml']
-android_deps	com.google.j2objc	j2objc-annotations	3.1	j2objc-annotations.jar	identical	central	84d3a150518485f8140ea99b8a985656749629f6433c92b80c75b36aba3b099b	
-android_deps	com.google.mlkit	common	18.11.0	common.aar	identical	google	66408a08dbb2465687ff5dd0c8f6410b56549ce3ecf449d9096f3712282131d0	
-android_deps	com.google.mlkit	genai-common	1.0.0-beta4	genai-common.aar	identical	google	2926c5e3f19fc679a0eba8cab2edadeb0c0f1ae2ba14de9bac6bd7a352ae5a56	
-android_deps	com.google.mlkit	genai-prompt	1.0.0-beta4	genai-prompt.aar	identical	google	675192b6ba91334ddbfb8cc429a8afb94cba370d927d7dba79525818b7186f6d	
-android_deps	com.google.mlkit	genai-schema	1.0.0-alpha1	genai-schema.jar	identical	google	d9ddb92d5e96a2933efaf057d0868d503a8d587f76649227b5b24036195514d6	
-android_deps	com.google.protobuf	protobuf-javalite	4.37.0-RC1	protobuf-javalite.jar	identical	central	f99baee9ec9050fea4ffbd5531496e700f3fec44995fbfc36bcf8e9efb7035ee	
-android_deps	com.squareup.okio	okio-jvm	3.18.2	okio-jvm.jar	identical	central	681fed549d1d2c63710f42c9eab433d642c71af778babd67035c50f8c425aaff	
-android_deps	javax.inject	javax.inject	1	javax.inject.jar	identical	central	91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff	
-android_deps	org.jetbrains.kotlin	kotlin-stdlib	2.5.0-Beta2	kotlin-stdlib.jar	identical	central	bcc8380470f1b4ff3795d9083ce6b9aa299e74e32f655fc9248f1801b63d36ef	
-android_deps	org.jetbrains.kotlinx	atomicfu-jvm	0.33.0	atomicfu-jvm.jar	identical	central	cdc94bfe4f739a0121860e61977d5c1e6a3d53c21f2471493393ba9e900d394e	
-android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-android	1.11.0	kotlinx-coroutines-android.jar	identical	central	c2cb206d27017c7d1bf5ff179787397543d13748dbabb0d7237e1585e0b29044	
-android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-core-jvm	1.11.0	kotlinx-coroutines-core-jvm.jar	identical	central	d1d75aa01dffbb4d1c520e67e4c4e7f5f6174718e7cb4632412503f2f0e604fa	
-android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-guava	1.11.0	kotlinx-coroutines-guava.jar	identical	central	82d3993130a494d6fab8b64705c8e10a61decd8af3d2e9274cfd8a3a5d80591f	
-android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-play-services	1.10.2	kotlinx-coroutines-play-services.jar	identical	central	a84469d683cffc4427270b7144c62047d2a71ece703e063a4880c8dcc42caf72	
-android_deps	org.jetbrains.kotlinx	kotlinx-serialization-core-jvm	1.12.0	kotlinx-serialization-core-jvm.jar	identical	central	bcfddcac76159058ba0953af05938c17111d238cd41be7191874656454d62f1a	
-android_deps	org.jetbrains	annotations	23.0.0	annotations.jar	identical	central	7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05	
-android_deps	org.jspecify	jspecify	1.0.1	jspecify.jar	identical	central	070d75f261fe4c5b8202508366715f7f2d4660f88c8ef7e6d3575e48c9683b66	
-android_deps	org.ow2.asm	asm	9.11.1	asm.jar	identical	central	ae4e6e10d59d0a1500317764b21881ad883f8550e33c66e6142f7032c6fb566c	
-android_deps	org.ow2.asm	asm-commons	9.11.1	asm-commons.jar	identical	central	6a5095ec53726156a78b2cd2efd45bc4e877754eca7c234f61224a53d6bfa661	
-android_deps	org.ow2.asm	asm-tree	9.11.1	asm-tree.jar	identical	central	2b15c3c1b288a9fad3bb2cd6d988ba9521554914ed1f2a2029141fa3f483154a	
-androidx	androidx.activity	activity	1.14.0-SNAPSHOT	activity.aar	not on Maven		2b8eed0a04c0d460d8ffc772dd5602c287374118f1f81bd465a317b3a506ce5e	
-androidx	androidx.activity	activity-compose	1.14.0-SNAPSHOT	activity-compose.aar	not on Maven		fbbac7db9abb275c46a10ad45bc4b1381631924f140f050fe4dbea4c848d4878	
-androidx	androidx.activity	activity-ktx	1.14.0-SNAPSHOT	activity-ktx.aar	not on Maven		b32f5a52d742a9bae272471502d4d96ab1a161146f08726b6004a04ba2b016ab	
-androidx	androidx.annotation	annotation-experimental	1.6.0	annotation-experimental.aar	identical	google	86ca66e1b758b439918140f87f6513d4d806d3d5637dfdac04495f3b1f5ed102	
-androidx	androidx.annotation	annotation-jvm	1.11.0	annotation-jvm.jar	identical	google	a83b827cc17fd6b41c7bf5e7a2a2b40a0895b00b3e30fdfdb820b49dc7b667f3	
-androidx	androidx.appcompat	appcompat	1.8.0	appcompat.aar	identical	google	773f79306eb0ca2447af8752e923ce6269e201e7fe6b275cc76e2998ee87e838	
-androidx	androidx.appcompat	appcompat-resources	1.8.0	appcompat-resources.aar	identical	google	3fe48cc3df409bed03063a4f5f5f9f8c51f1d63ea9e88d41e6489bf58495a5af	
-androidx	androidx.appsearch	appsearch	1.2.0-SNAPSHOT	appsearch.aar	not on Maven		a5003624ebcec2c513d857c48015a48bca989f55e182eb39e8cd95679dd41f6e	
-androidx	androidx.appsearch	appsearch-builtin-types	1.2.0-SNAPSHOT	appsearch-builtin-types.aar	not on Maven		681cdd001b2b6effaf6b553e7f1eba72750b5051d7bf67de14993685bcf2b15a	
-androidx	androidx.appsearch	appsearch-platform-storage	1.2.0-SNAPSHOT	appsearch-platform-storage.aar	not on Maven		90470b2ee042c77a8bba62108a5eaaefa4d353add35b699451cd833f5d971d28	
-androidx	androidx.arch.core	core-common	2.3.0-SNAPSHOT	core-common.jar	not on Maven		02a287cf4c02cd24d9cfc70d60be1e64dc71018797921e7b6a978d275022949b	
-androidx	androidx.arch.core	core-runtime	2.3.0-SNAPSHOT	core-runtime.aar	not on Maven		0e4aab722a11ff347c600727b900329027c61b90dfc9600e0fc7aa1f6c3f1ae1	
-androidx	androidx.autofill	autofill	1.4.0-SNAPSHOT	autofill.aar	not on Maven		dc74247ddd8137d37af7d70e7cd961dda85a2d405dd17659f4364ef8e4891190	
-androidx	androidx.biometric	biometric	1.4.0-SNAPSHOT	biometric.aar	not on Maven		0664f2fb559b0780d58c63f69e1fc507d2999e0a32d246a32d749982f688e5e1	
-androidx	androidx.browser	browser	1.11.0-SNAPSHOT	browser.aar	not on Maven		8e18f88f172b28223c87b817573028c20e2c9eaf5468a7bedffd1696b69ccb97	
-androidx	androidx.cardview	cardview	1.0.0	cardview.aar	identical	google	1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7	
-androidx	androidx.collection	collection-jvm	1.8.0-SNAPSHOT	collection-jvm.jar	not on Maven		6622dd8a09ad1bbf67ef15b24c47945f79dbd8e70eeca967bbbcc05ab986b386	
-androidx	androidx.collection	collection-ktx	1.8.0-SNAPSHOT	collection-ktx.jar	not on Maven		335a9cd93dcb4afab7c4daa34d5d4e24b38443ccef4ae5fffdfd6cf4f718b01e	
-androidx	androidx.compose.animation	animation-android	1.14.0-SNAPSHOT	animation-android.aar	not on Maven		19ec0176d860fa2b8a6eece8dbae8d2f77beb558d31236009c5d42732cf7a235	
-androidx	androidx.compose.animation	animation-core-android	1.14.0-SNAPSHOT	animation-core-android.aar	not on Maven		e81f2e5a3a2dda24fb5efa0521d92dfd68d9807b93928024bac89a9878aad9d3	
-androidx	androidx.compose.foundation	foundation-android	1.14.0-SNAPSHOT	foundation-android.aar	not on Maven		9c025437d6730d5cc892f21a0f9dbec87e831d95bf194054320e3c3c2c4e4dcd	
-androidx	androidx.compose.foundation	foundation-layout-android	1.14.0-SNAPSHOT	foundation-layout-android.aar	not on Maven		242229988eb4425d160212434cf74676036ee1ef4f4c4b027612c865db2a84d0	
-androidx	androidx.compose.material3	material3-android	1.6.0-SNAPSHOT	material3-android.aar	not on Maven		3a187853ba55cc86e7d7931f2906146267d114b54d59f4f580b599cf00f07cb0	
-androidx	androidx.compose.material3	material3-ripple-android	1.6.0-SNAPSHOT	material3-ripple-android.aar	not on Maven		965b8d38397e7fcfd448b66e4a136a938f586f106fd470cfea0659f946592321	
-androidx	androidx.compose.material	material-ripple-android	1.14.0-SNAPSHOT	material-ripple-android.aar	not on Maven		720f1a994f5b13112269e98692a6f809303242c306d2425b7dac95457819034d	
-androidx	androidx.compose.runtime	runtime-android	1.14.0-SNAPSHOT	runtime-android.aar	not on Maven		7d06357f090f1157e3266bc9cde4506ad0964f7c43572c05ba0eef08fab7d048	
-androidx	androidx.compose.runtime	runtime-annotation-android	1.14.0-SNAPSHOT	runtime-annotation-android.aar	not on Maven		b8bcd5bb14f172a7e7bd88cea0ac811a80d0d6e61320b284519500aa459fc971	
-androidx	androidx.compose.runtime	runtime-retain-android	1.14.0-SNAPSHOT	runtime-retain-android.aar	not on Maven		25a8ebca1565613e0da69d35218f24ddf5e841f0b8a1daade381b1808c9008c8	
-androidx	androidx.compose.runtime	runtime-saveable-android	1.14.0-SNAPSHOT	runtime-saveable-android.aar	not on Maven		89ded5b126dd9bb186bedf6eb585372492265ba09ba32cfb618e1b4704a7cd2c	
-androidx	androidx.compose.ui	ui-android	1.14.0-SNAPSHOT	ui-android.aar	not on Maven		342988c2303b84a21278eb9752ba06323afe350218048e7e58a2c3122397a346	
-androidx	androidx.compose.ui	ui-geometry-android	1.14.0-SNAPSHOT	ui-geometry-android.aar	not on Maven		9848a2063c0c0621b07f2c634b0796b17a5bf8acfefa28ace754e37462397d80	
-androidx	androidx.compose.ui	ui-graphics-android	1.14.0-SNAPSHOT	ui-graphics-android.aar	not on Maven		cc221182f0aad60db32de58728fe291dee7c8e404abf922e24c67cb00bb24b98	
-androidx	androidx.compose.ui	ui-text-android	1.14.0-SNAPSHOT	ui-text-android.aar	not on Maven		26121f5aae755fba08ba1bd07a7769bb4fc82fcd5d8ee04a9ea2bb5ab59a0bc9	
-androidx	androidx.compose.ui	ui-unit-android	1.14.0-SNAPSHOT	ui-unit-android.aar	not on Maven		589baab050d208328f899210c3bb558ede4e08d9c27bf83bbb4bd5021bcea8a7	
-androidx	androidx.compose.ui	ui-util-android	1.14.0-SNAPSHOT	ui-util-android.aar	not on Maven		0e5381572612a4c83b3b41eef5d66d3800b88d2c6258b586f8777a185e3bfc2e	
-androidx	androidx.concurrent	concurrent-futures	1.4.0-SNAPSHOT	concurrent-futures.jar	not on Maven		8df6ea7ee4f97041b5665ddcd7d3283d401a19602771af4ffbdaae21ed8fb151	
-androidx	androidx.constraintlayout	constraintlayout	2.3.0-SNAPSHOT	constraintlayout.aar	not on Maven		cfbf242c806a4d5507954c60a7a629f935cf9310cd7d0609295ccc86643417a7	
-androidx	androidx.constraintlayout	constraintlayout-core	1.2.0-SNAPSHOT	constraintlayout-core.jar	not on Maven		59b97d2364fd3c11097f9a0a6a07b48c38161d43d3834732d503dbff1adb72f0	
-androidx	androidx.coordinatorlayout	coordinatorlayout	1.4.0-SNAPSHOT	coordinatorlayout.aar	not on Maven		d79179249dd4b3255efcdf7798cb0d35281ac439ab3acd89ba41ed8e8db60484	
-androidx	androidx.core	core	1.20.0-SNAPSHOT	core.aar	not on Maven		2f3cdeb5cbddf53456e2df0d38e7a6dc3a10f12d92052ce64b30c1ec1b3d4dc1	
-androidx	androidx.core	core-animation	1.0.0	core-animation.aar	identical	google	abc46a4547ca674eb23c7fcbe7fcac36712521743b63cab3f00245b4b714c3b4	
-androidx	androidx.core	core-ktx	1.20.0-SNAPSHOT	core-ktx.aar	not on Maven		2e6c2d25ba79dae5cefb3d9b8b47344bf9cb991713111135e0f8bb58e949e0d0	
-androidx	androidx.core	core-pip	1.0.0-SNAPSHOT	core-pip.aar	not on Maven		5a21dc0dc1d57a4db06f4457a9e1a930b406f6f5545080a3408dada2a834643f	
-androidx	androidx.core	core-viewtree	1.1.0-SNAPSHOT	core-viewtree.aar	not on Maven		eb5d711f7405355c22dd426789ca9b4d7437df6305402c793546ca6ec6a24dee	
-androidx	androidx.credentials	credentials	1.7.0-SNAPSHOT	credentials.aar	not on Maven		b705f4f2f7cc8381c707dbc7fbd7bcea2c1c51f230477693e08414e1a6938285	
-androidx	androidx.cursoradapter	cursoradapter	1.0.0	cursoradapter.aar	identical	google	a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564	
-androidx	androidx.customview	customview	1.2.0	customview.aar	identical	google	40e98bb388cdf5c53a52699b1f78a5abdcf22de1e7c1be43b2c12fd6eadc6f9d	
-androidx	androidx.customview	customview-poolingcontainer	1.1.0	customview-poolingcontainer.aar	identical	google	e13a9752a815300b99359152468218dd4b31d8bad03e733b3421a735dd41dd37	
-androidx	androidx.datastore	datastore-android	1.3.0	datastore-android.aar	identical	google	c187fea8ed248eb25f43c71af323e6108db1d3c35945120983954f77e7769eb9	
-androidx	androidx.datastore	datastore-core-android	1.3.0	datastore-core-android.aar	identical	google	b518fe03fbc8cdd1bfaddc1c0ab8a28ba7570c42462ac0a8c6caed7a389cc875	
-androidx	androidx.datastore	datastore-core-okio-jvm	1.3.0	datastore-core-okio-jvm.jar	identical	google	54cbdc3e6d477078a2f1dba43b6328870dfee23cc356da5aa1b2271151cc29a4	
-androidx	androidx.datastore	datastore-preferences-android	1.3.0	datastore-preferences-android.aar	identical	google	1a6b2952271e6f87262338eb530561d5f4b47ef4bd9aadd2793b3beae10c69b5	
-androidx	androidx.datastore	datastore-preferences-core-android	1.3.0	datastore-preferences-core-android.aar	identical	google	45f9b2b89e8122c347e53ed1cfd6f30850777521f078d707d5b06ffa5337876a	
-androidx	androidx.datastore	datastore-preferences-external-protobuf	1.3.0	datastore-preferences-external-protobuf.jar	identical	google	59226809f449e3409058da98df384a18d24316443e4a1d657e63771b5fd87e36	
-androidx	androidx.datastore	datastore-preferences-proto	1.3.0	datastore-preferences-proto.jar	identical	google	dcc7a13558f43a9742aefcf2ece90b44f12c0f6c873d19f0b64460198e2d4eed	
-androidx	androidx.documentfile	documentfile	1.1.0	documentfile.aar	identical	google	684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822	
-androidx	androidx.drawerlayout	drawerlayout	1.3.0-SNAPSHOT	drawerlayout.aar	not on Maven		111011273713a9513b3794e9eca125328d3960253f449bdbc699f15d6eab634d	
-androidx	androidx.dynamicanimation	dynamicanimation	1.2.0-SNAPSHOT	dynamicanimation.aar	not on Maven		f1e275848666f749873cd8d2b690a9592cd123761030537f6546b552785faa2b	
-androidx	androidx.emoji2	emoji2	1.8.0-SNAPSHOT	emoji2.aar	not on Maven		0ba4c020586e9721fbd315ceb0a96d2c6db01b00438116f7a7b1ee0b02ef248a	
-androidx	androidx.emoji2	emoji2-views-helper	1.8.0-SNAPSHOT	emoji2-views-helper.aar	not on Maven		f227d56758961e573917db1834c1e715fa1ae2c0ee86241d8c10f15085da8414	
-androidx	androidx.exifinterface	exifinterface	1.5.0-SNAPSHOT	exifinterface.aar	not on Maven		20afb9480ffd1a1ff1ebcb8c33b0535a7d295bab0ebe3c1a7a8d626ee353abce	
-androidx	androidx.fragment	fragment	1.10.0-SNAPSHOT	fragment.aar	not on Maven		f34ce9603675aabc4d45203a880aab8d368136340a5d252d525e0dd9a92f606b	
-androidx	androidx.fragment	fragment-ktx	1.10.0-SNAPSHOT	fragment-ktx.aar	not on Maven		bd9da59f765b0b52a550dde760c52bd9b7076a106581c4baa2c2c182306e1640	
-androidx	androidx.graphics	graphics-core	1.0.4	graphics-core.aar	identical	google	7c9f2558871a7068b286d931537c579c69c7880c1070bcf66b3b8501af028aa0	
-androidx	androidx.graphics	graphics-path	1.1.0	graphics-path.aar	identical	google	d031370d45ba4129a175fe9de913328a512b01a3c267e0eaf6b9b759f35842ae	
-androidx	androidx.graphics	graphics-shapes-android	1.2.0-SNAPSHOT	graphics-shapes-android.aar	not on Maven		b32823472683deb2207f934e084990a1a9f4ca04db279a26664c50421fa0ba0e	
-androidx	androidx.gridlayout	gridlayout	1.1.0	gridlayout.aar	identical	google	99dae726941cb2b11d22129be7883b58e8c244150cc65f6c2529920b7cba0de8	
-androidx	androidx.ink	ink-authoring-android	1.1.0-alpha03	ink-authoring-android.aar	identical	google	54a2cdcd57cda72526c28ea195faccc2746af97e23577cd6dac79ca6a1a41c4d	
-androidx	androidx.ink	ink-brush-android	1.1.0-alpha03	ink-brush-android.aar	identical	google	504095aad40b909bf632891ae003f5a9e0830d77e4f3504ebb602faca6465f57	
-androidx	androidx.ink	ink-geometry-android	1.1.0-alpha03	ink-geometry-android.aar	identical	google	0f807186e450a32d529d63e692c89550323e8fa771b4e33fcbf2721eabe98c61	
-androidx	androidx.ink	ink-nativeloader-android	1.1.0-alpha03	ink-nativeloader-android.aar	identical	google	ec69a1cf0d81232e776b2ed8b6d8b6af5858accd276cae500c1bf3d9fdb28454	
-androidx	androidx.ink	ink-rendering-android	1.1.0-alpha03	ink-rendering-android.aar	identical	google	2b0508ef6e37d9571dc10977b313a5a23ecccb3b9392e88a40a3e64a74683f39	
-androidx	androidx.ink	ink-strokes-android	1.1.0-alpha03	ink-strokes-android.aar	identical	google	695cf260bc9b0c1da261150cea0ca0212983f4b47524ae267647bfbb6cec45fd	
-androidx	androidx.input	input-motionprediction	1.0.0	input-motionprediction.aar	identical	google	756b6e12b8c213a3c9aded33f0471ade63256453e9d897b5a6f5eedebc1207c3	
-androidx	androidx.legacy	legacy-support-core-utils	1.0.0	legacy-support-core-utils.aar	identical	google	a7edcf01d5b52b3034073027bc4775b78a4764bb6202bb91d61c829add8dd1c7	
-androidx	androidx.lifecycle	lifecycle-common-java8	2.12.0-SNAPSHOT	lifecycle-common-java8.jar	not on Maven		895e71679cd319db8140664d650af6695b0530f5896be9b8ecccd24cc4f6674f	
-androidx	androidx.lifecycle	lifecycle-common-jvm	2.12.0-SNAPSHOT	lifecycle-common-jvm.jar	not on Maven		9451d5d82abea5703bee7dba4157f24458c655caf1a72b3588e8c2dd69b9a732	
-androidx	androidx.lifecycle	lifecycle-livedata-core	2.12.0-SNAPSHOT	lifecycle-livedata-core.aar	not on Maven		fa046a95e9fdd1297d9d89981bf32f5d0cbd8be23d2ce1534a0b54643a8d6432	
-androidx	androidx.lifecycle	lifecycle-process	2.12.0-SNAPSHOT	lifecycle-process.aar	not on Maven		ab61e3677526c6982483afb3d709fce559f65c070e01b8989c27b45783f45e32	
-androidx	androidx.lifecycle	lifecycle-runtime-android	2.12.0-SNAPSHOT	lifecycle-runtime-android.aar	not on Maven		2eb3a8ca9c3d3d330d683eda4ea8488936086a7d64622e933f9251eeb81d99e6	
-androidx	androidx.lifecycle	lifecycle-runtime-compose-android	2.12.0-SNAPSHOT	lifecycle-runtime-compose-android.aar	not on Maven		e017671ec928aab94bb41af2dd3d79d8669ccf5a971d442440568072404039c4	
-androidx	androidx.lifecycle	lifecycle-runtime-ktx-android	2.12.0-SNAPSHOT	lifecycle-runtime-ktx-android.aar	not on Maven		3562873dc3367a1c2e808fbc49b4389cd35b6ec7b562f4905799f51f07961802	
-androidx	androidx.lifecycle	lifecycle-viewmodel-android	2.12.0-SNAPSHOT	lifecycle-viewmodel-android.aar	not on Maven		4fcc1ab56e1dbb9b91c83eb41654e97ba9e1bd9e79092e908fddae273566ae7a	
-androidx	androidx.lifecycle	lifecycle-viewmodel-ktx	2.12.0-SNAPSHOT	lifecycle-viewmodel-ktx.aar	not on Maven		1b2de5e0890409ef3fad8a4ce1a01eb3cab1310a7d98d592da6c44fba73ea2a7	
-androidx	androidx.lifecycle	lifecycle-viewmodel-savedstate-android	2.12.0-SNAPSHOT	lifecycle-viewmodel-savedstate-android.aar	not on Maven		a3d6ed85ee06943968fb43516390fc7e96e61af18a5b18c5bf64c8405bdefc82	
-androidx	androidx.loader	loader	1.2.0	loader.aar	identical	google	ca2108312a5b4d318b9ec4ea22aea0ec53c77f098057d0c0bbf73dae8b309e02	
-androidx	androidx.localbroadcastmanager	localbroadcastmanager	1.0.0	localbroadcastmanager.aar	identical	google	e71c328ceef5c4a7d76f2d86df1b65d65fe2acf868b1a4efd84a3f34336186d8	
-androidx	androidx.media	media	1.8.0	media.aar	identical	google	6f9c02ee24904b34e107bc2fb22cfbf103c9a49a7e9290bcda34a82fa20b5a7d	
-androidx	androidx.mediarouter	mediarouter	1.9.0-SNAPSHOT	mediarouter.aar	not on Maven		c477e0e9b875f9f8b5cbf80dcd284245f2809350a3579dacfe1dc4118d86feb4	
-androidx	androidx.navigationevent	navigationevent-android	1.2.0	navigationevent-android.aar	identical	google	14fade4ff0637f23fa540b4059e3e847d3882f2cd1015febcf97992bc3dbdc73	
-androidx	androidx.navigationevent	navigationevent-compose-android	1.2.0	navigationevent-compose-android.aar	identical	google	e4a00dc4b80ca81aff7e6f4db3222237614b410fe478c10be8d8665445275767	
-androidx	androidx.palette	palette	1.1.0	palette.aar	identical	google	32d84b5c82902ce051e14fc2870686548414260a46fab3642bca68a97e8b19ec	
-androidx	androidx.pdf	pdf-core	1.0.0-SNAPSHOT	pdf-core.aar	not on Maven		21d87e2108729bdf94e0d034f47d7f18729185252318a78cbd6ac721926ebad4	
-androidx	androidx.pdf	pdf-document-service	1.0.0-SNAPSHOT	pdf-document-service.aar	not on Maven		fa1eb9e819adcf63fb5ab362b873c303da36e05090f6482f4dca21b700b3a5b3	
-androidx	androidx.pdf	pdf-ink	1.0.0-SNAPSHOT	pdf-ink.aar	not on Maven		2a36bea3904a4d41891ba7c4693532d610e5450de1715c50e2ddf0695e7ed287	
-androidx	androidx.pdf	pdf-viewer	1.0.0-SNAPSHOT	pdf-viewer.aar	not on Maven		ad122360a4123543db8caba7e96b50cd2d9e3c13118a7900df4262ef03bcd0a1	
-androidx	androidx.pdf	pdf-viewer-fragment	1.0.0-SNAPSHOT	pdf-viewer-fragment.aar	not on Maven		f49afb31256ad44b27def522693efbf2c414ec01ed563101d9c6193349158257	
-androidx	androidx.preference	preference	1.3.0-SNAPSHOT	preference.aar	not on Maven		a1f9405cd648f2dcb56c6ae50bfaf3bb2dc0f7f8e70f8818655ace29193964e3	
-androidx	androidx.print	print	1.1.0	print.aar	identical	google	cd7ca6c4e70412aa224b6d3ee2f03aa7db2bcbe02f71f654e9a262ce39d563e6	
-androidx	androidx.privacysandbox.ads	ads-adservices	1.1.0-beta11	ads-adservices.aar	identical	google	540a6e2dc78e370615f77f872c0f3b700a1aca1d78a4a9af7d2808050848c663	
-androidx	androidx.privacysandbox.ads	ads-adservices-java	1.1.0-beta11	ads-adservices-java.aar	identical	google	b2885db5ddad9b457f94d21041da53267da89adfe438242ba07dd11c8fa63e74	
-androidx	androidx.recyclerview	recyclerview	1.5.0-SNAPSHOT	recyclerview.aar	not on Maven		28a9714d1756bd0c02a744872885545f091168158e4b305dbe7a5bd390532a7c	
-androidx	androidx.resourceinspection	resourceinspection-annotation	1.1.0-SNAPSHOT	resourceinspection-annotation.jar	not on Maven		d9d8adce6155203e43bd8ec362e822092faa49fa4fd57dd0b72faefdf2e67283	
-androidx	androidx.savedstate	savedstate-android	1.6.0-SNAPSHOT	savedstate-android.aar	not on Maven		b401683ef5c7bc2bf544f3d137462a8f019690e83d9aa81fe5128f393b3879c6	
-androidx	androidx.savedstate	savedstate-compose-android	1.6.0-SNAPSHOT	savedstate-compose-android.aar	not on Maven		7f6f2925201618395bb67093428215b855936a176ed7617b849992bfb9039d7f	
-androidx	androidx.savedstate	savedstate-ktx	1.6.0-SNAPSHOT	savedstate-ktx.aar	not on Maven		e62a756e878e370a7834fd8f0817126fc3dba758251e8acf95e045857286de86	
-androidx	androidx.slidingpanelayout	slidingpanelayout	1.3.0-SNAPSHOT	slidingpanelayout.aar	not on Maven		724bd01a05fafb7d48288d2b778d127789ecd3c06efde2655959163a605048c5	
-androidx	androidx.startup	startup-runtime	1.2.0	startup-runtime.aar	identical	google	f51d361d17b30b09cfb9e2aebf301d113f99437cbf462a066092795fb60eddd2	
-androidx	androidx.swiperefreshlayout	swiperefreshlayout	1.2.0	swiperefreshlayout.aar	identical	google	1de8aee6173d2ca251a1126fe18d4ca7d5c0dbc7a80fb9e6ff74a3ba5e9c9b92	
-androidx	androidx.test.espresso	espresso-idling-resource	3.8.0-alpha01	espresso-idling-resource.aar	identical	google	b6c379c6dccc093e41a74db51be779b44954217076b6e3b736b024a7bcc80705	
-androidx	androidx.tracing	tracing-android	2.1.0-SNAPSHOT	tracing-android.aar	not on Maven		0de51b6f225be174470c25a7dc1d94ef2a3751a95c5c1f267cb0da35366efe46	
-androidx	androidx.transition	transition	1.8.0-SNAPSHOT	transition.aar	not on Maven		936f609360a7aaaca2948bb88065695362368fe1ec17f664b5efdeabee143856	
-androidx	androidx.vectordrawable	vectordrawable	1.2.0	vectordrawable.aar	identical	google	4f44b94817ad266ed8641b0b8fab4e6d038902a62840bb6528473222e1cdcfc9	
-androidx	androidx.vectordrawable	vectordrawable-animated	1.2.0	vectordrawable-animated.aar	identical	google	a070bdd04222a040794e5e9fa4b778d575f7b8f4e84d06d9a38ec4d599770a69	
-androidx	androidx.versionedparcelable	versionedparcelable	1.2.1	versionedparcelable.aar	identical	google	ed7224932d08144446ec8b58c56be83e04c23a0becd4f3f4d40084baab6c7b53	
-androidx	androidx.viewpager2	viewpager2	1.2.0-SNAPSHOT	viewpager2.aar	not on Maven		2a91a85ad1684dfcf11db2dc8508ff84bc6a0dfd0a2340d2c1d316ee1dddd45d	
-androidx	androidx.viewpager	viewpager	1.1.0	viewpager.aar	identical	google	809f12e2cc3cdd4f9537bcae1824d5617a747b43a73d56f6e8f80a9873520807	
-androidx	androidx.window.sidecar	sidecar	1.0.0-SNAPSHOT	sidecar.aar	not on Maven		a43c87d3f1e9bf27ec6b3ce89abfca3c17a8f23cfb5ecbe221fcd38afc5c2e42	
-androidx	androidx.window	window	1.6.0-SNAPSHOT	window.aar	not on Maven		19b5f43ddf085f90acd963b9444c59f8d3d23c588c36f5ea66a1727bc9f0929f	
-androidx	androidx.window	window-core-android	1.6.0-SNAPSHOT	window-core-android.aar	not on Maven		207b1a82405b46b1f10425da44b7056bb2e526a08c2aedeb01b65aebdd1dc893	
-androidx	androidx.xr.arcore	arcore	1.0.0-alpha12	arcore.aar	identical	google	95256583da83853c7f99293209b19b96a50c19dd9fcfd459d4d63926b19f3ae9	
-androidx	androidx.xr.arcore	arcore-openxr	1.0.0-alpha12	arcore-openxr.aar	identical	google	e5f8537258a6d2c009d133c11925aa9e199a76623aa3605258bb52836fec118f	
-androidx	androidx.xr.arcore	arcore-projected	1.0.0-alpha12	arcore-projected.aar	identical	google	9c18e396d3927901cedf1410f7f16d19e2ab7ba67d6b38f90e8bb929b504bf4c	
-androidx	androidx.xr.arcore	arcore-runtime	1.0.0-alpha12	arcore-runtime.aar	identical	google	8c46b81b39dbca97762a572387ecb7769d7b223e0cc562f56b4c2173133b95bf	
-androidx	androidx.xr.runtime	runtime	1.0.0-alpha12	runtime.aar	identical	google	5183795d643bb2202a34765b94994f0442e45ce38b24e7c08f72089de3a098f9	
-androidx	androidx.xr.runtime	runtime-interfaces	1.0.0-alpha12	runtime-interfaces.aar	identical	google	738761c1171fd4b6aa9361274a63a9e75b51c39dea6f08da97c6349220620893	
-androidx	androidx.xr.runtime	runtime-manifest	1.0.0-alpha12	runtime-manifest.aar	identical	google	40db2ca934bf1527dcd3ec4c8c3abb1ef48f33d6a2e273254c74994de7925f3f	
-androidx	androidx.xr.runtime	runtime-openxr	1.0.0-alpha12	runtime-openxr.aar	identical	google	623f24da425bdccf2a72e083724a624d086e7fe8462f2482c73213f80b129ae8	
-androidx	androidx.xr.scenecore	scenecore	1.0.0-alpha13	scenecore.aar	identical	google	174f2685c76d8c24a0915e3c650ca90cc942b99ec5a8cf5fae94cd07e98d7ffe	
-androidx	androidx.xr.scenecore	scenecore-runtime	1.0.0-alpha13	scenecore-runtime.aar	identical	google	ed76ab2f938bbacf4e73674354661cc0d75a678c873e7f23de6022e39eefa212	
-androidx	androidx.xr.scenecore	scenecore-spatial-core	1.0.0-alpha13	scenecore-spatial-core.aar	identical	google	f7803438fe7ba6b86dbbca9f45093487c8f48d8005966fc368fa95c20bc18ac8	
-androidx	androidx.xr.scenecore	scenecore-spatial-rendering	1.0.0-alpha13	scenecore-spatial-rendering.aar	identical	google	38c1be1397095bf03ab543d916ecc226a8ed9acc6711d828aed13e0042d9a255	
+dir	group	name	version	file	status	repo	release	sha256	diff
+android_deps	com.airbnb.android	lottie	6.7.1	lottie.aar	identical	central		4423cb34732018f0ef7262fdf6c4ae0b5aaea0ec05f55c3eef7e90cb100f1da9	
+android_deps	com.google.android.datatransport	transport-api	5.0.0	transport-api.aar	identical	google		a42703ad653154bbf365731b91bce5e9313d75ebdc626f1f33d5be0393cf4124	
+android_deps	com.google.android.datatransport	transport-backend-cct	5.0.0	transport-backend-cct.aar	identical	google		0213d2ad87cc1e3b717f6502681fe9c43273a5d9bb5353a5a21c8df404e32d37	
+android_deps	com.google.android.datatransport	transport-runtime	5.0.0	transport-runtime.aar	identical	google		88f7db549974ddb062d039c909d60955ae8f39c3b54d0fa97021274a948dad1c	
+android_deps	com.google.android.gms	play-services-auth-api-phone	18.3.1	play-services-auth-api-phone.aar	identical	google		0a30a72786b37b64487af94614bbaefdfe8af44971cdbe5410b6f66f1f74fcb8	
+android_deps	com.google.android.gms	play-services-auth-base	18.3.0	play-services-auth-base.aar	identical	google		a435a7aae89b1977b2441d5bd24b70bf3a002d297b5796163a07c5cfc4f0958e	
+android_deps	com.google.android.gms	play-services-base	18.11.1	play-services-base.aar	identical	google		07f3a7cc24ecaed8b59b5f9ee909a7d7ced547984554ef31e84ac6efeb26b3ad	
+android_deps	com.google.android.gms	play-services-basement	18.12.0	play-services-basement.aar	identical	google		30e9df7012c15ef31a4b288b3d77eb4550b195a0581675cad121b0b4bbc47b76	
+android_deps	com.google.android.gms	play-services-cast	22.2.0	play-services-cast.aar	identical	google		cd4b488d65b78fa60daa333f690e8f6aa88c444f17f418ed0f487e5a5380e64d	
+android_deps	com.google.android.gms	play-services-cast-framework	22.2.0	play-services-cast-framework.aar	identical	google		2edf43be734420442266ae74064351c9b8cc947db2ea666ff37ca3d28a1502d0	
+android_deps	com.google.android.gms	play-services-clearcut	17.0.0	play-services-clearcut.aar	identical	google		cce72073c269c2b4cff301304751f2faa2cd1b0344fef581a59da63665f9a4b4	
+android_deps	com.google.android.gms	play-services-cloud-messaging	17.4.0	play-services-cloud-messaging.aar	identical	google		c525314ab50fb6bb915da1dab99ea71b45fdb2aeb5ea6b857e7b9562ebbb8c85	
+android_deps	com.google.android.gms	play-services-flags	18.1.0	play-services-flags.aar	identical	google		48a1a6894f964792f57f6f8f7e757ec40f83f43d12ac35158a475d7ae4ccbec0	
+android_deps	com.google.android.gms	play-services-gcm	17.0.0	play-services-gcm.aar	identical	google		646cbef62cf237f2847b462d1cd696a7755a60483c35ceaa44cb5404b3cc06af	
+android_deps	com.google.android.gms	play-services-identity-credentials	16.0.0-alpha12	play-services-identity-credentials.aar	identical	google		01473583a0da70dc775735f1c5bde91ec21bdcd82861574bde2180dc7f16ca87	
+android_deps	com.google.android.gms	play-services-iid	17.0.0	play-services-iid.aar	identical	google		d7ddceac8612de5b091371651279eb461f5cf6f9b66d9d95d07c383b81991869	
+android_deps	com.google.android.gms	play-services-location	21.4.0	play-services-location.aar	identical	google		d01c5cbb18c46309b1980535acd7b9d49062537a0c666ab2946c9aabc6b4dcbd	
+android_deps	com.google.android.gms	play-services-phenotype	17.0.0	play-services-phenotype.aar	identical	google		53d40a205e48ad4e35923a01f04d9850acbd7403b3d30fb388e586fad1540ece	
+android_deps	com.google.android.gms	play-services-stats	17.0.2	play-services-stats.aar	identical	google		dd4314a53f49a378ec146103d36232b96c75454d29526336ccbdf132941764d3	
+android_deps	com.google.android.gms	play-services-tasks	18.4.1	play-services-tasks.aar	identical	google		e8e3a012e50209f80ce2d988ad3b31927d20fee155d0b6538859bc0d903673d2	
+android_deps	com.google.android.gms	play-services-vision	20.1.3	play-services-vision.aar	identical	google		d70173ca5a87fa29c679443de1bc6b03b6ee92379aeecb48463403a42ec99303	
+android_deps	com.google.android.gms	play-services-vision-common	19.1.3	play-services-vision-common.aar	identical	google		1ff6a6a52d14a400f27e3c19191f3b4e185c07bf35ab6a396b29d50077ec7562	
+android_deps	com.google.android.material	material	1.14.0	material.aar	identical	google		19e8fab43df6870f8e4322059624384be0279da56dc910529ff591dc674008cd	
+android_deps	com.google.android.play	app-update	2.1.0	app-update.aar	identical	google		1565e9ef014f7cb7193f0462e4d817480aff4b333fc7f7e0052bb932cc28820d	
+android_deps	com.google.android.play	core-common	2.0.4	core-common.aar	identical	google		36400824014fc61d9379b13dd1ab13f6514847fb04347c0fdfe618bace78f3ed	
+android_deps	com.google.android.play	feature-delivery	2.1.0	feature-delivery.aar	identical	google		085bd4632ccf96ceafcbfb10219ae57d604c5f680a2ea3bf860fe2b289afe5ad	
+android_deps	com.google.android.play	review	2.0.2	review.aar	identical	google		1602026678231dba0f7482d1244e45ff83d9ff22fc8b6d6be8961228ac7a32dd	
+android_deps	com.google.ar	impress	0.0.12	impress.aar	identical	google		77585ba0977c7cc90d23a91e1ae9c024f46f50999e0ea977ca10e97c6f3eb1ca	
+android_deps	com.google.auto.service	auto-service-annotations	1.1.1	auto-service-annotations.jar	identical	central		16a76dd00a2650568447f5d6e3a9e2c809d9a42367d56b45215cfb89731f4d24	
+android_deps	com.google.code.findbugs	jsr305	3.0.2	jsr305.jar	identical	central		766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7	
+android_deps	com.google.errorprone	error_prone_annotations	2.51.0	error_prone_annotations.jar	identical	central		51a6d8348c7e307e47183859c07597dc8a2899c5d1b6f18a471bccaa3203d5cf	
+android_deps	com.google.firebase	firebase-annotations	18.0.0	firebase-annotations.jar	identical	google		cdb20e14f4f77463f6bb6d339cf95efe132a4196eb9592bf3c4dc83856e2670d	
+android_deps	com.google.firebase	firebase-common	23.0.0	firebase-common.aar	identical	google		f8595dd404aa37bb4a92824ffd7b0325428432079ce4908ea3f97af1c6b33f0f	
+android_deps	com.google.firebase	firebase-components	20.0.0	firebase-components.aar	identical	google		1a39e0a88fe34ee4c911cb10da88488c487714692cbdfacac6015ddeffa0029b	
+android_deps	com.google.firebase	firebase-datatransport	21.0.0	firebase-datatransport.aar	identical	google		72b3a3265676439b21331477653023274bce4f3fb94d8b32b6d1cb0ad335b2eb	
+android_deps	com.google.firebase	firebase-encoders	18.0.0	firebase-encoders.jar	identical	google		2f2badbf47d46a3812084f535ad6df378392c6320376bcb846b98a8351ec0f48	
+android_deps	com.google.firebase	firebase-encoders-json	19.0.0	firebase-encoders-json.aar	identical	google		f72d65dfd4a6f3850ac93cacf720433adbe932179884455fa7c5dd5db5a475c4	
+android_deps	com.google.firebase	firebase-encoders-proto	17.0.0	firebase-encoders-proto.jar	identical	google		0ca5fbf8ecd57fca9bd31c652e0c308c708bfa7ed5abb5f13ea55f1a23ac426d	
+android_deps	com.google.firebase	firebase-iid-interop	17.1.0	firebase-iid-interop.aar	identical	google		0b7c3721c84b62e70415307239ed4a7f998989084bf2833f90b9f5bea3095a05	
+android_deps	com.google.firebase	firebase-installations	20.0.0	firebase-installations.aar	identical	google		30b9c50a81e706bbe7fcac0f112a11cb151afd74f339b522631b8fd2b485e82e	
+android_deps	com.google.firebase	firebase-installations-interop	18.0.0	firebase-installations-interop.aar	identical	google		fab7f3633204dd1c889a2ea419bfc1937e0e3766aae236a4b9d3c665d59765eb	
+android_deps	com.google.firebase	firebase-measurement-connector	19.0.0	firebase-measurement-connector.aar	identical	google		dba74d6bf94647ee397bf7afb2ab07f6fe8d13157e56785fa540a2a13ed82c99	
+android_deps	com.google.firebase	firebase-messaging	26.0.1	firebase-messaging.aar	identical	google		2f9b97a0f5646d428d53fef82e4ec9568af6bbe3f7c3e4299f399a8751dbef44	
+android_deps	com.google.guava	failureaccess	1.0.3	failureaccess.jar	identical	central		cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb	
+android_deps	com.google.guava	guava	33.7.2-jre	guava.jar	different	central		b949fe975a32421c1a2633c07a4f1578b462f2f467668aa0a4023c5ff7c4a808	831 changed, 36 only in CIPD, 68 only on Maven; e.g. ['META-INF/MANIFEST.MF', 'META-INF/maven/com.google.guava/guava/pom.properties', 'META-INF/maven/com.google.guava/guava/pom.xml']
+android_deps	com.google.j2objc	j2objc-annotations	3.1	j2objc-annotations.jar	identical	central		84d3a150518485f8140ea99b8a985656749629f6433c92b80c75b36aba3b099b	
+android_deps	com.google.mlkit	common	18.11.0	common.aar	identical	google		66408a08dbb2465687ff5dd0c8f6410b56549ce3ecf449d9096f3712282131d0	
+android_deps	com.google.mlkit	genai-common	1.0.0-beta4	genai-common.aar	identical	google		2926c5e3f19fc679a0eba8cab2edadeb0c0f1ae2ba14de9bac6bd7a352ae5a56	
+android_deps	com.google.mlkit	genai-prompt	1.0.0-beta4	genai-prompt.aar	identical	google		675192b6ba91334ddbfb8cc429a8afb94cba370d927d7dba79525818b7186f6d	
+android_deps	com.google.mlkit	genai-schema	1.0.0-alpha1	genai-schema.jar	identical	google		d9ddb92d5e96a2933efaf057d0868d503a8d587f76649227b5b24036195514d6	
+android_deps	com.google.protobuf	protobuf-javalite	4.37.0-RC1	protobuf-javalite.jar	identical	central		f99baee9ec9050fea4ffbd5531496e700f3fec44995fbfc36bcf8e9efb7035ee	
+android_deps	com.squareup.okio	okio-jvm	3.18.2	okio-jvm.jar	identical	central		681fed549d1d2c63710f42c9eab433d642c71af778babd67035c50f8c425aaff	
+android_deps	javax.inject	javax.inject	1	javax.inject.jar	identical	central		91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff	
+android_deps	org.jetbrains.kotlin	kotlin-stdlib	2.5.0-Beta2	kotlin-stdlib.jar	identical	central		bcc8380470f1b4ff3795d9083ce6b9aa299e74e32f655fc9248f1801b63d36ef	
+android_deps	org.jetbrains.kotlinx	atomicfu-jvm	0.33.0	atomicfu-jvm.jar	identical	central		cdc94bfe4f739a0121860e61977d5c1e6a3d53c21f2471493393ba9e900d394e	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-android	1.11.0	kotlinx-coroutines-android.jar	identical	central		c2cb206d27017c7d1bf5ff179787397543d13748dbabb0d7237e1585e0b29044	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-core-jvm	1.11.0	kotlinx-coroutines-core-jvm.jar	identical	central		d1d75aa01dffbb4d1c520e67e4c4e7f5f6174718e7cb4632412503f2f0e604fa	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-guava	1.11.0	kotlinx-coroutines-guava.jar	identical	central		82d3993130a494d6fab8b64705c8e10a61decd8af3d2e9274cfd8a3a5d80591f	
+android_deps	org.jetbrains.kotlinx	kotlinx-coroutines-play-services	1.10.2	kotlinx-coroutines-play-services.jar	identical	central		a84469d683cffc4427270b7144c62047d2a71ece703e063a4880c8dcc42caf72	
+android_deps	org.jetbrains.kotlinx	kotlinx-serialization-core-jvm	1.12.0	kotlinx-serialization-core-jvm.jar	identical	central		bcfddcac76159058ba0953af05938c17111d238cd41be7191874656454d62f1a	
+android_deps	org.jetbrains	annotations	23.0.0	annotations.jar	identical	central		7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05	
+android_deps	org.jspecify	jspecify	1.0.1	jspecify.jar	identical	central		070d75f261fe4c5b8202508366715f7f2d4660f88c8ef7e6d3575e48c9683b66	
+android_deps	org.ow2.asm	asm	9.11.1	asm.jar	identical	central		ae4e6e10d59d0a1500317764b21881ad883f8550e33c66e6142f7032c6fb566c	
+android_deps	org.ow2.asm	asm-commons	9.11.1	asm-commons.jar	identical	central		6a5095ec53726156a78b2cd2efd45bc4e877754eca7c234f61224a53d6bfa661	
+android_deps	org.ow2.asm	asm-tree	9.11.1	asm-tree.jar	identical	central		2b15c3c1b288a9fad3bb2cd6d988ba9521554914ed1f2a2029141fa3f483154a	
+androidx	androidx.activity	activity	1.14.0-SNAPSHOT	activity.aar	not on Maven		1.13.0	2b8eed0a04c0d460d8ffc772dd5602c287374118f1f81bd465a317b3a506ce5e	
+androidx	androidx.activity	activity-compose	1.14.0-SNAPSHOT	activity-compose.aar	not on Maven		1.13.0	fbbac7db9abb275c46a10ad45bc4b1381631924f140f050fe4dbea4c848d4878	
+androidx	androidx.activity	activity-ktx	1.14.0-SNAPSHOT	activity-ktx.aar	not on Maven		1.13.0	b32f5a52d742a9bae272471502d4d96ab1a161146f08726b6004a04ba2b016ab	
+androidx	androidx.annotation	annotation-experimental	1.6.0	annotation-experimental.aar	identical	google		86ca66e1b758b439918140f87f6513d4d806d3d5637dfdac04495f3b1f5ed102	
+androidx	androidx.annotation	annotation-jvm	1.11.0	annotation-jvm.jar	identical	google		a83b827cc17fd6b41c7bf5e7a2a2b40a0895b00b3e30fdfdb820b49dc7b667f3	
+androidx	androidx.appcompat	appcompat	1.8.0	appcompat.aar	identical	google		773f79306eb0ca2447af8752e923ce6269e201e7fe6b275cc76e2998ee87e838	
+androidx	androidx.appcompat	appcompat-resources	1.8.0	appcompat-resources.aar	identical	google		3fe48cc3df409bed03063a4f5f5f9f8c51f1d63ea9e88d41e6489bf58495a5af	
+androidx	androidx.appsearch	appsearch	1.2.0-SNAPSHOT	appsearch.aar	not on Maven		1.1.0	a5003624ebcec2c513d857c48015a48bca989f55e182eb39e8cd95679dd41f6e	
+androidx	androidx.appsearch	appsearch-builtin-types	1.2.0-SNAPSHOT	appsearch-builtin-types.aar	not on Maven		1.1.0	681cdd001b2b6effaf6b553e7f1eba72750b5051d7bf67de14993685bcf2b15a	
+androidx	androidx.appsearch	appsearch-platform-storage	1.2.0-SNAPSHOT	appsearch-platform-storage.aar	not on Maven		1.1.0	90470b2ee042c77a8bba62108a5eaaefa4d353add35b699451cd833f5d971d28	
+androidx	androidx.arch.core	core-common	2.3.0-SNAPSHOT	core-common.jar	not on Maven		2.2.0	02a287cf4c02cd24d9cfc70d60be1e64dc71018797921e7b6a978d275022949b	
+androidx	androidx.arch.core	core-runtime	2.3.0-SNAPSHOT	core-runtime.aar	not on Maven		2.2.0	0e4aab722a11ff347c600727b900329027c61b90dfc9600e0fc7aa1f6c3f1ae1	
+androidx	androidx.autofill	autofill	1.4.0-SNAPSHOT	autofill.aar	not on Maven		1.3.0	dc74247ddd8137d37af7d70e7cd961dda85a2d405dd17659f4364ef8e4891190	
+androidx	androidx.biometric	biometric	1.4.0-SNAPSHOT	biometric.aar	not on Maven		1.1.0	0664f2fb559b0780d58c63f69e1fc507d2999e0a32d246a32d749982f688e5e1	
+androidx	androidx.browser	browser	1.11.0-SNAPSHOT	browser.aar	not on Maven		1.10.0	8e18f88f172b28223c87b817573028c20e2c9eaf5468a7bedffd1696b69ccb97	
+androidx	androidx.cardview	cardview	1.0.0	cardview.aar	identical	google		1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7	
+androidx	androidx.collection	collection-jvm	1.8.0-SNAPSHOT	collection-jvm.jar	not on Maven		1.7.0	6622dd8a09ad1bbf67ef15b24c47945f79dbd8e70eeca967bbbcc05ab986b386	
+androidx	androidx.collection	collection-ktx	1.8.0-SNAPSHOT	collection-ktx.jar	not on Maven		1.7.0	335a9cd93dcb4afab7c4daa34d5d4e24b38443ccef4ae5fffdfd6cf4f718b01e	
+androidx	androidx.compose.animation	animation-android	1.14.0-SNAPSHOT	animation-android.aar	not on Maven		1.12.1	19ec0176d860fa2b8a6eece8dbae8d2f77beb558d31236009c5d42732cf7a235	
+androidx	androidx.compose.animation	animation-core-android	1.14.0-SNAPSHOT	animation-core-android.aar	not on Maven		1.12.1	e81f2e5a3a2dda24fb5efa0521d92dfd68d9807b93928024bac89a9878aad9d3	
+androidx	androidx.compose.foundation	foundation-android	1.14.0-SNAPSHOT	foundation-android.aar	not on Maven		1.12.1	9c025437d6730d5cc892f21a0f9dbec87e831d95bf194054320e3c3c2c4e4dcd	
+androidx	androidx.compose.foundation	foundation-layout-android	1.14.0-SNAPSHOT	foundation-layout-android.aar	not on Maven		1.12.1	242229988eb4425d160212434cf74676036ee1ef4f4c4b027612c865db2a84d0	
+androidx	androidx.compose.material3	material3-android	1.6.0-SNAPSHOT	material3-android.aar	not on Maven		1.4.0	3a187853ba55cc86e7d7931f2906146267d114b54d59f4f580b599cf00f07cb0	
+androidx	androidx.compose.material3	material3-ripple-android	1.6.0-SNAPSHOT	material3-ripple-android.aar	not on Maven		1.5.0-rc01 (pre-release)	965b8d38397e7fcfd448b66e4a136a938f586f106fd470cfea0659f946592321	
+androidx	androidx.compose.material	material-ripple-android	1.14.0-SNAPSHOT	material-ripple-android.aar	not on Maven		1.12.1	720f1a994f5b13112269e98692a6f809303242c306d2425b7dac95457819034d	
+androidx	androidx.compose.runtime	runtime-android	1.14.0-SNAPSHOT	runtime-android.aar	not on Maven		1.12.1	7d06357f090f1157e3266bc9cde4506ad0964f7c43572c05ba0eef08fab7d048	
+androidx	androidx.compose.runtime	runtime-annotation-android	1.14.0-SNAPSHOT	runtime-annotation-android.aar	not on Maven		1.12.1	b8bcd5bb14f172a7e7bd88cea0ac811a80d0d6e61320b284519500aa459fc971	
+androidx	androidx.compose.runtime	runtime-retain-android	1.14.0-SNAPSHOT	runtime-retain-android.aar	not on Maven		1.12.1	25a8ebca1565613e0da69d35218f24ddf5e841f0b8a1daade381b1808c9008c8	
+androidx	androidx.compose.runtime	runtime-saveable-android	1.14.0-SNAPSHOT	runtime-saveable-android.aar	not on Maven		1.12.1	89ded5b126dd9bb186bedf6eb585372492265ba09ba32cfb618e1b4704a7cd2c	
+androidx	androidx.compose.ui	ui-android	1.14.0-SNAPSHOT	ui-android.aar	not on Maven		1.12.1	342988c2303b84a21278eb9752ba06323afe350218048e7e58a2c3122397a346	
+androidx	androidx.compose.ui	ui-geometry-android	1.14.0-SNAPSHOT	ui-geometry-android.aar	not on Maven		1.12.1	9848a2063c0c0621b07f2c634b0796b17a5bf8acfefa28ace754e37462397d80	
+androidx	androidx.compose.ui	ui-graphics-android	1.14.0-SNAPSHOT	ui-graphics-android.aar	not on Maven		1.12.1	cc221182f0aad60db32de58728fe291dee7c8e404abf922e24c67cb00bb24b98	
+androidx	androidx.compose.ui	ui-text-android	1.14.0-SNAPSHOT	ui-text-android.aar	not on Maven		1.12.1	26121f5aae755fba08ba1bd07a7769bb4fc82fcd5d8ee04a9ea2bb5ab59a0bc9	
+androidx	androidx.compose.ui	ui-unit-android	1.14.0-SNAPSHOT	ui-unit-android.aar	not on Maven		1.12.1	589baab050d208328f899210c3bb558ede4e08d9c27bf83bbb4bd5021bcea8a7	
+androidx	androidx.compose.ui	ui-util-android	1.14.0-SNAPSHOT	ui-util-android.aar	not on Maven		1.12.1	0e5381572612a4c83b3b41eef5d66d3800b88d2c6258b586f8777a185e3bfc2e	
+androidx	androidx.concurrent	concurrent-futures	1.4.0-SNAPSHOT	concurrent-futures.jar	not on Maven		1.3.0	8df6ea7ee4f97041b5665ddcd7d3283d401a19602771af4ffbdaae21ed8fb151	
+androidx	androidx.constraintlayout	constraintlayout	2.3.0-SNAPSHOT	constraintlayout.aar	not on Maven		2.2.2	cfbf242c806a4d5507954c60a7a629f935cf9310cd7d0609295ccc86643417a7	
+androidx	androidx.constraintlayout	constraintlayout-core	1.2.0-SNAPSHOT	constraintlayout-core.jar	not on Maven		1.1.2	59b97d2364fd3c11097f9a0a6a07b48c38161d43d3834732d503dbff1adb72f0	
+androidx	androidx.coordinatorlayout	coordinatorlayout	1.4.0-SNAPSHOT	coordinatorlayout.aar	not on Maven		1.3.0	d79179249dd4b3255efcdf7798cb0d35281ac439ab3acd89ba41ed8e8db60484	
+androidx	androidx.core	core	1.20.0-SNAPSHOT	core.aar	not on Maven		1.19.1	2f3cdeb5cbddf53456e2df0d38e7a6dc3a10f12d92052ce64b30c1ec1b3d4dc1	
+androidx	androidx.core	core-animation	1.0.0	core-animation.aar	identical	google		abc46a4547ca674eb23c7fcbe7fcac36712521743b63cab3f00245b4b714c3b4	
+androidx	androidx.core	core-ktx	1.20.0-SNAPSHOT	core-ktx.aar	not on Maven		1.19.1	2e6c2d25ba79dae5cefb3d9b8b47344bf9cb991713111135e0f8bb58e949e0d0	
+androidx	androidx.core	core-pip	1.0.0-SNAPSHOT	core-pip.aar	not on Maven		1.0.0-alpha04 (pre-release)	5a21dc0dc1d57a4db06f4457a9e1a930b406f6f5545080a3408dada2a834643f	
+androidx	androidx.core	core-viewtree	1.1.0-SNAPSHOT	core-viewtree.aar	not on Maven		1.0.0	eb5d711f7405355c22dd426789ca9b4d7437df6305402c793546ca6ec6a24dee	
+androidx	androidx.credentials	credentials	1.7.0-SNAPSHOT	credentials.aar	not on Maven		1.6.0	b705f4f2f7cc8381c707dbc7fbd7bcea2c1c51f230477693e08414e1a6938285	
+androidx	androidx.cursoradapter	cursoradapter	1.0.0	cursoradapter.aar	identical	google		a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564	
+androidx	androidx.customview	customview	1.2.0	customview.aar	identical	google		40e98bb388cdf5c53a52699b1f78a5abdcf22de1e7c1be43b2c12fd6eadc6f9d	
+androidx	androidx.customview	customview-poolingcontainer	1.1.0	customview-poolingcontainer.aar	identical	google		e13a9752a815300b99359152468218dd4b31d8bad03e733b3421a735dd41dd37	
+androidx	androidx.datastore	datastore-android	1.3.0	datastore-android.aar	identical	google		c187fea8ed248eb25f43c71af323e6108db1d3c35945120983954f77e7769eb9	
+androidx	androidx.datastore	datastore-core-android	1.3.0	datastore-core-android.aar	identical	google		b518fe03fbc8cdd1bfaddc1c0ab8a28ba7570c42462ac0a8c6caed7a389cc875	
+androidx	androidx.datastore	datastore-core-okio-jvm	1.3.0	datastore-core-okio-jvm.jar	identical	google		54cbdc3e6d477078a2f1dba43b6328870dfee23cc356da5aa1b2271151cc29a4	
+androidx	androidx.datastore	datastore-preferences-android	1.3.0	datastore-preferences-android.aar	identical	google		1a6b2952271e6f87262338eb530561d5f4b47ef4bd9aadd2793b3beae10c69b5	
+androidx	androidx.datastore	datastore-preferences-core-android	1.3.0	datastore-preferences-core-android.aar	identical	google		45f9b2b89e8122c347e53ed1cfd6f30850777521f078d707d5b06ffa5337876a	
+androidx	androidx.datastore	datastore-preferences-external-protobuf	1.3.0	datastore-preferences-external-protobuf.jar	identical	google		59226809f449e3409058da98df384a18d24316443e4a1d657e63771b5fd87e36	
+androidx	androidx.datastore	datastore-preferences-proto	1.3.0	datastore-preferences-proto.jar	identical	google		dcc7a13558f43a9742aefcf2ece90b44f12c0f6c873d19f0b64460198e2d4eed	
+androidx	androidx.documentfile	documentfile	1.1.0	documentfile.aar	identical	google		684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822	
+androidx	androidx.drawerlayout	drawerlayout	1.3.0-SNAPSHOT	drawerlayout.aar	not on Maven		1.2.0	111011273713a9513b3794e9eca125328d3960253f449bdbc699f15d6eab634d	
+androidx	androidx.dynamicanimation	dynamicanimation	1.2.0-SNAPSHOT	dynamicanimation.aar	not on Maven		1.1.0	f1e275848666f749873cd8d2b690a9592cd123761030537f6546b552785faa2b	
+androidx	androidx.emoji2	emoji2	1.8.0-SNAPSHOT	emoji2.aar	not on Maven		1.7.0	0ba4c020586e9721fbd315ceb0a96d2c6db01b00438116f7a7b1ee0b02ef248a	
+androidx	androidx.emoji2	emoji2-views-helper	1.8.0-SNAPSHOT	emoji2-views-helper.aar	not on Maven		1.7.0	f227d56758961e573917db1834c1e715fa1ae2c0ee86241d8c10f15085da8414	
+androidx	androidx.exifinterface	exifinterface	1.5.0-SNAPSHOT	exifinterface.aar	not on Maven		1.4.2	20afb9480ffd1a1ff1ebcb8c33b0535a7d295bab0ebe3c1a7a8d626ee353abce	
+androidx	androidx.fragment	fragment	1.10.0-SNAPSHOT	fragment.aar	not on Maven		1.9.1	f34ce9603675aabc4d45203a880aab8d368136340a5d252d525e0dd9a92f606b	
+androidx	androidx.fragment	fragment-ktx	1.10.0-SNAPSHOT	fragment-ktx.aar	not on Maven		1.9.1	bd9da59f765b0b52a550dde760c52bd9b7076a106581c4baa2c2c182306e1640	
+androidx	androidx.graphics	graphics-core	1.0.4	graphics-core.aar	identical	google		7c9f2558871a7068b286d931537c579c69c7880c1070bcf66b3b8501af028aa0	
+androidx	androidx.graphics	graphics-path	1.1.0	graphics-path.aar	identical	google		d031370d45ba4129a175fe9de913328a512b01a3c267e0eaf6b9b759f35842ae	
+androidx	androidx.graphics	graphics-shapes-android	1.2.0-SNAPSHOT	graphics-shapes-android.aar	not on Maven		1.1.0	b32823472683deb2207f934e084990a1a9f4ca04db279a26664c50421fa0ba0e	
+androidx	androidx.gridlayout	gridlayout	1.1.0	gridlayout.aar	identical	google		99dae726941cb2b11d22129be7883b58e8c244150cc65f6c2529920b7cba0de8	
+androidx	androidx.ink	ink-authoring-android	1.1.0-alpha03	ink-authoring-android.aar	identical	google		54a2cdcd57cda72526c28ea195faccc2746af97e23577cd6dac79ca6a1a41c4d	
+androidx	androidx.ink	ink-brush-android	1.1.0-alpha03	ink-brush-android.aar	identical	google		504095aad40b909bf632891ae003f5a9e0830d77e4f3504ebb602faca6465f57	
+androidx	androidx.ink	ink-geometry-android	1.1.0-alpha03	ink-geometry-android.aar	identical	google		0f807186e450a32d529d63e692c89550323e8fa771b4e33fcbf2721eabe98c61	
+androidx	androidx.ink	ink-nativeloader-android	1.1.0-alpha03	ink-nativeloader-android.aar	identical	google		ec69a1cf0d81232e776b2ed8b6d8b6af5858accd276cae500c1bf3d9fdb28454	
+androidx	androidx.ink	ink-rendering-android	1.1.0-alpha03	ink-rendering-android.aar	identical	google		2b0508ef6e37d9571dc10977b313a5a23ecccb3b9392e88a40a3e64a74683f39	
+androidx	androidx.ink	ink-strokes-android	1.1.0-alpha03	ink-strokes-android.aar	identical	google		695cf260bc9b0c1da261150cea0ca0212983f4b47524ae267647bfbb6cec45fd	
+androidx	androidx.input	input-motionprediction	1.0.0	input-motionprediction.aar	identical	google		756b6e12b8c213a3c9aded33f0471ade63256453e9d897b5a6f5eedebc1207c3	
+androidx	androidx.legacy	legacy-support-core-utils	1.0.0	legacy-support-core-utils.aar	identical	google		a7edcf01d5b52b3034073027bc4775b78a4764bb6202bb91d61c829add8dd1c7	
+androidx	androidx.lifecycle	lifecycle-common-java8	2.12.0-SNAPSHOT	lifecycle-common-java8.jar	not on Maven		2.11.0	895e71679cd319db8140664d650af6695b0530f5896be9b8ecccd24cc4f6674f	
+androidx	androidx.lifecycle	lifecycle-common-jvm	2.12.0-SNAPSHOT	lifecycle-common-jvm.jar	not on Maven		2.11.0	9451d5d82abea5703bee7dba4157f24458c655caf1a72b3588e8c2dd69b9a732	
+androidx	androidx.lifecycle	lifecycle-livedata-core	2.12.0-SNAPSHOT	lifecycle-livedata-core.aar	not on Maven		2.11.0	fa046a95e9fdd1297d9d89981bf32f5d0cbd8be23d2ce1534a0b54643a8d6432	
+androidx	androidx.lifecycle	lifecycle-process	2.12.0-SNAPSHOT	lifecycle-process.aar	not on Maven		2.11.0	ab61e3677526c6982483afb3d709fce559f65c070e01b8989c27b45783f45e32	
+androidx	androidx.lifecycle	lifecycle-runtime-android	2.12.0-SNAPSHOT	lifecycle-runtime-android.aar	not on Maven		2.11.0	2eb3a8ca9c3d3d330d683eda4ea8488936086a7d64622e933f9251eeb81d99e6	
+androidx	androidx.lifecycle	lifecycle-runtime-compose-android	2.12.0-SNAPSHOT	lifecycle-runtime-compose-android.aar	not on Maven		2.11.0	e017671ec928aab94bb41af2dd3d79d8669ccf5a971d442440568072404039c4	
+androidx	androidx.lifecycle	lifecycle-runtime-ktx-android	2.12.0-SNAPSHOT	lifecycle-runtime-ktx-android.aar	not on Maven		2.11.0	3562873dc3367a1c2e808fbc49b4389cd35b6ec7b562f4905799f51f07961802	
+androidx	androidx.lifecycle	lifecycle-viewmodel-android	2.12.0-SNAPSHOT	lifecycle-viewmodel-android.aar	not on Maven		2.11.0	4fcc1ab56e1dbb9b91c83eb41654e97ba9e1bd9e79092e908fddae273566ae7a	
+androidx	androidx.lifecycle	lifecycle-viewmodel-ktx	2.12.0-SNAPSHOT	lifecycle-viewmodel-ktx.aar	not on Maven		2.11.0	1b2de5e0890409ef3fad8a4ce1a01eb3cab1310a7d98d592da6c44fba73ea2a7	
+androidx	androidx.lifecycle	lifecycle-viewmodel-savedstate-android	2.12.0-SNAPSHOT	lifecycle-viewmodel-savedstate-android.aar	not on Maven		2.11.0	a3d6ed85ee06943968fb43516390fc7e96e61af18a5b18c5bf64c8405bdefc82	
+androidx	androidx.loader	loader	1.2.0	loader.aar	identical	google		ca2108312a5b4d318b9ec4ea22aea0ec53c77f098057d0c0bbf73dae8b309e02	
+androidx	androidx.localbroadcastmanager	localbroadcastmanager	1.0.0	localbroadcastmanager.aar	identical	google		e71c328ceef5c4a7d76f2d86df1b65d65fe2acf868b1a4efd84a3f34336186d8	
+androidx	androidx.media	media	1.8.0	media.aar	identical	google		6f9c02ee24904b34e107bc2fb22cfbf103c9a49a7e9290bcda34a82fa20b5a7d	
+androidx	androidx.mediarouter	mediarouter	1.9.0-SNAPSHOT	mediarouter.aar	not on Maven		1.8.1	c477e0e9b875f9f8b5cbf80dcd284245f2809350a3579dacfe1dc4118d86feb4	
+androidx	androidx.navigationevent	navigationevent-android	1.2.0	navigationevent-android.aar	identical	google		14fade4ff0637f23fa540b4059e3e847d3882f2cd1015febcf97992bc3dbdc73	
+androidx	androidx.navigationevent	navigationevent-compose-android	1.2.0	navigationevent-compose-android.aar	identical	google		e4a00dc4b80ca81aff7e6f4db3222237614b410fe478c10be8d8665445275767	
+androidx	androidx.palette	palette	1.1.0	palette.aar	identical	google		32d84b5c82902ce051e14fc2870686548414260a46fab3642bca68a97e8b19ec	
+androidx	androidx.pdf	pdf-core	1.0.0-SNAPSHOT	pdf-core.aar	not on Maven		1.0.0-beta01 (pre-release)	21d87e2108729bdf94e0d034f47d7f18729185252318a78cbd6ac721926ebad4	
+androidx	androidx.pdf	pdf-document-service	1.0.0-SNAPSHOT	pdf-document-service.aar	not on Maven		1.0.0-beta01 (pre-release)	fa1eb9e819adcf63fb5ab362b873c303da36e05090f6482f4dca21b700b3a5b3	
+androidx	androidx.pdf	pdf-ink	1.0.0-SNAPSHOT	pdf-ink.aar	not on Maven		1.0.0-beta01 (pre-release)	2a36bea3904a4d41891ba7c4693532d610e5450de1715c50e2ddf0695e7ed287	
+androidx	androidx.pdf	pdf-viewer	1.0.0-SNAPSHOT	pdf-viewer.aar	not on Maven		1.0.0-beta01 (pre-release)	ad122360a4123543db8caba7e96b50cd2d9e3c13118a7900df4262ef03bcd0a1	
+androidx	androidx.pdf	pdf-viewer-fragment	1.0.0-SNAPSHOT	pdf-viewer-fragment.aar	not on Maven		1.0.0-beta01 (pre-release)	f49afb31256ad44b27def522693efbf2c414ec01ed563101d9c6193349158257	
+androidx	androidx.preference	preference	1.3.0-SNAPSHOT	preference.aar	not on Maven		1.2.1	a1f9405cd648f2dcb56c6ae50bfaf3bb2dc0f7f8e70f8818655ace29193964e3	
+androidx	androidx.print	print	1.1.0	print.aar	identical	google		cd7ca6c4e70412aa224b6d3ee2f03aa7db2bcbe02f71f654e9a262ce39d563e6	
+androidx	androidx.privacysandbox.ads	ads-adservices	1.1.0-beta11	ads-adservices.aar	identical	google		540a6e2dc78e370615f77f872c0f3b700a1aca1d78a4a9af7d2808050848c663	
+androidx	androidx.privacysandbox.ads	ads-adservices-java	1.1.0-beta11	ads-adservices-java.aar	identical	google		b2885db5ddad9b457f94d21041da53267da89adfe438242ba07dd11c8fa63e74	
+androidx	androidx.recyclerview	recyclerview	1.5.0-SNAPSHOT	recyclerview.aar	not on Maven		1.4.0	28a9714d1756bd0c02a744872885545f091168158e4b305dbe7a5bd390532a7c	
+androidx	androidx.resourceinspection	resourceinspection-annotation	1.1.0-SNAPSHOT	resourceinspection-annotation.jar	not on Maven		1.0.1	d9d8adce6155203e43bd8ec362e822092faa49fa4fd57dd0b72faefdf2e67283	
+androidx	androidx.savedstate	savedstate-android	1.6.0-SNAPSHOT	savedstate-android.aar	not on Maven		1.5.0	b401683ef5c7bc2bf544f3d137462a8f019690e83d9aa81fe5128f393b3879c6	
+androidx	androidx.savedstate	savedstate-compose-android	1.6.0-SNAPSHOT	savedstate-compose-android.aar	not on Maven		1.5.0	7f6f2925201618395bb67093428215b855936a176ed7617b849992bfb9039d7f	
+androidx	androidx.savedstate	savedstate-ktx	1.6.0-SNAPSHOT	savedstate-ktx.aar	not on Maven		1.5.0	e62a756e878e370a7834fd8f0817126fc3dba758251e8acf95e045857286de86	
+androidx	androidx.slidingpanelayout	slidingpanelayout	1.3.0-SNAPSHOT	slidingpanelayout.aar	not on Maven		1.2.0	724bd01a05fafb7d48288d2b778d127789ecd3c06efde2655959163a605048c5	
+androidx	androidx.startup	startup-runtime	1.2.0	startup-runtime.aar	identical	google		f51d361d17b30b09cfb9e2aebf301d113f99437cbf462a066092795fb60eddd2	
+androidx	androidx.swiperefreshlayout	swiperefreshlayout	1.2.0	swiperefreshlayout.aar	identical	google		1de8aee6173d2ca251a1126fe18d4ca7d5c0dbc7a80fb9e6ff74a3ba5e9c9b92	
+androidx	androidx.test.espresso	espresso-idling-resource	3.8.0-alpha01	espresso-idling-resource.aar	identical	google		b6c379c6dccc093e41a74db51be779b44954217076b6e3b736b024a7bcc80705	
+androidx	androidx.tracing	tracing-android	2.1.0-SNAPSHOT	tracing-android.aar	not on Maven		2.0.5	0de51b6f225be174470c25a7dc1d94ef2a3751a95c5c1f267cb0da35366efe46	
+androidx	androidx.transition	transition	1.8.0-SNAPSHOT	transition.aar	not on Maven		1.7.2	936f609360a7aaaca2948bb88065695362368fe1ec17f664b5efdeabee143856	
+androidx	androidx.vectordrawable	vectordrawable	1.2.0	vectordrawable.aar	identical	google		4f44b94817ad266ed8641b0b8fab4e6d038902a62840bb6528473222e1cdcfc9	
+androidx	androidx.vectordrawable	vectordrawable-animated	1.2.0	vectordrawable-animated.aar	identical	google		a070bdd04222a040794e5e9fa4b778d575f7b8f4e84d06d9a38ec4d599770a69	
+androidx	androidx.versionedparcelable	versionedparcelable	1.2.1	versionedparcelable.aar	identical	google		ed7224932d08144446ec8b58c56be83e04c23a0becd4f3f4d40084baab6c7b53	
+androidx	androidx.viewpager2	viewpager2	1.2.0-SNAPSHOT	viewpager2.aar	not on Maven		1.1.0	2a91a85ad1684dfcf11db2dc8508ff84bc6a0dfd0a2340d2c1d316ee1dddd45d	
+androidx	androidx.viewpager	viewpager	1.1.0	viewpager.aar	identical	google		809f12e2cc3cdd4f9537bcae1824d5617a747b43a73d56f6e8f80a9873520807	
+androidx	androidx.window.sidecar	sidecar	1.0.0-SNAPSHOT	sidecar.aar	not on Maven			a43c87d3f1e9bf27ec6b3ce89abfca3c17a8f23cfb5ecbe221fcd38afc5c2e42	
+androidx	androidx.window	window	1.6.0-SNAPSHOT	window.aar	not on Maven		1.5.1	19b5f43ddf085f90acd963b9444c59f8d3d23c588c36f5ea66a1727bc9f0929f	
+androidx	androidx.window	window-core-android	1.6.0-SNAPSHOT	window-core-android.aar	not on Maven		1.5.1	207b1a82405b46b1f10425da44b7056bb2e526a08c2aedeb01b65aebdd1dc893	
+androidx	androidx.xr.arcore	arcore	1.0.0-alpha12	arcore.aar	identical	google		95256583da83853c7f99293209b19b96a50c19dd9fcfd459d4d63926b19f3ae9	
+androidx	androidx.xr.arcore	arcore-openxr	1.0.0-alpha12	arcore-openxr.aar	identical	google		e5f8537258a6d2c009d133c11925aa9e199a76623aa3605258bb52836fec118f	
+androidx	androidx.xr.arcore	arcore-projected	1.0.0-alpha12	arcore-projected.aar	identical	google		9c18e396d3927901cedf1410f7f16d19e2ab7ba67d6b38f90e8bb929b504bf4c	
+androidx	androidx.xr.arcore	arcore-runtime	1.0.0-alpha12	arcore-runtime.aar	identical	google		8c46b81b39dbca97762a572387ecb7769d7b223e0cc562f56b4c2173133b95bf	
+androidx	androidx.xr.runtime	runtime	1.0.0-alpha12	runtime.aar	identical	google		5183795d643bb2202a34765b94994f0442e45ce38b24e7c08f72089de3a098f9	
+androidx	androidx.xr.runtime	runtime-interfaces	1.0.0-alpha12	runtime-interfaces.aar	identical	google		738761c1171fd4b6aa9361274a63a9e75b51c39dea6f08da97c6349220620893	
+androidx	androidx.xr.runtime	runtime-manifest	1.0.0-alpha12	runtime-manifest.aar	identical	google		40db2ca934bf1527dcd3ec4c8c3abb1ef48f33d6a2e273254c74994de7925f3f	
+androidx	androidx.xr.runtime	runtime-openxr	1.0.0-alpha12	runtime-openxr.aar	identical	google		623f24da425bdccf2a72e083724a624d086e7fe8462f2482c73213f80b129ae8	
+androidx	androidx.xr.scenecore	scenecore	1.0.0-alpha13	scenecore.aar	identical	google		174f2685c76d8c24a0915e3c650ca90cc942b99ec5a8cf5fae94cd07e98d7ffe	
+androidx	androidx.xr.scenecore	scenecore-runtime	1.0.0-alpha13	scenecore-runtime.aar	identical	google		ed76ab2f938bbacf4e73674354661cc0d75a678c873e7f23de6022e39eefa212	
+androidx	androidx.xr.scenecore	scenecore-spatial-core	1.0.0-alpha13	scenecore-spatial-core.aar	identical	google		f7803438fe7ba6b86dbbca9f45093487c8f48d8005966fc368fa95c20bc18ac8	
+androidx	androidx.xr.scenecore	scenecore-spatial-rendering	1.0.0-alpha13	scenecore-spatial-rendering.aar	identical	google		38c1be1397095bf03ab543d916ecc226a8ed9acc6711d828aed13e0042d9a255	

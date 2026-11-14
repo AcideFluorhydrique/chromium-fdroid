@@ -80,7 +80,20 @@ def check(row):
                            f'{len(only_r)} only on Maven; e.g. {(changed + only_l + only_r)[:3]}')
         return repo, 'different'
     if SNAPSHOT_REPO and v.endswith('-SNAPSHOT'):
-        remote = get(f"{SNAPSHOT_REPO}/{g.replace('.', '/')}/{n}/{v}/{n}-{v}{ext}")
+        vdir = f"{SNAPSHOT_REPO}/{g.replace('.', '/')}/{n}/{v}"
+        remote = get(f"{vdir}/{n}-{v}{ext}")
+        if remote is None:
+            # Snapshot repositories usually name files with a timestamp, listed in
+            # maven-metadata.xml as <snapshotVersion><extension/><value/>.
+            meta = get(f"{vdir}/maven-metadata.xml")
+            if meta:
+                vals = re.findall(r'<snapshotVersion>\s*(?:<classifier>[^<]*</classifier>\s*)?'
+                                  rf'<extension>{ext[1:]}</extension>\s*<value>([^<]+)</value>', meta.decode())
+                if vals:
+                    remote = get(f"{vdir}/{n}-{vals[-1]}{ext}")
+                row['diff'] = f'metadata: {len(vals)} {ext[1:]} snapshot(s)'
+            else:
+                row['diff'] = f'no {vdir}/maven-metadata.xml'
         row['release'] = latest_release(g, n)
         if remote is not None:
             same = hashlib.sha256(remote).digest() == hashlib.sha256(data).digest()

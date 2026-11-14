@@ -30,7 +30,8 @@ Workflow inputs:
 - `own_toolchain`: Build clang/lld, Rust/bindgen, GN, Ninja, and Node from source instead of using Google's prebuilt toolchains.
 - `package_name`: Android package name. Defaults to `org.chromium.chrome.fdroidtest`, allowing the test build to be installed alongside the regular release.
 - `toolchain_from`: Reuse a toolchain built by previous workflow runs, as `owner/repo/run_id`. Several runs can be given, separated by spaces; later ones take precedence. Saves approximately 2.5 hours. Artifacts are retained for 7 days.
-  Current complete toolchain for 157.0.8103.50 (until 2026-11-18): `AcideFluorhydrique/chromium/43082253964 AcideFluorhydrique/chromium-fdroid/43129945973` (clang and tools from the first run, Rust with Crubit from the second).
+  Debian-built toolchain for 158.0.8127.36 (until 2026-11-21): `AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951` (GN/Ninja/Node from the first run, clang and Rust from the second).
+- `variant`: Replace the non-free Java libraries with [`gms_variant.py`](.github/scripts/gms_variant.py) before `gn gen`. The full F-Droid combination is `androidx=release stubs genstubs gms=microg drop=playcore,mlkit,impress gnargs patch=cast,shape,castoff,status,fido`.
 
 GitHub Actions free runners have a maximum execution time of 6 hours per job, so the build is split into multiple workflows:
 
@@ -41,13 +42,16 @@ GitHub Actions free runners have a maximum execution time of 6 hours per job, so
 
 | Task | Status |
 |---|---|
-| Build toolchain from source (clang, Rust, GN, Ninja, Node) | Done. All components build from source (clang: 1h42m, Rust with Crubit: 2h25m, GN/Ninja/Node: 2h), and `chrome_public_apk` 157.0.8103.50 builds with them: 4 stages, about 18 hours of compiling, no errors, 490 MB APK ([run 43129945973](https://github.com/AcideFluorhydrique/chromium-fdroid/actions/runs/43129945973)). |
-| Scan source tree with `fdroid scanner` and identify remaining prebuilt binaries | Completed for version 157.0.8103.50. See [reports/157.0.8103.50](reports/157.0.8103.50/fdroid-scan.md). |
-| Generate `scandelete` rules from the build graph ([#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)) | 167 rules generated. Reduced 70,988 findings to 5,275 after applying the rules. See [build-graph.md](reports/157.0.8103.50/build-graph.md) and [scan-rules.txt](reports/157.0.8103.50/scan-rules.txt). |
-| Review the flagged files the build reads ([#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)) | Done. 7 accepted in [`fdroid/scanignore.txt`](fdroid/scanignore.txt); 5 must be replaced and are assigned to #5, #6 and #8. See [`fdroid/build-graph-review.md`](fdroid/build-graph-review.md). |
-| Replace prebuilt Android build tools with versions from `sdkmanager` / Maven (aapt2, bundletool, kotlinc, protoc, etc.); build R8 from source | Not started. |
-| Replace the 443 Maven packages in `third_party/android_deps` and `androidx` | Not started. Can be handled in batches. |
-| Remove non-open-source dependencies, including Google Play services, Firebase, ML Kit, and ARCore | Not started. |
+| Build toolchain from source (clang, Rust, GN, Ninja, Node) | Done. `chrome_public_apk` builds with it for 157.0.8103.50 ([run](https://github.com/AcideFluorhydrique/chromium-fdroid/actions/runs/43129945973), 490 MB) and 158.0.8127.36 ([run](https://github.com/AcideFluorhydrique/chromium-fdroid/actions/runs/43386249559), 493 MB). |
+| Build the toolchain inside Debian (`debian:trixie`), as F-Droid's build server would | Done ([toolchain-debian.yml](.github/workflows/toolchain-debian.yml)). Debian's clang 19 and gcc 14 as host compilers, the NDK from Debian's `sdkmanager`, Debian's OpenSSL 3 and ncursesw for Rust, Rust's stage0 from Debian's `rustup`. A full APK build with it is running. |
+| Prebuilt tools the build reads (tsc, esbuild, gperf, rollup's wasm) | Done. All built from source in Debian ([tools-from-source.yml](.github/workflows/tools-from-source.yml)); Go 1.26 for tsc is itself built from Debian's Go 1.24. |
+| Scan source tree with `fdroid scanner` | Done for 157.0.8103.50, 157.0.8103.78 and 158.0.8127.36. See [reports/](reports/). |
+| Remove flagged files the build does not read ([#3](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/3)) | Done. Generated from the build graph; [`fdroid/prune_binaries.py`](fdroid/prune_binaries.py) deletes them in a script, as suggested on fdroiddata#3911. 70,988 findings down to about 5,000. |
+| Review the flagged files the build reads ([#7](https://github.com/AcideFluorhydrique/chromium-fdroid/issues/7)) | Done. 7 accepted in [`fdroid/scanignore.txt`](fdroid/scanignore.txt), the rest replaced (see above and below). |
+| Skip DEPS entries the APK does not need | Done. 33 entries in [`fdroid/skip-deps.txt`](fdroid/skip-deps.txt); every build input still exists ([sync-trim.md](reports/158.0.8127.36/sync-trim.md)). |
+| Java libraries in `third_party/android_deps` and `androidx` | All 197 files the build reads are byte-identical to upstream: 121 to Google Maven / Maven Central, 76 to an androidx.dev CI snapshot ([maven-verify.md](reports/158.0.8127.36/maven-verify.md)). With the snapshots replaced by released androidx versions on Google Maven, the Java compiles ([java-androidx-release.md](reports/158.0.8127.36/java-androidx-release.md)). |
+| Remove Google Play services, Firebase, ML Kit, Play Core and ARCore | Java compiles with all of them replaced ([java-fdroid-full.md](reports/158.0.8127.36/java-fdroid-full.md)): microG's client libraries, stubs for what microG lacks (generated from the public API, only the classes Chromium uses), GN args for ML Kit/ARCore/VR, and small patches. An APK with this combination is being built for testing with Play services, with microG and with neither. |
+| Android build tools from `sdkmanager` / Maven (aapt2, bundletool, kotlinc, protoc, ...); R8 from source | Not started. |
 
 ## Scan Results (157.0.8103.50)
 
@@ -92,20 +96,19 @@ Notes:
 
 ## Differences from Chromium's Official Toolchain
 
-The source-built toolchain is not yet identical to Chromium's official toolchain:
+The source-built toolchain is not identical to Chromium's official toolchain:
 
-- **Clang:** No bootstrap build, PGO, ThinLTO, or BOLT. The starting point is Ubuntu's clang-18.
-- **Android RISC-V runtime:** Not built, as the NDK available on the runner does not yet support API level 37.
-- **Rust:** Crubit is not built. The starting point is the official Rust stage0 compiler.
-- **GN:** Built with GCC 13 because GN uses C++23's `std::expected`, which is not supported by clang-18 together with Ubuntu's libstdc++.
-- **OpenSSL:** Rust's OpenSSL 3.5 dependency is built from source instead of using the prebuilt 1.1.1 version from CIPD.
+- **Clang:** No bootstrap build, PGO, ThinLTO, or BOLT, so the APK builds about 30% slower. The starting point is the host clang (Ubuntu's clang-18 or Debian's clang 19).
+- **Compiler runtimes:** Not built for Android RISC-V, and (in the Debian build) not for desktop Linux on other CPUs, which an APK does not use.
+- **Rust:** Crubit builds only `cc_bindings_from_rs`, the part Chromium uses.
+- **GN:** Built with GCC, because GN uses C++23's `std::expected`, which clang-18 with Ubuntu's libstdc++ does not support.
+- **OpenSSL:** Debian's OpenSSL 3 (or 3.5 built from source) instead of the prebuilt 1.1.1 from CIPD.
 
-The following prebuilt files are still used. They are build-time dependencies only and are not included in the APK:
+Prebuilt files still used at build time (not included in the APK):
 
-- Chromium's Debian sysroot
-- `ncursesw` used by bindgen
-- Rust stage0
-- `third_party/node/node_modules`
+- Chromium's Debian sysroot for amd64, for clang's host tools
+- Rust's stage0 compiler, installed with Debian's `rustup` from static.rust-lang.org
+- `libxml2` and `zstd` source tarballs from Google's mirror (source, not binaries)
 
 ## Contributing
 

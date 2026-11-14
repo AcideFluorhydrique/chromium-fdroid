@@ -23,10 +23,19 @@ def main():
     lines = open(log, errors='replace').read().splitlines()
     errors = []
     failed = []
+    excerpts = []
     for i, line in enumerate(lines):
         m = FAILED.match(line)
         if m:
             failed.append(m[1].split()[0])
+            # Show what a non-javac step printed, so its cause is in the report.
+            if len(excerpts) < 3 and not m[1].split()[0].endswith(('.javac.jar', '.turbine.jar')):
+                out_lines = []
+                for nxt in lines[i + 2:i + 40]:
+                    if re.match(r'^\[\d+/\d+\] ', nxt) or nxt.startswith('FAILED: '):
+                        break
+                    out_lines.append(nxt[:300])
+                excerpts.append((m[1].split()[0], out_lines[:30]))
         m = ERROR.match(line)
         if not m:
             continue
@@ -66,6 +75,9 @@ def main():
     if failed:
         md += ['', '### Failed steps', '']
         md += [f'- `{f}`' for f in failed[:40]]
+    for step, out_lines in excerpts:
+        md += ['', f'<details><summary>Output of {step}</summary>', '', '```']
+        md += out_lines + ['```', '', '</details>']
     text = '\n'.join(md) + '\n'
     with open(out, 'w') as f:
         f.write(text)

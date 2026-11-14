@@ -28,7 +28,10 @@ Usage: gms_variant.py <src dir> <spec>
                  published, else the newest stable one, by overwriting the
                  CIPD file in place.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
-                 and ARCore/VR/OpenXR/Cardboard.
+                 and ARCore/OpenXR/Cardboard. enable_vr stays on: with it off,
+                 Chromium 158 for Android does not compile (omnibox_edit_model.cc
+                 calls AutocompleteMatch::GetVectorIcon, which only exists with
+                 ENABLE_VR on Android).
   patch=NAMES    Small source edits: cast (CastOptions without the Builder
                  microG lacks), shape (Shape Detection without the Vision API),
                  castoff (never add the Cast route providers, so the Cast
@@ -98,7 +101,6 @@ GEN_DEPS = [
 GN_ARGS = [
     'use_mlkit_for_aicore = false',
     'enable_arcore = false',
-    'enable_vr = false',
     'enable_openxr = false',
     'enable_cardboard = false',
 ]

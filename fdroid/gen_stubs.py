@@ -280,7 +280,9 @@ class Generator:
                 init = m.value
                 if init is None and 'final' in m.mods:
                     init = self.default_value(t)
-                    if dotted(m.type) in self.generated and dotted(m.type).startswith(dotted(k.name) + '.'):
+                    nk = self.classes.get(dotted(m.type))
+                    if nk and nk.kind == 'class' and 'abstract' not in nk.mods \
+                            and dotted(m.type).startswith(dotted(k.name) + '.'):
                         init = f'new {dotted(m.type)}()'
                 if 'final' in m.mods and 'static' in m.mods:
                     mm.append('final')
@@ -415,6 +417,7 @@ def main():
         parsed = reachable(parsed, open(args.roots).read().split(), known)
     generated = {dotted(n) for n in parsed}
     gen = Generator(known, generated, args.classpath, cp_classes)
+    gen.classes = {dotted(n): k for n, k in parsed.items()}
     nested = collections.defaultdict(list)
     tops = []
     for name, k in parsed.items():

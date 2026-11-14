@@ -78,6 +78,16 @@ def check(row):
             changed = sorted(k for k in set(a) & set(b) if a[k] != b[k])
             row['diff'] = (f'{len(changed)} changed, {len(only_l)} only in CIPD, '
                            f'{len(only_r)} only on Maven; e.g. {(changed + only_l + only_r)[:3]}')
+        if v.endswith('-jre'):
+            # Guava publishes -jre and -android flavors of each version.
+            alt = v[:-4] + '-android'
+            r2 = get(f"{base}/{g.replace('.', '/')}/{n}/{alt}/{n}-{alt}{ext}")
+            if r2 is not None and hashlib.sha256(r2).digest() == hashlib.sha256(data).digest():
+                row['diff'] = f'is {n}-{alt}{ext}, not -jre'
+                return repo, 'identical'
+            if r2 is not None and entries(r2) == a:
+                row['diff'] = f'same contents as {n}-{alt}{ext}'
+                return repo, 'same contents'
         return repo, 'different'
     if SNAPSHOT_REPO and v.endswith('-SNAPSHOT'):
         vdir = f"{SNAPSHOT_REPO}/{g.replace('.', '/')}/{n}/{v}"

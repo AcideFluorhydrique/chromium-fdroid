@@ -101,7 +101,7 @@ jobs:
 
   stage2:
     needs: [resolve, stage1]
-    if: needs.stage1.outputs.done != 'true'
+    if: ${{ !cancelled() && needs.stage1.result == 'success' && needs.stage1.outputs.done != 'true' }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 2
@@ -112,7 +112,7 @@ jobs:
 
   stage3:
     needs: [resolve, stage2]
-    if: needs.stage2.outputs.done != 'true'
+    if: ${{ !cancelled() && needs.stage2.result == 'success' && needs.stage2.outputs.done != 'true' }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 3
@@ -123,7 +123,7 @@ jobs:
 
   stage4:
     needs: [resolve, stage3]
-    if: needs.stage3.outputs.done != 'true'
+    if: ${{ !cancelled() && needs.stage3.result == 'success' && needs.stage3.outputs.done != 'true' }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 4
@@ -134,7 +134,7 @@ jobs:
 
   stage5:
     needs: [resolve, stage4]
-    if: needs.stage4.outputs.done != 'true'
+    if: ${{ !cancelled() && needs.stage4.result == 'success' && needs.stage4.outputs.done != 'true' }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 5
@@ -145,7 +145,7 @@ jobs:
 
   stage6:
     needs: [resolve, stage5]
-    if: needs.stage5.outputs.done != 'true'
+    if: ${{ !cancelled() && needs.stage5.result == 'success' && needs.stage5.outputs.done != 'true' }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 6

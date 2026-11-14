@@ -15,6 +15,26 @@ for i in 1 2 3 4 5; do
 done
 git config --global --add safe.directory '*'
 
+# Build Go $1 (e.g. 1.26 or 1.26.2) from source, bootstrapped from Debian's
+# golang-go, through the newest 1.24.x if Debian's Go is too old. Prints GOROOT.
+build_go() {
+  local want=$1 boot=/usr/lib/go tag
+  tag=$(git ls-remote --tags https://github.com/golang/go | grep -oP "refs/tags/\Kgo${want//./\\.}(\.[0-9]+)?$" | sort -V | tail -1)
+  [ -n "$tag" ] || { echo "no Go tag for $want" >&2; return 1; }
+  build_one() {  # tag bootstrap-root
+    rm -rf "go-$1" && git clone -q --depth 1 -b "$1" https://github.com/golang/go.git "go-$1" >&2
+    (cd "go-$1/src" && GOROOT_BOOTSTRAP=$2 GOTOOLCHAIN=local ./make.bash >&2)
+  }
+  if ! build_one "$tag" "$boot"; then
+    local mid
+    mid=$(git ls-remote --tags https://github.com/golang/go | grep -oP 'refs/tags/\Kgo1\.24\.[0-9]+$' | sort -V | tail -1)
+    echo "Debian's Go cannot bootstrap $tag; building $mid first" >&2
+    build_one "$mid" "$boot"
+    build_one "$tag" "$PWD/go-$mid"
+  fi
+  echo "$PWD/go-$tag"
+}
+
 gitiles() { curl -fsSL "https://chromium.googlesource.com/$1?format=TEXT" | base64 -d; }
 deps=$(gitiles "chromium/src/+/refs/tags/$VERSION/DEPS")
 mkdir -p pkg
@@ -43,8 +63,11 @@ tsc)
   tag=$(git ls-remote --tags https://github.com/microsoft/typescript-go | grep -oP "refs/tags/\K(typescript/)?v?${v//./\\.}$" | head -1 || true)
   [ -n "$tag" ] || { echo "no typescript-go tag for $v; tags:"; git ls-remote --tags https://github.com/microsoft/typescript-go | tail -20; exit 1; }
   git clone -q --depth 1 -b "$tag" https://github.com/microsoft/typescript-go.git tsgo-src
-  (cd tsgo-src && go version && grep -E '^(go|toolchain) ' go.mod \
-    && CGO_ENABLED=0 go build -trimpath -o ../pkg/tsc ./cmd/tsgo)
+  gover=$(grep -oP '^toolchain go\K[0-9.]+' tsgo-src/go.mod || grep -oP '^go \K[0-9.]+' tsgo-src/go.mod)
+  echo "typescript-go needs Go $gover; Debian has $(go version)"
+  goroot=$(build_go "$gover")
+  export PATH="$goroot/bin:$PATH"
+  (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -o ../pkg/tsc ./cmd/tsgo)
   ver="tsc $(pkg/tsc --version 2>&1 | head -1)"
   ;;
 esac

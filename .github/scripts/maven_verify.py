@@ -79,12 +79,36 @@ def check(row):
             row['diff'] = (f'{len(changed)} changed, {len(only_l)} only in CIPD, '
                            f'{len(only_r)} only on Maven; e.g. {(changed + only_l + only_r)[:3]}')
         return repo, 'different'
+    if SNAPSHOT_REPO and v.endswith('-SNAPSHOT'):
+        remote = get(f"{SNAPSHOT_REPO}/{g.replace('.', '/')}/{n}/{v}/{n}-{v}{ext}")
+        row['release'] = latest_release(g, n)
+        if remote is not None:
+            same = hashlib.sha256(remote).digest() == hashlib.sha256(data).digest()
+            if not same and entries(data) is not None and entries(data) == entries(remote):
+                return 'androidx.dev', 'snapshot, same contents'
+            return 'androidx.dev', 'snapshot, identical' if same else 'snapshot, different'
     return '', 'not on Maven'
+
+
+SNAPSHOT_REPO = None
+
+
+def latest_release(g, n):
+    meta = get(f"{REPOS['google']}/{g.replace('.', '/')}/{n}/maven-metadata.xml")
+    if not meta:
+        return ''
+    vs = re.findall(r'<version>([^<]+)</version>', meta.decode())
+    stable = [v for v in vs if re.fullmatch(r'[0-9.]+', v)]
+    return (stable or vs or [''])[-1] + ('' if stable else ' (pre-release)')
 
 
 def main():
     src, inputs_file, out_dir = sys.argv[1:4]
     os.makedirs(out_dir, exist_ok=True)
+    global SNAPSHOT_REPO
+    m = re.search(r"https://androidx\.dev/snapshots/builds/\d+/artifacts/repository",
+                  open(os.path.join(src, 'third_party/androidx/build.gradle')).read())
+    SNAPSHOT_REPO = m[0] if m else None
     used = collections.defaultdict(set)
     for line in open(inputs_file):
         p = line.strip()
@@ -111,23 +135,29 @@ def main():
             row['repo'], row['status'] = repo, status
 
     with open(os.path.join(out_dir, 'maven-verify.tsv'), 'w') as f:
-        f.write('dir\tgroup\tname\tversion\tfile\tstatus\trepo\tsha256\tdiff\n')
+        f.write('dir\tgroup\tname\tversion\tfile\tstatus\trepo\trelease\tsha256\tdiff\n')
         for r in rows:
             f.write(f"{r['dir']}\t{r['group']}\t{r['name']}\t{r['version']}\t{r['file']}\t"
-                    f"{r['status']}\t{r['repo']}\t{r['sha256']}\t{r.get('diff', '')}\n")
+                    f"{r['status']}\t{r['repo']}\t{r.get('release', '')}\t{r['sha256']}\t{r.get('diff', '')}\n")
 
     counts = collections.Counter(r['status'] for r in rows)
     lines = ['## CIPD Java libraries vs Maven', '',
              f'{len(rows)} files of {sum(len(v) for v in used.values())} libraries that chrome_public_apk reads.', '',
              '| result | files |', '|---|---:|']
-    for s in ('identical', 'same contents', 'different', 'not on Maven'):
+    statuses = ('identical', 'same contents', 'different', 'snapshot, identical',
+                'snapshot, same contents', 'snapshot, different', 'not on Maven')
+    for s in statuses:
         lines.append(f'| {s} | {counts.get(s, 0)} |')
-    for s in ('different', 'not on Maven', 'same contents'):
+    if SNAPSHOT_REPO:
+        lines += ['', f'Snapshots are compared with {SNAPSHOT_REPO}; "release" is the newest '
+                  'version of that artifact on Google Maven.']
+    for s in statuses[1:]:
         sel = [r for r in rows if r['status'] == s]
         if sel:
-            lines += ['', f'### {s}', '', '| artifact | version | file | detail |', '|---|---|---|---|']
-            lines += [f"| `{r['group']}:{r['name']}` | {r['version']} | {r['file']} | {r.get('diff', r['repo'])} |"
-                      for r in sel]
+            lines += ['', f'### {s}', '', '| artifact | version | file | release | detail |',
+                      '|---|---|---|---|---|']
+            lines += [f"| `{r['group']}:{r['name']}` | {r['version']} | {r['file']} | "
+                      f"{r.get('release', '')} | {r.get('diff', r['repo'])} |" for r in sel]
     open(os.path.join(out_dir, 'maven-verify.md'), 'w').write('\n'.join(lines) + '\n')
     print('\n'.join(lines[:10]))
 

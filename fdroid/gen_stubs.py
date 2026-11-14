@@ -192,6 +192,7 @@ class Generator:
 
     def resolvable(self, t):
         for n in type_names(t):
+            n = dotted(n)
             if OBFUSCATED.search(n) or n.startswith('kotlin.jvm.internal.'):
                 return False
             if n in self.known or n in self.generated:
@@ -355,6 +356,7 @@ def reachable(parsed, tokens, known):
         # IdentityCredentialManager.Companion), which the roots do not spell out.
         todo += [c for c in parsed if c.startswith(n + '$') and '$' not in c[len(n) + 1:]]
         for r in refs:
+            r = dotted(r)
             if r in by_dotted and r not in known:
                 todo.append(by_dotted[r])
     # Nested classes are emitted inside their outer class, so keep the outers.
@@ -386,6 +388,8 @@ def main():
     known = set()
     for j in args.exclude_jar:
         known |= jar_classes(j)
+    known_raw = known
+    known = {dotted(n) for n in known}
 
     tmp = tempfile.mkdtemp()
     parsed = {}
@@ -395,7 +399,7 @@ def main():
         data = download(coord)
         jar = os.path.join(tmp, f'{coord[1]}.jar')
         open(jar, 'wb').write(data)
-        names = sorted(jar_classes(jar) - known)
+        names = sorted(jar_classes(jar) - known_raw)
         if only:
             names = [n for n in names if any(n == o or n.startswith(o + '$') for o in only)]
         for i in range(0, len(names), 200):

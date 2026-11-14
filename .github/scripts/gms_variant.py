@@ -514,6 +514,9 @@ def main():
         elif key == 'androidx':
             assert value == 'release', item
             androidx_releases(src)
+            # The committed .info files describe the snapshot .aars; let gn gen
+            # regenerate them for the releases (Chromium's own switch for this).
+            args.append('update_android_aar_prebuilts = true')
         elif key == 'gnargs':
             args += GN_ARGS
         elif key == 'patch':

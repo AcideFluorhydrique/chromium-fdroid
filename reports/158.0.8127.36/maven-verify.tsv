@@ -43,7 +43,7 @@ android_deps	com.google.firebase	firebase-installations-interop	18.0.0	firebase-
 android_deps	com.google.firebase	firebase-measurement-connector	19.0.0	firebase-measurement-connector.aar	identical	google		dba74d6bf94647ee397bf7afb2ab07f6fe8d13157e56785fa540a2a13ed82c99	
 android_deps	com.google.firebase	firebase-messaging	26.0.1	firebase-messaging.aar	identical	google		2f9b97a0f5646d428d53fef82e4ec9568af6bbe3f7c3e4299f399a8751dbef44	
 android_deps	com.google.guava	failureaccess	1.0.3	failureaccess.jar	identical	central		cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb	
-android_deps	com.google.guava	guava	33.7.2-jre	guava.jar	different	central		b949fe975a32421c1a2633c07a4f1578b462f2f467668aa0a4023c5ff7c4a808	831 changed, 36 only in CIPD, 68 only on Maven; e.g. ['META-INF/MANIFEST.MF', 'META-INF/maven/com.google.guava/guava/pom.properties', 'META-INF/maven/com.google.guava/guava/pom.xml']
+android_deps	com.google.guava	guava	33.7.2-jre	guava.jar	identical	central		b949fe975a32421c1a2633c07a4f1578b462f2f467668aa0a4023c5ff7c4a808	is guava-33.7.2-android.jar, not -jre
 android_deps	com.google.j2objc	j2objc-annotations	3.1	j2objc-annotations.jar	identical	central		84d3a150518485f8140ea99b8a985656749629f6433c92b80c75b36aba3b099b	
 android_deps	com.google.mlkit	common	18.11.0	common.aar	identical	google		66408a08dbb2465687ff5dd0c8f6410b56549ce3ecf449d9096f3712282131d0	
 android_deps	com.google.mlkit	genai-common	1.0.0-beta4	genai-common.aar	identical	google		2926c5e3f19fc679a0eba8cab2edadeb0c0f1ae2ba14de9bac6bd7a352ae5a56	

@@ -64,7 +64,9 @@ GEN_ARTIFACTS = [
     'com.google.android.gms:play-services-cast:22.2.0',
     'com.google.android.gms:play-services-cast-framework:22.2.0',
     'com.google.android.gms:play-services-identity-credentials:16.0.0-alpha12',
-    'com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall',
+    'com.google.android.gms:play-services-base:18.11.1:com.google.android.gms.common.api.internal.TaskApiCall,'
+    'com.google.android.gms.common.internal.GmsClient',
+    'com.google.android.gms:play-services-basement:18.12.0:com.google.android.gms.common.internal.GmsClient',
 ]
 # Compile-time classpath for the generated stubs (Maven, the versions are not critical).
 GEN_CLASSPATH = [
@@ -83,6 +85,8 @@ GEN_DEPS = [
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_appcompat_appcompat_java'),
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_java'),
     ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_annotation_annotation_jvm_java'),
+    # play-services-identity-credentials brings androidx.credentials along.
+    ('third_party/androidx/BUILD.gn', '//third_party/androidx', 'androidx_credentials_credentials_java'),
     ('third_party/kotlin_stdlib/BUILD.gn', '//third_party/kotlin_stdlib', 'kotlin_stdlib_java'),
 ]
 GN_ARGS = [

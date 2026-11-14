@@ -320,7 +320,7 @@ class Generator:
                 body = '{ throw new UnsupportedOperationException("not available in this build"); }'
                 out.append(f'{indent}  {" ".join(mm)} {tp + " " if tp else ""}{rt} {m.name}({params}){throws} {body}')
         if k.kind == 'class' and not is_enum and not is_annotation and not has_noarg:
-            out.append(f'{indent}  protected {simple}() {{{sup_call} }}')
+            out.append(f'{indent}  public {simple}() {{{sup_call} }}')
         for n in nested.get(k.name, []):
             out += self.emit(n, nested, indent + '  ')
         out.append(f'{indent}}}')
@@ -351,6 +351,9 @@ def reachable(parsed, tokens, known):
                 refs |= type_names(t)
         if '$' in n:
             refs.add(dotted(n.rsplit('$', 1)[0]))
+        # Nested classes are often used through the outer name (RemoteMediaClient.Callback,
+        # IdentityCredentialManager.Companion), which the roots do not spell out.
+        todo += [c for c in parsed if c.startswith(n + '$') and '$' not in c[len(n) + 1:]]
         for r in refs:
             if r in by_dotted and r not in known:
                 todo.append(by_dotted[r])

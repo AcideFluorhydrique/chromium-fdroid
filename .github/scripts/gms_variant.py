@@ -381,7 +381,12 @@ def androidx_releases(src):
             except urllib.error.HTTPError:
                 missing.append(f'{g}:{n}:{rel}{ext}')
                 continue
-            with open(os.path.join(d, f), 'wb') as out:
+            path = os.path.join(d, f)
+            # CIPD installs its files read-only (and may hard-link them from its cache).
+            os.chmod(d, 0o755)
+            os.chmod(path, 0o644)
+            os.unlink(path)
+            with open(path, 'wb') as out:
                 out.write(data)
         done.append(f'{g}:{n} {v} -> {rel}')
     print(f'androidx: {len(done)} snapshots replaced with releases, {len(missing)} not on Google Maven',

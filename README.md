@@ -30,7 +30,7 @@ Workflow inputs:
 - `own_toolchain`: Build clang/lld, Rust/bindgen, GN, Ninja, and Node from source instead of using Google's prebuilt toolchains.
 - `package_name`: Android package name. Defaults to `org.chromium.chrome.fdroidtest`, allowing the test build to be installed alongside the regular release.
 - `toolchain_from`: Reuse a toolchain built by previous workflow runs, as `owner/repo/run_id`. Several runs can be given, separated by spaces; later ones take precedence. Saves approximately 2.5 hours. Artifacts are retained for 7 days.
-  Debian-built toolchain for 158.0.8127.36 (until 2026-11-21): `AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951` (GN/Ninja/Node from the first run, clang and Rust from the second).
+  Debian-built toolchain for 158.0.8127.36 (until 2026-11-21): `AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951 AcideFluorhydrique/chromium-fdroid/43711783516` (GN/Ninja/Node from the first run, Rust from the second, clang built against the Debian system from the third).
 - `variant`: Replace the non-free Java libraries with [`gms_variant.py`](.github/scripts/gms_variant.py) before `gn gen`. The full F-Droid combination is `androidx=release stubs genstubs gms=microg drop=playcore,mlkit,impress gnargs patch=cast,shape,castoff,status,fido`.
 
 GitHub Actions free runners have a maximum execution time of 6 hours per job, so the build is split into multiple workflows:

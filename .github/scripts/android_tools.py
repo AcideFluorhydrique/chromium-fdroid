@@ -37,7 +37,7 @@ MAVEN = {
     'android_build_tools/manifest_merger': ('com.android.tools.build:manifest-merger', 'manifest-merger.jar', None),
     # Only checked for the version being published (CIPD repackages these).
     'android_build_tools/lint': ('com.android.tools.lint:lint', None, None),
-    'android_build_tools/signflinger': ('com.android.tools:signflinger', None, None),
+    'android_build_tools/signflinger': ('com.android:signflinger', 'signflinger.jar', None),
     'android_build_tools/error_prone': ('com.google.errorprone:error_prone_core', None, None),
     'android_build_tools/nullaway': ('com.uber.nullaway:nullaway', None, None),
     'kotlinc/current': ('org.jetbrains.kotlin:kotlin-compiler', None, None),
@@ -104,7 +104,27 @@ def maven_check(cipd_dir, tool, tags, src):
     data = open(path, 'rb').read()
     other = jar if inner is None else zipfile.ZipFile(io.BytesIO(jar)).read(inner)
     same = hashlib.sha256(data).digest() == hashlib.sha256(other).digest()
-    return (f'{v} on {repo}, ' + ('identical' if same else 'different')), v
+    if same:
+        return f'{v} on {repo}, identical', v
+    note = f'{v} on {repo}, different'
+    if tool == 'android_build_tools/bundletool':
+        rel = get(f'https://github.com/google/bundletool/releases/download/{v}/bundletool-all-{v}.jar')
+        if rel is not None:
+            note += '; GitHub release bundletool-all ' + (
+                'identical' if hashlib.sha256(rel).digest() == hashlib.sha256(data).digest()
+                else 'different, ' + zip_diff(data, rel))
+    elif zipfile.is_zipfile(io.BytesIO(data)) and zipfile.is_zipfile(io.BytesIO(other)):
+        note += ', ' + zip_diff(data, other)
+    return note, v
+
+
+def zip_diff(a, b):
+    za = {i.filename: i.CRC for i in zipfile.ZipFile(io.BytesIO(a)).infolist() if not i.is_dir()}
+    zb = {i.filename: i.CRC for i in zipfile.ZipFile(io.BytesIO(b)).infolist() if not i.is_dir()}
+    common = set(za) & set(zb)
+    changed = sum(1 for k in common if za[k] != zb[k])
+    return (f'CIPD has {len(za)} entries, the other {len(zb)}; {len(common)} shared, '
+            f'{changed} of them differ')
 
 
 def main():

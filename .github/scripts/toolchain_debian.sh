@@ -3,7 +3,7 @@
 # Debian's packages as the starting point (F-Droid's build server runs Debian).
 #
 # Usage (from the workspace that holds src/ and ci/):
-#   toolchain_debian.sh clang|rust|rust-rustup|tools
+#   toolchain_debian.sh clang|clang-hostsys|rust|rust-rustup|tools
 #
 # Writes pkg/<part>.tar.zst, the same artifact layout as toolchain.yml.
 set -euo pipefail
@@ -32,7 +32,25 @@ clang --version | head -1
 gcc --version | head -1
 
 case "$part" in
-clang)
+clang|clang-hostsys)
+  if [ "$part" = clang-hostsys ]; then
+    # Build clang's host tools against this Debian system instead of
+    # Chromium's prebuilt amd64 sysroot, with libxml2 and zstd from upstream.
+    export OWN_HOST_SYSROOT=/
+    apt_install libzstd-dev libxml2-dev
+    up=$ws/upstream-src
+    mkdir -p "$up"
+    xml=$(grep -oP "^LIBXML2_VERSION = '\K[^']+" src/tools/clang/scripts/build.py)
+    zst=$(grep -oP "^ZSTD_VERSION = '\K[^']+" src/tools/clang/scripts/build.py)
+    curl -fsSL "https://gitlab.gnome.org/GNOME/libxml2/-/archive/${xml#libxml2-}/$xml.tar.gz" -o "$up/$xml.tar.gz"
+    curl -fsSL "https://github.com/facebook/zstd/releases/download/v${zst#zstd-}/$zst.tar.gz" -o "$up/$zst.tar.gz"
+    for f in "$xml.tar.gz" "$zst.tar.gz"; do
+      g=$(curl -fsSL "https://commondatastorage.googleapis.com/chromium-browser-clang/tools/$f" | sha256sum | cut -c1-64)
+      u=$(sha256sum "$up/$f" | cut -c1-64)
+      echo "$f upstream $u, Google's copy $g: $([ "$u" = "$g" ] && echo identical || echo DIFFERENT)"
+    done
+    export OWN_TOOLS_URL=file://$up
+  fi
   # The Android NDK from F-Droid's sdkmanager, at the version Chromium pins.
   apt_install sdkmanager
   ndk=$(grep -oP "'android_ndk_version': Str\('\d+@\K[0-9.]+" src/DEPS)
@@ -55,6 +73,10 @@ clang)
 
   d=src/third_party/llvm-build/Release+Asserts
   "$d/bin/clang" --version | head -1
+  # Newest glibc symbol versions the binaries need (Ubuntu 24.04 has 2.39).
+  for b in clang lld llvm-ar; do
+    [ -f "$d/bin/$b" ] && echo "$b needs $(objdump -T "$d/bin/$b" | grep -oP 'GLIBC_\K[0-9.]+' | sort -V | tail -1)" || true
+  done
   mkdir -p pkg
   tar -C src -cf - "third_party/llvm-build/Release+Asserts/bin" \
     "third_party/llvm-build/Release+Asserts/lib/clang" \

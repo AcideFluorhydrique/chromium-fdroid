@@ -106,9 +106,10 @@ The source-built toolchain is not identical to Chromium's official toolchain:
 
 Prebuilt files still used at build time (not included in the APK):
 
-- Chromium's Debian sysroot for amd64, for clang's host tools
 - Rust's stage0 compiler, installed with Debian's `rustup` from static.rust-lang.org
-- `libxml2` and `zstd` source tarballs from Google's mirror (source, not binaries)
+- The NDK, installed with Debian's `sdkmanager` and checked against F-Droid's transparency log
+
+With `clang-hostsys` in [toolchain-debian.yml](.github/workflows/toolchain-debian.yml), clang's host tools are built against the Debian system instead of Chromium's amd64 sysroot (the binaries need glibc 2.38, so they still run on Ubuntu 24.04), and libxml2 and zstd come from GNOME GitLab and GitHub (byte-identical to Google's copies). Nothing is downloaded from Google's storage any more.
 
 ## Contributing
 

@@ -91,9 +91,10 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 
 還在用的預編譯檔（只在編譯時用到，不會進 APK）：
 
-- Chromium 的 amd64 Debian sysroot（clang 自己的工具用）
 - Rust 的 stage0，用 Debian 的 `rustup` 從 static.rust-lang.org 安裝
-- Google 鏡像上的 `libxml2` 和 `zstd` 原始碼壓縮檔（是原始碼，不是二進位檔）
+- NDK，用 Debian 的 `sdkmanager` 安裝，並對照 F-Droid 的 transparency log 檢查
+
+[toolchain-debian.yml](.github/workflows/toolchain-debian.yml) 的 `clang-hostsys` 讓 clang 自己的工具改對 Debian 系統編，不用 Chromium 的 amd64 sysroot（編出來的程式只需要 glibc 2.38，Ubuntu 24.04 上照樣能跑）；libxml2 和 zstd 改從 GNOME GitLab 和 GitHub 下載（和 Google 鏡像上的逐位元組相同）。現在完全不從 Google 的儲存空間下載東西。
 
 ## 一起幫忙
 

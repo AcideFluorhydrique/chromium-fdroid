@@ -74,6 +74,16 @@ jobs:
           docker run --rm -e VERSION -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" \
             debian:trixie bash ci/.github/scripts/toolchain_debian.sh "${{ matrix.part }}"
 
+      # Debian's glibc is newer than the runner's: check the clang built against
+      # it still runs on Ubuntu 24.04, where the Chromium build happens.
+      - name: Run the new clang on the runner
+        if: startsWith(matrix.part, 'clang')
+        run: |
+          d="src/third_party/llvm-build/Release+Asserts/bin"
+          ldd --version | head -1
+          "$d/clang" --version | head -1
+          echo 'int main(){return 0;}' > t.c && "$d/clang" -fuse-ld=lld -o t t.c && ./t && echo "compiled and linked a program on the runner"
+
       - uses: actions/upload-artifact@v4
         with:
           name: chromium-tc-${{ matrix.part }}

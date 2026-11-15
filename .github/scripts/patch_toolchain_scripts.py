@@ -74,6 +74,19 @@ def main():
         "    sysroot = os.path.dirname(os.path.dirname(GetWinSDKDir()))\n",
     )
 
+    # With OWN_TOOLS_URL set (e.g. file:///.../upstream-src), libxml2 and zstd
+    # are taken from there: tarballs downloaded from their upstream projects
+    # instead of the copies on Google's storage.
+    if os.environ.get('OWN_TOOLS_URL'):
+        old = "DownloadAndUnpack(CDS_URL + '/tools/' + zip_name, dirs.unzip_dir)"
+        with open(build_py) as f:
+            text = f.read()
+        if text.count(old) != 2:
+            sys.exit(f'{build_py}: expected the libxml2 and zstd downloads')
+        with open(build_py, 'w') as f:
+            f.write(text.replace(old, "DownloadAndUnpack(os.environ['OWN_TOOLS_URL'] + '/' + zip_name, dirs.unzip_dir)"))
+        print(f'patched {build_py}: libxml2 and zstd from OWN_TOOLS_URL')
+
     if '--rust' in sys.argv[2:]:
         patch(
             os.path.join(src, 'tools/rust/build_rust.py'),

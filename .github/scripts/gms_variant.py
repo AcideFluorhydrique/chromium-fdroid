@@ -7,6 +7,7 @@ Usage: gms_variant.py <src dir> <spec>
   gms=microg     Provide the Play services/Firebase targets from a new
                  //fdroid_gms directory: targets microG publishes a library for
                  (org.microg.gms on Maven Central) use it, the rest are empty.
+                 Versions and sha256 are pinned in fdroid/microg.lock.
   gms=drop       Same directory, but every target is empty.
   drop=GROUPS    Turn the targets of these groups in
                  //third_party/android_deps into empty java_groups. Groups:
@@ -17,10 +18,15 @@ Usage: gms_variant.py <src dir> <spec>
   stubs          Build fdroid/stubs (Play Core, Firebase and InstanceID API
                  surface implemented as "not available") as //fdroid_stubs and
                  use it for those targets instead of empty groups.
-  genstubs       Also generate stubs (fdroid/gen_stubs.py) from Google's own
-                 jars for the APIs microG does not publish (Cast,
+  genstubs       Also add stubs for the APIs microG does not publish (Cast,
                  identity credentials), only the classes Chromium's Java uses,
-                 into //fdroid_stubs. microG's Cast libraries are left out.
+                 to //fdroid_stubs. microG's Cast libraries are left out.
+                 The stubs are the Java sources committed in fdroid/stubs-gen
+                 (written by stubgen.yml), so the build downloads none of
+                 Google's jars. genstubs=download generates them on the spot
+                 with fdroid/gen_stubs.py from Google's jars instead, as
+                 stubgen.yml does; it is also the fallback while
+                 fdroid/stubs-gen does not exist.
   androidx=release
                  Replace every androidx -SNAPSHOT library (from androidx.dev
                  CI builds, not on Google Maven) with the closest release on
@@ -47,6 +53,7 @@ An empty java_group keeps GN happy, so javac then reports every place in
 Chromium that still uses the removed library.
 """
 
+import hashlib
 import io
 import shutil
 import os
@@ -137,44 +144,99 @@ def latest(group, artifact):
     return v
 
 
-def microg_jars(artifacts, out_jar):
+MICROG_LOCK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'fdroid', 'microg.lock')
+
+
+def read_microg_lock():
+    """fdroid/microg.lock: "group:artifact:version packaging sha256" per line."""
+    lock = {}
+    if os.path.exists(MICROG_LOCK):
+        for line in open(MICROG_LOCK):
+            line = line.split('#', 1)[0].split()
+            if line:
+                g, a, v = line[0].split(':')
+                lock[(g, a)] = (v, line[1], line[2])
+    return lock
+
+
+def microg_jars(artifacts, out_jar, proguard_out=None):
     """Download the microG libraries and their org.microg dependencies and
-    merge their classes into one jar."""
+    merge their classes into one jar. The AARs' consumer ProGuard rules
+    (proguard.txt, e.g. the keep rules for microG's reflection-based
+    SafeParcelables) are concatenated into proguard_out for R8.
+
+    Versions and sha256 come from fdroid/microg.lock; a library that is not
+    in it, or whose download does not match, stops the build. With
+    MICROG_LOCK_UPDATE=1 the newest versions on Maven Central are resolved
+    instead and the lock file is rewritten."""
+    update = os.environ.get('MICROG_LOCK_UPDATE') == '1'
+    lock = {} if update else read_microg_lock()
     seen = {}
-    todo = [('org.microg.gms', a, None) for a in artifacts]
+    todo = sorted((('org.microg.gms', a) for a in artifacts), reverse=True)
     while todo:
-        group, artifact, version = todo.pop()
+        group, artifact = todo.pop()
         if (group, artifact) in seen:
             continue
-        version = version or latest(group, artifact)
+        if update:
+            version = latest(group, artifact)
+        elif (group, artifact) in lock:
+            version = lock[(group, artifact)][0]
+        else:
+            sys.exit(f'{group}:{artifact} is not in fdroid/microg.lock; '
+                     'run gms_variant.py with MICROG_LOCK_UPDATE=1 and commit the lock file')
         base = f"{MAVEN}/{group.replace('.', '/')}/{artifact}/{version}/{artifact}-{version}"
         pom = ET.fromstring(fetch(base + '.pom'))
         ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
         packaging = pom.findtext('m:packaging', 'jar', ns)
         data = fetch(base + ('.aar' if packaging == 'aar' else '.jar'))
-        seen[(group, artifact)] = (version, packaging, data)
+        digest = hashlib.sha256(data).hexdigest()
+        if not update and (packaging, digest) != lock[(group, artifact)][1:]:
+            sys.exit(f'{group}:{artifact}:{version}: {packaging} sha256 {digest} '
+                     f'does not match fdroid/microg.lock')
+        seen[(group, artifact)] = (version, packaging, data, digest)
         for dep in pom.findall('m:dependencies/m:dependency', ns):
             g = dep.findtext('m:groupId', '', ns)
             if g.startswith('org.microg') and dep.findtext('m:scope', 'compile', ns) in ('compile', 'runtime'):
-                todo.append((g, dep.findtext('m:artifactId', '', ns), dep.findtext('m:version', None, ns)))
+                todo.append((g, dep.findtext('m:artifactId', '', ns)))
+    if update:
+        # Keep entries other variants use (e.g. Cast without genstubs).
+        merged = read_microg_lock()
+        merged.update({k: (v[0], v[1], v[3]) for k, v in seen.items()})
+        with open(MICROG_LOCK, 'w') as f:
+            f.write('# microG client libraries from Maven Central, used by gms_variant.py (gms=microg).\n'
+                    '# group:artifact:version packaging sha256. Regenerate with MICROG_LOCK_UPDATE=1.\n')
+            for (g, a), (v, pk, d) in sorted(merged.items()):
+                f.write(f'{g}:{a}:{v} {pk} {d}\n')
 
     names = set()
+    rules = []
     with zipfile.ZipFile(out_jar, 'w', zipfile.ZIP_DEFLATED) as out:
-        for (group, artifact), (version, packaging, data) in sorted(seen.items()):
-            print(f'microG: {group}:{artifact}:{version} ({packaging})', file=sys.stderr)
+        for (group, artifact), (version, packaging, data, digest) in sorted(seen.items()):
+            print(f'microG: {group}:{artifact}:{version} ({packaging}) sha256 {digest[:16]}', file=sys.stderr)
             jars = []
             if packaging == 'aar':
                 aar = zipfile.ZipFile(io.BytesIO(data))
-                jars = [aar.read(n) for n in aar.namelist()
+                jars = [aar.read(n) for n in sorted(aar.namelist())
                         if n == 'classes.jar' or (n.startswith('libs/') and n.endswith('.jar'))]
+                if 'proguard.txt' in aar.namelist():
+                    rules.append(f'# {group}:{artifact}:{version}\n'
+                                 + aar.read('proguard.txt').decode().rstrip() + '\n')
             else:
                 jars = [data]
             for j in jars:
                 z = zipfile.ZipFile(io.BytesIO(j))
-                for n in z.namelist():
+                for n in sorted(z.namelist()):
                     if n.endswith('.class') and n not in names:
                         names.add(n)
-                        out.writestr(n, z.read(n))
+                        # Fixed timestamp, so the same inputs give the same jar.
+                        info = zipfile.ZipInfo(n, date_time=(1980, 1, 1, 0, 0, 0))
+                        info.compress_type = zipfile.ZIP_DEFLATED
+                        info.external_attr = 0o644 << 16
+                        out.writestr(info, z.read(n))
+    if proguard_out:
+        with open(proguard_out, 'w') as f:
+            f.write('\n'.join(rules))
+        print(f'microG: consumer ProGuard rules from {len(rules)} libraries', file=sys.stderr)
     return sorted(f'{g}:{a}:{v[0]}' for (g, a), v in seen.items())
 
 
@@ -237,7 +299,7 @@ def gen_deps(src):
     return out
 
 
-def write_stubs(src, generated=False):
+def write_stubs(src, generated=False, download=False):
     here = os.path.dirname(os.path.abspath(__file__))
     stubs = os.path.join(here, '..', '..', 'fdroid', 'stubs', 'java')
     dst = os.path.join(src, 'fdroid_stubs')
@@ -246,7 +308,12 @@ def write_stubs(src, generated=False):
     shutil.copytree(stubs, os.path.join(dst, 'java'))
     deps = ['$google_play_services_package:google_play_services_tasks_java']
     if generated:
-        gen_stubs(src, os.path.join(src, 'fdroid_gms', 'microg.jar'), os.path.join(dst, 'java', 'src'))
+        committed = os.path.join(here, '..', '..', 'fdroid', 'stubs-gen', 'java')
+        if os.path.isdir(committed) and not download:
+            shutil.copytree(committed, os.path.join(dst, 'java'), dirs_exist_ok=True)
+            print('fdroid_stubs: generated stubs from fdroid/stubs-gen (no download)', file=sys.stderr)
+        else:
+            gen_stubs(src, os.path.join(src, 'fdroid_gms', 'microg.jar'), os.path.join(dst, 'java', 'src'))
         deps += ['$google_play_services_package:google_play_services_base_java',
                  '$google_play_services_package:google_play_services_basement_java'] + gen_deps(src)
     sources = sorted(
@@ -438,12 +505,14 @@ def write_gms_dir(src, mode, stubs=False, genstubs=False):
                 continue
             if m and 'play-services-' + m[1].replace('_', '-') in available:
                 wanted[n] = 'play-services-' + m[1].replace('_', '-')
-        provided = microg_jars(sorted(set(wanted.values())), os.path.join(d, 'microg.jar'))
+        provided = microg_jars(sorted(set(wanted.values())), os.path.join(d, 'microg.jar'),
+                               os.path.join(d, 'microg-proguard.txt'))
         lines += [
             'java_prebuilt("microg_java") {',
             '  jar_path = "microg.jar"',
             '  supports_android = true',
             '  enable_bytecode_checks = false',
+            '  proguard_configs = [ "microg-proguard.txt" ]',
             '}',
             '',
         ]
@@ -536,8 +605,8 @@ def set_gms_package(src):
 def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
-    stubs = 'stubs' in spec or 'genstubs' in spec
-    genstubs = 'genstubs' in spec
+    genstubs = 'genstubs' in spec or 'genstubs=download' in spec
+    stubs = 'stubs' in spec or genstubs
     if genstubs and 'gms=microg' not in spec:
         sys.exit('genstubs needs gms=microg (it compiles against the microG jar)')
     for item in spec:
@@ -553,7 +622,7 @@ def main():
             if 'impress' in groups:
                 drop_xr_module(src)
         elif key in ('stubs', 'genstubs'):
-            pass
+            assert (key, value) in (('stubs', ''), ('genstubs', ''), ('genstubs', 'download')), item
         elif key == 'androidx':
             assert value == 'release', item
             androidx_releases(src)
@@ -567,7 +636,7 @@ def main():
         else:
             sys.exit(f'unknown spec item {item}')
     if stubs:
-        write_stubs(src, genstubs)
+        write_stubs(src, genstubs, 'genstubs=download' in spec)
     print('\n'.join(args))
 
 

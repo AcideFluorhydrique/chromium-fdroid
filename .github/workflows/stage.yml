@@ -227,6 +227,9 @@ jobs:
           treat_warnings_as_errors = false
           android_static_analysis = "off"
           use_siso = false
+          # 非 official 的 release 預設 dcheck_always_on = true（build/config/dcheck_always_on.gni），
+          # DCHECK 失敗會直接 crash，也比較慢、比較大；official 時本來就是 false
+          dcheck_always_on = false
           chrome_public_manifest_package = "$PACKAGE_NAME"
           ARGS
           # 照 uazo/cromite 的 build/chromium.gn_args（Vanilla Chromium）

@@ -26,6 +26,7 @@ import urllib.request
 import zipfile
 
 GOOGLE = 'https://dl.google.com/dl/android/maven2'
+CENTRAL = 'https://repo1.maven.org/maven2'
 TOOL_DIRS = re.compile(r'^src/third_party/(android_build_tools/[^/]+|kotlinc|jdk|android_sdk|r8|'
                        r'android_toolchain|turbine|byte_buddy|bazel|android_platform|robolectric)')
 # CIPD dir -> (Maven group:artifact[:classifier], file inside the CIPD dir to compare,
@@ -34,6 +35,12 @@ MAVEN = {
     'android_build_tools/aapt2': ('com.android.tools.build:aapt2:linux', 'aapt2', 'aapt2'),
     'android_build_tools/bundletool': ('com.android.tools.build:bundletool', 'bundletool.jar', None),
     'android_build_tools/manifest_merger': ('com.android.tools.build:manifest-merger', 'manifest-merger.jar', None),
+    # Only checked for the version being published (CIPD repackages these).
+    'android_build_tools/lint': ('com.android.tools.lint:lint', None, None),
+    'android_build_tools/signflinger': ('com.android.tools:signflinger', None, None),
+    'android_build_tools/error_prone': ('com.google.errorprone:error_prone_core', None, None),
+    'android_build_tools/nullaway': ('com.uber.nullaway:nullaway', None, None),
+    'kotlinc/current': ('org.jetbrains.kotlin:kotlin-compiler', None, None),
 }
 
 
@@ -76,21 +83,28 @@ def maven_check(cipd_dir, tool, tags, src):
     vers = [re.sub(r'^version:\d+@', '', t) for t in tags if t.startswith('version:')]
     if not vers:
         return 'no version tag', ''
-    v = re.sub(r'\.cr\d+$', '', vers[0])
-    jar = get(f"{GOOGLE}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}{'-' + cls if cls else ''}.jar")
+    # CIPD versions end in .crN or a 10-hex-digit 3pp suffix; kotlinc's start with v.
+    v = re.sub(r'(\.cr\d+|\.[0-9a-f]{10})$', '', vers[0]).lstrip('v')
+    jar, repo = None, ''
+    for repo, base in (('Google Maven', GOOGLE), ('Maven Central', CENTRAL)):
+        jar = get(f"{base}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}{'-' + cls if cls else ''}.jar")
+        if jar is not None:
+            break
     if jar is None:
-        return f'{v} not on Google Maven', v
+        return f'{v} not on Google Maven or Maven Central', v
+    if local is None:
+        return f'{v} on {repo}', v
     path = None
     for root, _, files in os.walk(os.path.join(src, cipd_dir)):
         if local in files:
             path = os.path.join(root, local)
             break
     if path is None:
-        return f'{v} on Google Maven; {local} not found in CIPD dir', v
+        return f'{v} on {repo}; {local} not found in CIPD dir', v
     data = open(path, 'rb').read()
     other = jar if inner is None else zipfile.ZipFile(io.BytesIO(jar)).read(inner)
     same = hashlib.sha256(data).digest() == hashlib.sha256(other).digest()
-    return (f'{v} on Google Maven, ' + ('identical' if same else 'different')), v
+    return (f'{v} on {repo}, ' + ('identical' if same else 'different')), v
 
 
 def main():
@@ -100,6 +114,8 @@ def main():
     rows = []
     for path, pkg, ver in sorted(deps_packages(src)):
         tool = path[len('third_party/'):].removesuffix('/cipd')
+        if tool.startswith('kotlinc/'):
+            tool = 'kotlinc/current'
         used = sum(1 for i in inputs if i.startswith(path + '/'))
         tags = cipd_tags(pkg, ver)
         maven, v = ('', '')
@@ -115,7 +131,7 @@ def main():
     lines = ['## Prebuilt Android build tools', '',
              f"{len(rows)} CIPD packages; {sum(1 for r in rows if r['used'])} have files the "
              'chrome_public_apk build graph reads (tools run by scripts may not show up as inputs).', '',
-             '| directory | CIPD version | build inputs | Google Maven |', '|---|---|---:|---|']
+             '| directory | CIPD version | build inputs | Maven |', '|---|---|---:|---|']
     lines += [f"| `{r['path']}` | `{r['tags']}` | {r['used']} | {r['maven']} |" for r in rows]
     open(os.path.join(out_dir, 'android-tools.md'), 'w').write('\n'.join(lines) + '\n')
     print('\n'.join(lines))

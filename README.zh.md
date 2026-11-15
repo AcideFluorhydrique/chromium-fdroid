@@ -28,7 +28,7 @@ Actions → **Build Chromium Android for F-Droid tests** → Run workflow。
 - `own_toolchain`：clang / lld、rust / bindgen、gn、ninja、node 全部自己從原始碼編，不用 Google 預編譯的。
 - `package_name`：預設 `org.chromium.chrome.fdroidtest`，可以和正式發布的版本同時安裝。
 - `toolchain_from`：直接用之前 run 編好的工具鏈（`owner/repo/run_id`），可以填好幾個，用空白分隔，後面的優先。省掉約 2.5 小時。artifact 保留 7 天。
-  158.0.8127.36 在 Debian 裡編的工具鏈（到 2026-11-21）：`AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951`（gn/ninja/node 取第一個，clang 和 rust 取第二個）。
+  158.0.8127.36 在 Debian 裡編的工具鏈（到 2026-11-21）：`AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951 AcideFluorhydrique/chromium-fdroid/43711783516`（gn/ninja/node 取第一個，rust 取第二個，對 Debian 系統編的 clang 取第三個）。
 - `variant`：在 `gn gen` 前用 [`gms_variant.py`](.github/scripts/gms_variant.py) 換掉不自由的 Java 函式庫。完整的 F-Droid 組合是 `androidx=release stubs genstubs gms=microg drop=playcore,mlkit,impress gnargs patch=cast,shape,castoff,status,fido`。
 
 免費 runner 單一 job 最多 6 小時，所以分成幾段：

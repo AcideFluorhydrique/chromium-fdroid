@@ -504,6 +504,22 @@ def drop_xr_module(src):
     with open(path, 'w') as f:
         f.write(new)
     print('chrome_feature_modules.gni: removed the XR feature module', file=sys.stderr)
+    # The XR module was the only place WebXR's Java ends up in the APK, but its
+    # native side is still built (enable_vr), so jni_zero's final check fails
+    # with "native library depends on ... Java files that we do not include".
+    # Let it drop those JNI entries, as it already does for test targets.
+    jni = os.path.join(src, 'third_party/jni_zero/jni_zero.gni')
+    patch_file(jni,
+               '''    forward_variables_from(invoker,
+                           [
+                             "add_stubs_for_missing_jni",''',
+               '''    if (!defined(invoker.remove_uncalled_jni) && !defined(remove_uncalled_jni)) {
+      remove_uncalled_jni = true
+    }
+    forward_variables_from(invoker,
+                           [
+                             "add_stubs_for_missing_jni",''')
+    print('jni_zero.gni: remove_uncalled_jni by default', file=sys.stderr)
 
 
 def set_gms_package(src):

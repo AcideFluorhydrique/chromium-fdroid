@@ -46,6 +46,9 @@ Usage: gms_variant.py <src dir> <spec>
                  which microG lacks), fido (Fido2ApiCall's private Play
                  services Binder calls fail instead of using GmsClient).
 
+  tools=NAMES    Replace prebuilt build tools with releases from Maven
+                 (build_tools_maven.py): r8, turbine, optionally name:version.
+
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
 that file, as Cromite does. Nothing is printed for args.gn any more.
@@ -638,6 +641,11 @@ def main():
             args += GN_ARGS
         elif key == 'patch':
             apply_patches(src, value.split(','))
+        elif key == 'tools':
+            # python3 -I leaves the script's directory out of sys.path.
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import build_tools_maven
+            build_tools_maven.apply(src, value)
         else:
             sys.exit(f'unknown spec item {item}')
     if stubs:

@@ -52,6 +52,24 @@ on:
         required: false
         default: ""
         type: string
+      # 一次完整的編譯要 12 小時以上。如果只是最後幾步壞掉（R8、打包），不用重頭來：
+      # 從那個 run 的 chromium-src 和某一棒的 out/ artifact 接著編，用 fixup 改掉 src 裡
+      # 有問題的檔案，ninja 只會重做受影響的步驟。artifact 只保留 3 天。
+      resume_from:
+        description: "接著編：之前的 run id（填了就跳過工具鏈和 stage 1；version / target_cpu 要和那個 run 一樣）"
+        required: false
+        default: ""
+        type: string
+      resume_out:
+        description: "接著編：從哪個 out/ artifact 開始，例如 chromium-out-2"
+        required: false
+        default: ""
+        type: string
+      fixup:
+        description: "接著編：ninja 之前在 workspace 執行的 bash，例如 sed -i ... src/fdroid_gms/microg-proguard.txt"
+        required: false
+        default: ""
+        type: string
 
 # 從別的 run 下載工具鏈 artifact 需要 actions: read
 permissions:
@@ -84,7 +102,7 @@ jobs:
 
   toolchain:
     needs: resolve
-    if: inputs.own_toolchain && (inputs.toolchain_from == '' || inputs.rebuild_only != '')
+    if: inputs.resume_from == '' && inputs.own_toolchain && (inputs.toolchain_from == '' || inputs.rebuild_only != '')
     uses: ./.github/workflows/toolchain.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -92,7 +110,7 @@ jobs:
 
   stage1:
     needs: [resolve, toolchain]
-    if: ${{ !cancelled() && needs.resolve.result == 'success' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
+    if: ${{ !cancelled() && inputs.resume_from == '' && needs.resolve.result == 'success' && (needs.toolchain.result == 'success' || needs.toolchain.result == 'skipped') }}
     uses: ./.github/workflows/stage.yml
     with:
       stage: 1
@@ -160,3 +178,49 @@ jobs:
       target_cpu: ${{ inputs.target_cpu }}
       package_name: ${{ inputs.package_name }}
       official: ${{ inputs.official || false }}
+
+  # ---------- resume_from：從別的 run 接著編 ----------
+  # stage 編號從 11 開始，out/ artifact 才不會和原本 run 的 chromium-out-N 混在一起。
+  # fixup 每一棒都要重跑，因為 chromium-src artifact 不會更新。
+
+  resume11:
+    needs: resolve
+    if: ${{ inputs.resume_from != '' }}
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 11
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+      src_run: ${{ inputs.resume_from }}
+      out_run: ${{ inputs.resume_from }}
+      out_name: ${{ inputs.resume_out }}
+      fixup: ${{ inputs.fixup }}
+
+  resume12:
+    needs: [resolve, resume11]
+    if: ${{ !cancelled() && needs.resume11.result == 'success' && needs.resume11.outputs.done != 'true' }}
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 12
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+      src_run: ${{ inputs.resume_from }}
+      fixup: ${{ inputs.fixup }}
+
+  resume13:
+    needs: [resolve, resume12]
+    if: ${{ !cancelled() && needs.resume12.result == 'success' && needs.resume12.outputs.done != 'true' }}
+    uses: ./.github/workflows/stage.yml
+    with:
+      stage: 13
+      last_stage: true
+      version: ${{ needs.resolve.outputs.version }}
+      target_cpu: ${{ inputs.target_cpu }}
+      package_name: ${{ inputs.package_name }}
+      official: ${{ inputs.official || false }}
+      src_run: ${{ inputs.resume_from }}
+      fixup: ${{ inputs.fixup }}

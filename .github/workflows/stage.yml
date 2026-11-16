@@ -33,6 +33,27 @@ on:
       variant:
         type: string
         default: ""
+      gn_args:
+        description: "額外的 GN args，接在 args.gn 最後（只有 stage 1 用得到）"
+        type: string
+        default: ""
+      # build.yml 的 resume_from：從別的 run 的 artifact 接著編（stage > 1 才有用）
+      src_run:
+        description: "chromium-src 從哪個 run 下載（留空 = 這次 run）"
+        type: string
+        default: ""
+      out_run:
+        description: "上一棒的 out/ 從哪個 run 下載（留空 = 這次 run）"
+        type: string
+        default: ""
+      out_name:
+        description: "上一棒 out/ 的 artifact 名稱（留空 = chromium-out-<stage-1>）"
+        type: string
+        default: ""
+      fixup:
+        description: "還原之後、ninja 之前在 workspace 執行的 bash（改 src 裡的檔案；每一棒都要重跑，因為 src artifact 不會更新）"
+        type: string
+        default: ""
     outputs:
       done:
         value: ${{ jobs.build.outputs.done }}
@@ -214,6 +235,8 @@ jobs:
 
       - name: gn gen
         if: inputs.stage == 1
+        env:
+          GN_ARGS: ${{ inputs.gn_args }}
         run: |
           mkdir -p src/out/Default
           cat > src/out/Default/args.gn <<ARGS
@@ -227,6 +250,9 @@ jobs:
           treat_warnings_as_errors = false
           android_static_analysis = "off"
           use_siso = false
+          # 非 official 的 release 預設 dcheck_always_on = true（build/config/dcheck_always_on.gni），
+          # DCHECK 失敗會直接 crash，也比較慢、比較大；official 時本來就是 false
+          dcheck_always_on = false
           chrome_public_manifest_package = "$PACKAGE_NAME"
           ARGS
           # 照 uazo/cromite 的 build/chromium.gn_args（Vanilla Chromium）
@@ -237,6 +263,7 @@ jobs:
           ARGS
           fi
           [ -f variant.gn ] && cat variant.gn >> src/out/Default/args.gn
+          [ -n "$GN_ARGS" ] && printf '%s\n' "$GN_ARGS" >> src/out/Default/args.gn
           cat src/out/Default/args.gn
           cd src && buildtools/linux64/gn gen out/Default
 
@@ -272,6 +299,8 @@ jobs:
         with:
           name: chromium-src
           path: pkg-src
+          run-id: ${{ inputs.src_run || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Previous stage number
         id: prev
@@ -282,8 +311,10 @@ jobs:
         if: inputs.stage > 1
         uses: actions/download-artifact@v4
         with:
-          name: chromium-out-${{ steps.prev.outputs.n }}
+          name: ${{ inputs.out_name || format('chromium-out-{0}', steps.prev.outputs.n) }}
           path: pkg-out
+          run-id: ${{ inputs.out_run || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Restore
         if: inputs.stage > 1
@@ -298,6 +329,14 @@ jobs:
       - name: Install build deps
         if: inputs.stage > 1
         run: sudo src/build/install-build-deps.sh --android --no-prompt --no-chromeos-fonts --no-syms --no-arm --no-nacl
+
+      - name: Fixup
+        if: inputs.stage > 1 && inputs.fixup != ''
+        env:
+          FIXUP: ${{ inputs.fixup }}
+        run: |
+          echo "$FIXUP"
+          bash -euxo pipefail -c "$FIXUP"
 
       # ---------- 編譯 ----------
 

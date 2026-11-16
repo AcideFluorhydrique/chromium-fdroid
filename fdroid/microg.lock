@@ -1,0 +1,17 @@
+# microG client libraries from Maven Central, used by gms_variant.py (gms=microg).
+# group:artifact:version packaging sha256. Regenerate with MICROG_LOCK_UPDATE=1.
+org.microg.gms:play-services-auth:0.3.14.250932 aar 83764233abdc5501c8c65963fcbaffffb23eb50eade88370a796a2a7e7e56606
+org.microg.gms:play-services-auth-api-phone:0.3.14.250932 aar 592d6108be35d9bfb05d3b650fcc38fdebaf05635efb46dd6b6e1b91d466d268
+org.microg.gms:play-services-auth-base:0.3.14.250932 aar 304ba87f6673edeb02bd4f0a60d8b17df31b14a439fa8c38e6ef61ff00211f40
+org.microg.gms:play-services-auth-blockstore:0.3.14.250932 aar f9485241f51d83eaeb9a5d5a7196babfbacd203b2135a4f98ec5d913016a4481
+org.microg.gms:play-services-base:0.3.14.250932 aar eeef9fd92b547c869aa9163721bef0ccd34aeefc8cf269d114661c98ac526ab9
+org.microg.gms:play-services-basement:0.3.14.250932 aar d669e374b428c4a43d65a0ab8776324538eaa0aa71fec95c4f0afb2a5885ee3d
+org.microg.gms:play-services-cast:0.3.14.250932 aar 0680ff228f8aef4217a30d1dd2e5cd36d22686ba569cd195d54c635e96da3893
+org.microg.gms:play-services-cast-framework:0.3.14.250932 aar 826f568eee01b2b43e4c6e28388e849420b1e2a18247d17b4ff040eb6ea1aabd
+org.microg.gms:play-services-clearcut:0.3.14.250932 aar 530a362bdd995cac4a6294298720b3d978606970d3e4bcfcfe8efd7737331b8a
+org.microg.gms:play-services-fido:0.3.14.250932 aar a1196e8e8d793b33110b93ba69060dd4f10e3246b01f17d305dba4e32c850871
+org.microg.gms:play-services-location:0.3.14.250932 aar 3e79c218f25f8714f51111e15b5efb24fd7c77841dbba97ce53828df59cd8f79
+org.microg.gms:play-services-phenotype:0.3.14.250932 aar f076feb2d13e6437ba3ba37887b03364fecbc24ac100bd5b8cbeef80a5fa4d61
+org.microg.gms:play-services-tasks:0.3.14.250932 aar 90a5c1630c26381ca00fceb093956b360c2e84c9c7120f3a567da0cdbfdba9a7
+org.microg.gms:play-services-vision:0.3.14.250932 aar 93c311929d36104b3ed3e7975f9529795c6619e80574a78600f070410ced1467
+org.microg.gms:play-services-vision-common:0.3.14.250932 aar c9dbb344f589fe5aa5b22eb1fc310ee117ab28a9fc27dc0376f7250d0bf95088

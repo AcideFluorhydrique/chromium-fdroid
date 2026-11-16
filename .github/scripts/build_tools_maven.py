@@ -9,7 +9,8 @@ Used by gms_variant.py:  tools=r8,turbine   or   tools=r8:9.6.1,turbine:1.17.0
            so the same version is used if it is published, else the newest of
            the same major.minor, else the newest one. custom_d8.jar and
            custom_r8.jar (prebuilt jars checked into Chromium) are rebuilt from
-           their Java sources against that r8.jar, and the GraalVM native-image
+           their Java sources against that r8.jar, after changing the two
+           uses of R8-internal classes to R8's public API, and the GraalVM native-image
            cipd/bin/custom_d8 is no longer used (dex.py runs the jar instead).
   turbine  third_party/turbine/cipd/turbine.jar <- com.google.turbine:turbine
            (the all-deps jar) on Maven Central, newest release unless a
@@ -96,6 +97,49 @@ def jar_from_dir(classes_dir, out_jar):
     os.replace(tmp, out_jar)
 
 
+EXPAND_FLAG_FILES = """
+    // F-Droid build: R8's internal FlagFile is not visible in the released jar.
+    // dex.py and proguard.py write one argument per line.
+    private static String[] expandFlagFiles(String[] args) throws IOException {
+        List<String> out = new ArrayList<>();
+        for (String arg : args) {
+            if (!arg.startsWith("@")) {
+                out.add(arg);
+                continue;
+            }
+            for (String line :
+                    java.nio.file.Files.readAllLines(java.nio.file.Paths.get(arg.substring(1)))) {
+                if (!line.isEmpty()) {
+                    out.add(line);
+                }
+            }
+        }
+        return out.toArray(new String[0]);
+    }
+}
+"""
+
+
+def public_api_only(java):
+    """CustomD8/CustomR8 use two classes from R8's internal utils package.
+    Google's own r8.jar keeps their names; the released jar on Maven is
+    minified, so only R8's public API can be used: ProgramResource.fromBytes
+    (same arguments as OneShotByteResource.create) and a local flag-file
+    reader."""
+    s = open(java).read()
+    s = re.sub(r'^import com\.android\.tools\.r8\.utils\.(FlagFile|OneShotByteResource);\n', '', s, flags=re.M)
+    s = s.replace('OneShotByteResource.create(', 'ProgramResource.fromBytes(')
+    if 'FlagFile.expandFlagFiles(args, null)' in s:
+        s = s.replace('FlagFile.expandFlagFiles(args, null)', 'expandFlagFiles(args)')
+        end = s.rstrip().rfind('}')
+        s = s[:end].rstrip() + '\n' + EXPAND_FLAG_FILES
+    left = re.findall(r'com\.android\.tools\.r8\.utils\.\w+|FlagFile\.|OneShotByteResource', s)
+    if left:
+        sys.exit(f'{java}: still uses R8 internals: {sorted(set(left))}')
+    with open(java, 'w') as f:
+        f.write(s)
+
+
 def swap_r8(src, version=None):
     jdk = os.path.join(src, 'third_party/jdk/current/bin')
     r8 = os.path.join(src, 'third_party/r8/cipd/lib/r8.jar')
@@ -121,6 +165,7 @@ def swap_r8(src, version=None):
     for name, cls in (('custom_d8', 'CustomD8'), ('custom_r8', 'CustomR8')):
         tmp = tempfile.mkdtemp()
         java = os.path.join(src, f'third_party/r8/java/src/org/chromium/build/{cls}.java')
+        public_api_only(java)
         subprocess.run([os.path.join(jdk, 'javac'), '-nowarn', '-cp', r8, '-d', tmp, java], check=True)
         jar_from_dir(tmp, os.path.join(src, f'third_party/r8/{name}.jar'))
         shutil.rmtree(tmp)

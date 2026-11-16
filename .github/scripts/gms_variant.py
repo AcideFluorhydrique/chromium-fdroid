@@ -234,8 +234,13 @@ def microg_jars(artifacts, out_jar, proguard_out=None):
                         info.external_attr = 0o644 << 16
                         out.writestr(info, z.read(n))
     if proguard_out:
+        text = '\n'.join(rules)
+        # R8 refuses "-keepattributes InnerClasses" without EnclosingMethod
+        # ("Attribute InnerClasses requires EnclosingMethod attribute").
+        text = re.sub(r'^(-keepattributes\s+(?!.*EnclosingMethod).*\bInnerClasses\b.*)$',
+                      r'\1,EnclosingMethod', text, flags=re.M)
         with open(proguard_out, 'w') as f:
-            f.write('\n'.join(rules))
+            f.write(text)
         print(f'microG: consumer ProGuard rules from {len(rules)} libraries', file=sys.stderr)
     return sorted(f'{g}:{a}:{v[0]}' for (g, a), v in seen.items())
 

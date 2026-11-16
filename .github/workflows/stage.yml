@@ -33,6 +33,23 @@ on:
       variant:
         type: string
         default: ""
+      # resume.yml：從別的 run 的 artifact 接著編（stage > 1 才有用）
+      src_run:
+        description: "chromium-src 從哪個 run 下載（留空 = 這次 run）"
+        type: string
+        default: ""
+      out_run:
+        description: "上一棒的 out/ 從哪個 run 下載（留空 = 這次 run）"
+        type: string
+        default: ""
+      out_name:
+        description: "上一棒 out/ 的 artifact 名稱（留空 = chromium-out-<stage-1>）"
+        type: string
+        default: ""
+      fixup:
+        description: "還原之後、ninja 之前在 workspace 執行的 bash（改 src 裡的檔案；每一棒都要重跑，因為 src artifact 不會更新）"
+        type: string
+        default: ""
     outputs:
       done:
         value: ${{ jobs.build.outputs.done }}
@@ -275,6 +292,8 @@ jobs:
         with:
           name: chromium-src
           path: pkg-src
+          run-id: ${{ inputs.src_run || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Previous stage number
         id: prev
@@ -285,8 +304,10 @@ jobs:
         if: inputs.stage > 1
         uses: actions/download-artifact@v4
         with:
-          name: chromium-out-${{ steps.prev.outputs.n }}
+          name: ${{ inputs.out_name || format('chromium-out-{0}', steps.prev.outputs.n) }}
           path: pkg-out
+          run-id: ${{ inputs.out_run || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Restore
         if: inputs.stage > 1
@@ -301,6 +322,14 @@ jobs:
       - name: Install build deps
         if: inputs.stage > 1
         run: sudo src/build/install-build-deps.sh --android --no-prompt --no-chromeos-fonts --no-syms --no-arm --no-nacl
+
+      - name: Fixup
+        if: inputs.stage > 1 && inputs.fixup != ''
+        env:
+          FIXUP: ${{ inputs.fixup }}
+        run: |
+          echo "$FIXUP"
+          bash -euxo pipefail -c "$FIXUP"
 
       # ---------- 編譯 ----------
 

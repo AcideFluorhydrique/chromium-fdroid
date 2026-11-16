@@ -52,6 +52,11 @@ on:
         required: false
         default: ""
         type: string
+      gn_args:
+        description: "額外的 GN args，接在 args.gn 最後，例如 use_sysroot = false（實驗用）"
+        required: false
+        default: ""
+        type: string
       # 一次完整的編譯要 12 小時以上。如果只是最後幾步壞掉（R8、打包），不用重頭來：
       # 從那個 run 的 chromium-src 和某一棒的 out/ artifact 接著編，用 fixup 改掉 src 裡
       # 有問題的檔案，ninja 只會重做受影響的步驟。artifact 只保留 3 天。
@@ -122,6 +127,7 @@ jobs:
       toolchain_from: ${{ inputs.toolchain_from }}
       rebuild_only: ${{ inputs.rebuild_only }}
       variant: ${{ inputs.variant }}
+      gn_args: ${{ inputs.gn_args }}
 
   stage2:
     needs: [resolve, stage1]

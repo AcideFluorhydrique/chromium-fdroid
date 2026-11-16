@@ -33,7 +33,11 @@ on:
       variant:
         type: string
         default: ""
-      # resume.yml：從別的 run 的 artifact 接著編（stage > 1 才有用）
+      gn_args:
+        description: "額外的 GN args，接在 args.gn 最後（只有 stage 1 用得到）"
+        type: string
+        default: ""
+      # build.yml 的 resume_from：從別的 run 的 artifact 接著編（stage > 1 才有用）
       src_run:
         description: "chromium-src 從哪個 run 下載（留空 = 這次 run）"
         type: string
@@ -231,6 +235,8 @@ jobs:
 
       - name: gn gen
         if: inputs.stage == 1
+        env:
+          GN_ARGS: ${{ inputs.gn_args }}
         run: |
           mkdir -p src/out/Default
           cat > src/out/Default/args.gn <<ARGS
@@ -257,6 +263,7 @@ jobs:
           ARGS
           fi
           [ -f variant.gn ] && cat variant.gn >> src/out/Default/args.gn
+          [ -n "$GN_ARGS" ] && printf '%s\n' "$GN_ARGS" >> src/out/Default/args.gn
           cat src/out/Default/args.gn
           cd src && buildtools/linux64/gn gen out/Default
 

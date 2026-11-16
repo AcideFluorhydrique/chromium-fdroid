@@ -2,7 +2,8 @@
 """Replace prebuilt Android build tools from CIPD with released versions from
 Maven (accepted on fdroiddata#3911 instead of building them from source).
 
-Used by gms_variant.py:  tools=r8,turbine   or   tools=r8:9.6.1,turbine:1.17.0
+Used by gms_variant.py:  tools=r8,turbine,aapt2,protoc
+                    or   tools=r8:9.6.1,turbine:1.17.0
 
   r8       third_party/r8/cipd/lib/r8.jar <- com.android.tools:r8 on Google
            Maven. Chromium rolls R8 to the tip of R8's newest release branch,
@@ -17,10 +18,18 @@ Used by gms_variant.py:  tools=r8,turbine   or   tools=r8:9.6.1,turbine:1.17.0
            version is given. The GraalVM native-image cipd/turbine is no longer
            used.
 
-Every download is printed with its sha256.
+  aapt2    third_party/android_build_tools/aapt2/cipd/aapt2 <- the binary
+           inside com.android.tools.build:aapt2:<version>:linux on Google
+           Maven, at the version DEPS pins (aapt2_version).
+  protoc   third_party/android_build_tools/protoc/cipd/protoc <-
+           com.google.protobuf:protoc:4.<version>:linux-x86_64 on Maven
+           Central, at the version DEPS pins (v35.1 -> 4.35.1).
+
+Every download is printed with its sha256, next to the file it replaces.
 """
 
 import hashlib
+import io
 import os
 import re
 import shutil
@@ -45,7 +54,7 @@ def versions(repo, group, name):
     return re.findall(r'<version>([^<]+)</version>', meta)
 
 
-def overwrite(path, data):
+def overwrite(path, data, mode=0o644):
     # CIPD installs its files read-only (and may hard-link them from its cache).
     d = os.path.dirname(path)
     os.chmod(d, 0o755)
@@ -54,6 +63,23 @@ def overwrite(path, data):
         os.unlink(path)
     with open(path, 'wb') as f:
         f.write(data)
+    os.chmod(path, mode)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def deps_text(src):
+    return open(os.path.join(src, 'DEPS')).read()
+
+
+def swap_binary(name, path, data, source):
+    old = open(path, 'rb').read() if os.path.exists(path) else b''
+    same = 'identical to' if old == data else 'replaces'
+    print(f'{name}: {source}, {len(data)} bytes, sha256 {sha(data)}; '
+          f'{same} the CIPD file (sha256 {sha(old)[:16]})', file=sys.stderr)
+    overwrite(path, data, 0o755)
 
 
 def remove(path):
@@ -201,6 +227,30 @@ def swap_turbine(src, version=None):
     print('turbine: internal_rules.gni uses turbine.jar; removed cipd/turbine', file=sys.stderr)
 
 
+def swap_aapt2(src, version=None):
+    if not version:
+        m = re.search(r"'aapt2_version':\s*'version:\d+@([^']+)'", deps_text(src))
+        if not m:
+            sys.exit('aapt2: aapt2_version not found in DEPS')
+        version = m[1]
+    jar = fetch(f'{GOOGLE}/com/android/tools/build/aapt2/{version}/aapt2-{version}-linux.jar')
+    data = zipfile.ZipFile(io.BytesIO(jar)).read('aapt2')
+    swap_binary('aapt2', os.path.join(src, 'third_party/android_build_tools/aapt2/cipd/aapt2'), data,
+                f'com.android.tools.build:aapt2:{version}:linux from Google Maven')
+
+
+def swap_protoc(src, version=None):
+    if not version:
+        m = re.search(r"android_build_tools/protoc/cipd'.*?'version':\s*'version:\d+@v([0-9.]+)'",
+                      deps_text(src), re.S)
+        if not m:
+            sys.exit('protoc: version not found in DEPS')
+        version = '4.' + m[1]
+    data = fetch(f'{CENTRAL}/com/google/protobuf/protoc/{version}/protoc-{version}-linux-x86_64.exe')
+    swap_binary('protoc', os.path.join(src, 'third_party/android_build_tools/protoc/cipd/protoc'), data,
+                f'com.google.protobuf:protoc:{version}:linux-x86_64 from Maven Central')
+
+
 def apply(src, value):
     for item in value.split(','):
         name, _, version = item.partition(':')
@@ -208,8 +258,12 @@ def apply(src, value):
             swap_r8(src, version or None)
         elif name == 'turbine':
             swap_turbine(src, version or None)
+        elif name == 'aapt2':
+            swap_aapt2(src, version or None)
+        elif name == 'protoc':
+            swap_protoc(src, version or None)
         else:
-            sys.exit(f'unknown tool {name!r} (r8, turbine)')
+            sys.exit(f'unknown tool {name!r} (r8, turbine, aapt2, protoc)')
 
 
 if __name__ == '__main__':

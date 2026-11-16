@@ -47,7 +47,8 @@ Usage: gms_variant.py <src dir> <spec>
                  services Binder calls fail instead of using GmsClient).
 
   tools=NAMES    Replace prebuilt build tools with releases from Maven
-                 (build_tools_maven.py): r8, turbine, optionally name:version.
+                 (build_tools_maven.py): r8, turbine, aapt2, protoc,
+                 optionally name:version.
 
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits

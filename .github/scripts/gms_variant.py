@@ -33,6 +33,10 @@ Usage: gms_variant.py <src dir> <spec>
                  Google Maven: the same version (stable or alpha/beta/rc) if
                  published, else the newest stable one, by overwriting the
                  CIPD file in place.
+  androidx-keep=GROUPS
+                 With androidx=release: keep Chromium's snapshot for these
+                 androidx groups (androidx.<group>, e.g. preference,
+                 recyclerview, core), when a release is too old.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
                  and ARCore/OpenXR/Cardboard. enable_vr is set to true: it would
                  follow those to false, and Chromium 158 for Android does not
@@ -444,7 +448,7 @@ ANDROIDX_CONSTANTS = [
 ]
 
 
-def androidx_releases(src):
+def androidx_releases(src, keep=()):
     import json
     google = 'https://dl.google.com/dl/android/maven2'
     bom = json.load(open(os.path.join(src, 'third_party/androidx/bill_of_materials.json')))
@@ -452,6 +456,9 @@ def androidx_releases(src):
     for e in bom:
         g, n, v = e['group'], e['name'], e['version']
         if not v.endswith('-SNAPSHOT'):
+            continue
+        if any(g == 'androidx.' + k for k in keep):
+            print(f'androidx: keeping {g}:{n} {v} (androidx-keep)', file=sys.stderr)
             continue
         d = os.path.join(src, 'third_party/androidx/cipd/libs', re.sub(r'[.\-]', '_', f'{g}_{n}'))
         if not os.path.isdir(d):
@@ -615,6 +622,8 @@ def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
     genstubs = 'genstubs' in spec or 'genstubs=download' in spec
+    keep = [k for item in spec if item.startswith('androidx-keep=')
+            for k in item.partition('=')[2].split(',') if k]
     stubs = 'stubs' in spec or genstubs
     if genstubs and 'gms=microg' not in spec:
         sys.exit('genstubs needs gms=microg (it compiles against the microG jar)')
@@ -634,10 +643,12 @@ def main():
             assert (key, value) in (('stubs', ''), ('genstubs', ''), ('genstubs', 'download')), item
         elif key == 'androidx':
             assert value == 'release', item
-            androidx_releases(src)
+            androidx_releases(src, keep)
             # The committed .info files describe the snapshot .aars; let gn gen
             # regenerate them for the releases (Chromium's own switch for this).
             args.append('update_android_aar_prebuilts = true')
+        elif key == 'androidx-keep':
+            pass
         elif key == 'gnargs':
             args += GN_ARGS
         elif key == 'patch':

@@ -50,6 +50,12 @@ Usage: gms_variant.py <src dir> <spec>
                  which microG lacks), fido (Fido2ApiCall's private Play
                  services Binder calls fail instead of using GmsClient).
 
+  nosysroot      Build the host tools against the build machine's own system
+                 instead of Chromium's prebuilt Debian sysroot: prints
+                 use_sysroot = false and use_clang_modules = false (the module
+                 map generator needs the sysroot), and stops base/BUILD.gn from
+                 linking -latomic on Android when use_sysroot is false (the
+                 NDK has no libatomic; Chromium builds its own atomic support).
   tools=NAMES    Replace prebuilt build tools with releases from Maven
                  (build_tools_maven.py): r8, turbine, aapt2, protoc,
                  optionally name:version.
@@ -649,6 +655,12 @@ def main():
             args.append('update_android_aar_prebuilts = true')
         elif key == 'androidx-keep':
             pass
+        elif key == 'nosysroot':
+            patch_file(os.path.join(src, 'base/BUILD.gn'),
+                       'if (!use_sysroot && (is_android || is_chromeos || (is_linux && !is_castos)) &&',
+                       'if (!use_sysroot && (is_chromeos || (is_linux && !is_castos)) &&')
+            print('base/BUILD.gn: no -latomic on Android without the sysroot', file=sys.stderr)
+            args += ['use_sysroot = false', 'use_clang_modules = false']
         elif key == 'gnargs':
             args += GN_ARGS
         elif key == 'patch':

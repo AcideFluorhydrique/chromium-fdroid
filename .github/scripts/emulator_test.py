@@ -109,7 +109,7 @@ def main():
     skip_first_run()
     shot(out, '1-page')
 
-    tap(r'^More options$', r'menu_button')
+    tap(r'^More options$', r'^Customize and control', r'menu_button')
     tap(r'^Settings$')
     shot(out, '2-settings')
     tap(r'^Privacy and security$')

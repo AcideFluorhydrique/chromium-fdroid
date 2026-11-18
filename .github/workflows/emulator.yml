@@ -1,0 +1,88 @@
+name: Test APKs in an emulator
+
+# 在 GitHub runner 的 Android 模擬器（KVM）裡裝 APK、截圖 設定→隱私和安全性 和 Reader mode、收 logcat，
+# 結果推到 emulator-results 分支（截圖可以直接在 GitHub 上看）。
+# x86_64 映像檔內建 ARM 轉譯，可以跑我們的 arm64 APK。
+
+on:
+  workflow_dispatch:
+    inputs:
+      apks:
+        description: "空白分隔的 label=來源。來源是本 repo 的 run id、owner/repo/run_id，或 release:owner/repo（最新 release 的 arm64 APK）"
+        required: true
+        type: string
+      api_level:
+        description: "Android API level"
+        required: false
+        default: "35"
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APKS: ${{ inputs.apks }}
+        run: |
+          mkdir -p apks
+          for item in $APKS; do
+            label=${item%%=*} src=${item#*=}
+            d=dl/$label
+            mkdir -p "$d"
+            case "$src" in
+              release:*) gh release download -R "${src#release:}" -p '*arm64*.apk' -D "$d" ;;
+              */*/*) gh run download "${src##*/}" -R "${src%/*}" -p 'chromium-android-*' -D "$d" ;;
+              *) gh run download "$src" -R "$GITHUB_REPOSITORY" -p 'chromium-android-*' -D "$d" ;;
+            esac
+            apk=$(find "$d" -name '*.apk' ! -name '*.apks' | grep -v -- '-unsigned' | head -1)
+            [ -n "$apk" ] || { echo "no APK for $item"; find "$d"; exit 1; }
+            mv "$apk" "apks/$label.apk"
+          done
+          rm -rf dl
+          ls -la apks
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run in the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          disk-size: 8G
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
+
+      - name: Push results to the emulator-results branch
+        if: always()
+        run: |
+          [ -d results ] || exit 0
+          dest="runs/${{ github.run_id }}-api${{ inputs.api_level }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone -q --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" -b emulator-results res 2>/dev/null \
+            || { git init -q res && cd res && git checkout -q -b emulator-results && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" && cd ..; }
+          mkdir -p "res/$dest"
+          cp -r results/* "res/$dest/"
+          gzip -9 "res/$dest"/*/logcat.txt || true
+          cd res
+          git add -A
+          git commit -q -m "Emulator results for run ${{ github.run_id }} (API ${{ inputs.api_level }})"
+          for i in 1 2 3; do git push -q origin emulator-results && break; git pull -q --rebase origin emulator-results; done
+          echo "https://github.com/${{ github.repository }}/tree/emulator-results/$dest" >> "$GITHUB_STEP_SUMMARY"

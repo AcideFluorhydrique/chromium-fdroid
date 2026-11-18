@@ -1,0 +1,45 @@
+keeprv
+package org.chromium.chrome.fdroidtest.keeprv
+crash lines: 116
+11-18 03:48:04.436  5270  5270 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x7bad001b9dac in tid 5270 (roidtest.keeprv), pid 5270 (roidtest.keeprv)
+11-18 03:48:04.671  5302  5302 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+11-18 03:48:04.671  5302  5302 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys'
+11-18 03:48:04.671  5302  5302 F DEBUG   : Revision: '0'
+11-18 03:48:04.671  5302  5302 F DEBUG   : ABI: 'x86_64'
+11-18 03:48:04.671  5302  5302 F DEBUG   : Guest architecture: 'arm64'
+11-18 03:48:04.671  5302  5302 F DEBUG   : Timestamp: 2026-11-18 03:48:04.550109419+0000
+11-18 03:48:04.671  5302  5302 F DEBUG   : Process uptime: 2s
+11-18 03:48:04.671  5302  5302 F DEBUG   : Cmdline: org.chromium.chrome.fdroidtest.keeprv
+11-18 03:48:04.671  5302  5302 F DEBUG   : pid: 5270, tid: 5270, name: roidtest.keeprv  >>> org.chromium.chrome.fdroidtest.keeprv <<<
+11-18 03:48:04.671  5302  5302 F DEBUG   : uid: 10211
+11-18 03:48:04.671  5302  5302 F DEBUG   : signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x00007bad001b9dac
+11-18 03:48:04.671  5302  5302 F DEBUG   :     rax 00007bb0455733a8  rbx 00007baeac438210  rcx 000000005c000000  rdx 0000000000000000
+11-18 03:48:04.671  5302  5302 F DEBUG   :     r8  00007ffc456aaac8  r9  0000000000000000  r10 00007bb051e3c030  r11 3a42270a432f678c
+11-18 03:48:04.671  5302  5302 F DEBUG   :     r12 00007bb051e3c03d  r13 0000000000000000  r14 00007bb035ec2c92  r15 0000000000000000
+11-18 03:48:04.671  5302  5302 F DEBUG   :     rdi 00007baeac438210  rsi 00007bb035ec2c92
+11-18 03:48:04.671  5302  5302 F DEBUG   :     rbp 00007baeec467c10  rsp 00007ffc456aab48  rip 00007bad001b9dac
+11-18 03:48:04.671  5302  5302 F DEBUG   : 12 total frames
+11-18 03:48:04.671  5302  5302 F DEBUG   : backtrace:
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #00 pc 000000000885cdac  /data/app/~~6YJ_lD_-XMAGHMqhFclgug==/org.chromium.chrome.fdroidtest.keeprv-OSLjTMOqknUbbHRREhID4g==/base.apk (offset 0x4d8c000)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #01 pc 00000000000dfd9c  /system/lib64/libandroid_runtime.so (android::jnihelp::ThrowException(_JNIEnv*, char const*, char const*, ...)+316) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #02 pc 00000000000272cf  [anon:scudo:primary]
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #03 pc 000000000018ca14  /system/lib64/libandroid_runtime.so (android::NativeOpenNonAssetFd(_JNIEnv*, _jclass*, long, int, _jstring*, _jlongArray*)+772) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #04 pc 0000000000000007  <unknown>
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #05 pc 0000000000183534  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (art_jni_trampoline+196)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #06 pc 00000000007f722f  [stack]
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #07 pc 000000000017893d  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (android.content.res.AssetManager.openNonAssetFd+237)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #08 pc 00000000007f722f  [stack]
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #09 pc 0000000000178779  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (android.content.res.AssetManager.openNonAssetFd+153)
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #10 pc 00000000007f6e27  [stack]
+11-18 03:48:04.671  5302  5302 F DEBUG   :       #11 pc 0000000000212154  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+756) (BuildId: 62338b1c62e3991543c9b8b8bae2b361)
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x0  00007baeac438210  x1  00000000000030c6  x2  000000000000002f  x3  00007bacef662b40
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x4  0000000000000000  x5  0000000000000001  x6  0000000000000000  x7  00007bacef662869
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x8  00007bad84c61ce0  x9  ffffff80ffffffd8  x10 0000000000009129  x11 00007bacf9e5e94f
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x12 0000000000000004  x13 000000000000000c  x14 000000000000007f  x15 0000000000000000
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x16 0000000000000000  x17 0000000000000000  x18 00007bacede64000  x19 00007baeac438210
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x20 00007bacef662c20  x21 0000000000000000  x22 0000000000000001  x23 0000000000000000
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x24 00007bb051e3c025  x25 00007baeac438210  x26 00007baa00018fe0  x27 0000000000000001
+11-18 03:48:04.680  5302  5302 F DEBUG   :     x28 00007baa00060580  x29 00007bacef662b80  lr  00007bacfb020da8  sp  00007bacef662a90
+11-18 03:48:04.680  5302  5302 F DEBUG   :     pc  00007bad84c61ce0  pst 0000000000000000
+lines from org.chromium.chrome.fdroidtest.keeprv mentioning Play services: 0
+

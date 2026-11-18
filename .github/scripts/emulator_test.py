@@ -27,13 +27,14 @@ def adb(*args, check=False, timeout=180):
 
 
 def shot(out, name):
+    nodes()
     path = os.path.join(out, f'{name}.png')
     with open(path, 'wb') as f:
         f.write(subprocess.run(['adb', 'exec-out', 'screencap', '-p'], capture_output=True).stdout)
     print(f'screenshot {path}', flush=True)
 
 
-def nodes():
+def _nodes():
     adb('shell', 'uiautomator', 'dump', '/sdcard/ui.xml')
     xml = adb('shell', 'cat', '/sdcard/ui.xml')
     try:
@@ -48,6 +49,22 @@ def nodes():
             out.append((n.get('text', ''), n.get('content-desc', ''), n.get('resource-id', ''),
                         (x1 + x2) // 2, (y1 + y2) // 2))
     return out
+
+
+def nodes():
+    """UI nodes, after dismissing system "isn't responding" dialogs (the AOSP image's
+    launcher often hangs under emulation and its dialog covers the app)."""
+    for _ in range(3):
+        found = _nodes()
+        if not any("isn't responding" in t for t, *_ in found):
+            return found
+        wait = [n for n in found if n[0] == 'Wait']
+        if not wait:
+            return found
+        adb('shell', 'input', 'tap', str(wait[0][3]), str(wait[0][4]))
+        print('dismissed an ANR dialog', flush=True)
+        time.sleep(2)
+    return _nodes()
 
 
 _SIZE = []

@@ -65,11 +65,30 @@ def tap(*patterns, wait=3, tries=3):
     return False
 
 
+def launch(pkg, url):
+    """Open url in pkg by naming its launcher activity explicitly."""
+    act = adb('shell', 'cmd', 'package', 'resolve-activity', '--brief', '-c',
+              'android.intent.category.LAUNCHER', pkg).strip().splitlines()[-1]
+    out = adb('shell', 'am', 'start', '-W', '-a', 'android.intent.action.VIEW', '-d', url, '-n', act)
+    print(f'launch {act}: {out.strip()}', flush=True)
+
+
 def skip_first_run():
     for _ in range(6):
         if not tap(r'^(Accept & continue|Use without an account|No thanks|Not now|Skip|Got it|Continue|Done)$',
                    r'(fre_|signin_fre_dismiss|negative_button)', wait=3, tries=1):
             break
+
+
+_PIDS = {}
+
+
+def pkg_pid(log, pkg, line):
+    """Whether a logcat line comes from one of pkg's processes."""
+    if pkg not in _PIDS:
+        _PIDS[pkg] = set(re.findall(r'Start proc (\d+):' + re.escape(pkg), log))
+    parts = line.split()
+    return len(parts) > 2 and parts[2] in _PIDS[pkg]
 
 
 def main():
@@ -85,7 +104,7 @@ def main():
     adb('shell', 'echo "_ --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line')
     adb('shell', 'am', 'set-debug-app', '--persistent', pkg)
 
-    adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', 'https://example.com', '-p', pkg)
+    launch(pkg, 'https://example.com')
     time.sleep(25)
     skip_first_run()
     shot(out, '1-page')
@@ -107,7 +126,7 @@ def main():
         adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
         time.sleep(1)
 
-    adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', ARTICLE, '-p', pkg)
+    launch(pkg, ARTICLE)
     time.sleep(20)
     shot(out, '6-article')
     if tap(r'^View$', r'Simplified view', r'reader', wait=8, tries=3):
@@ -116,9 +135,13 @@ def main():
     log = adb('logcat', '-d', timeout=120)
     with open(os.path.join(out, 'logcat.txt'), 'w') as f:
         f.write(log)
-    crashes = [l for l in log.splitlines() if 'FATAL' in l or 'AndroidRuntime: ' in l]
+    crashes = [l for l in log.splitlines()
+               if 'FATAL EXCEPTION' in l or 'Fatal signal' in l or ('AndroidRuntime' in l and ' E ' in l)
+               or (' F DEBUG' in l)]
     with open(os.path.join(out, 'summary.txt'), 'w') as f:
         f.write(f'{label}\npackage {pkg}\ncrash lines: {len(crashes)}\n' + '\n'.join(crashes[:40]) + '\n')
+        gms = [l for l in log.splitlines() if pkg_pid(log, pkg, l) and re.search(r'GmsClient|GoogleApiManager|com\.google\.android\.gms', l)]
+        f.write(f'lines from {pkg} mentioning Play services: {len(gms)}\n' + '\n'.join(gms[:40]) + '\n')
     print(open(os.path.join(out, 'summary.txt')).read(), flush=True)
     adb('uninstall', pkg)
 

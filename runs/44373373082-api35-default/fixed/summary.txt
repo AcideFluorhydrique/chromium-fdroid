@@ -1,0 +1,6 @@
+fixed
+package org.chromium.chrome.fdroidvariant
+crash lines: 0
+
+lines from org.chromium.chrome.fdroidvariant mentioning Play services: 0
+

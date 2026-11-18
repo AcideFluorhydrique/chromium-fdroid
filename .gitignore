@@ -16,6 +16,7 @@ captures/
 *.aab
 *.apk
 output-metadata.json
+/apks
 
 # IntelliJ
 *.iml
@@ -34,3 +35,5 @@ google-services.json
 # Android Profiling
 *.hprof
 __pycache__/
+
+.DS_Store

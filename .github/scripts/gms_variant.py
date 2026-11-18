@@ -472,6 +472,36 @@ ANDROIDX_CONSTANTS = [
 ]
 
 
+def patch_sliding_pane(src):
+    """Two-column Settings with slidingpanelayout 1.2.0 instead of the 1.3 snapshot.
+
+    SlidingPaneLayout wraps its second child (the detail pane) in a
+    TouchBlocker. In the 1.3 snapshot the TouchBlocker shares the child's
+    LayoutParams, so MultiColumnSettings setting the detail pane's width
+    (settings_min_multi_column_screen_width - settings_narrow_header_width,
+    480dp) sets the width SlidingPaneLayout measures; on a narrow phone it
+    then shrinks the pane to the screen. In 1.2.0 the TouchBlocker is a plain
+    FrameLayout with its own LayoutParams: the 480dp lands on the child inside
+    it, the TouchBlocker is the screen's width, and the child is drawn 480dp
+    wide anyway, so every Settings page runs off the right edge (no right
+    margin or rounded corners, switches off screen). Set the width on the
+    view SlidingPaneLayout holds instead, which is what the snapshot does.
+    """
+    path = os.path.join(src, 'chrome/android/java/src/org/chromium/chrome/browser/settings/MultiColumnSettings.java')
+    patch_file(path,
+               '        LayoutParams params = detailView.getLayoutParams();\n',
+               '        // F-Droid build (slidingpanelayout 1.2.0): size the TouchBlocker that wraps\n'
+               '        // the detail pane, which is the child SlidingPaneLayout measures.\n'
+               '        View detailContainer =\n'
+               '                detailView.getParent() == view ? detailView : (View) detailView.getParent();\n'
+               '        LayoutParams params = detailContainer.getLayoutParams();\n')
+    patch_file(path,
+               '        detailView.setLayoutParams(params);\n',
+               '        detailContainer.setLayoutParams(params);\n')
+    print('androidx: MultiColumnSettings: detail pane width on the TouchBlocker (slidingpanelayout 1.2.0)',
+          file=sys.stderr)
+
+
 def androidx_releases(src, keep=()):
     import json
     google = 'https://dl.google.com/dl/android/maven2'
@@ -523,6 +553,8 @@ def androidx_releases(src, keep=()):
             with open(path, 'w') as f:
                 f.write(text.replace(old, new))
             print(f'androidx: {os.path.basename(path)}: {old} -> {new}', file=sys.stderr)
+    if any(x.startswith('androidx.slidingpanelayout:slidingpanelayout ') for x in done):
+        patch_sliding_pane(src)
     print(f'androidx: {len(done)} snapshots replaced with releases, {len(missing)} not on Google Maven',
           file=sys.stderr)
     for x in done + [f'{m} (kept the snapshot)' for m in missing]:

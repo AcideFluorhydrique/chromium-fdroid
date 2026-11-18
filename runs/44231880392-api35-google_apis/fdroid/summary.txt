@@ -1,0 +1,45 @@
+fdroid
+package org.chromium.chrome.fdroidvariant
+crash lines: 116
+11-18 03:43:39.535  4790  4790 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x7d811cd6c478 in tid 4790 (e.fdroidvariant), pid 4790 (e.fdroidvariant)
+11-18 03:43:39.746  4827  4827 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+11-18 03:43:39.746  4827  4827 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys'
+11-18 03:43:39.746  4827  4827 F DEBUG   : Revision: '0'
+11-18 03:43:39.746  4827  4827 F DEBUG   : ABI: 'x86_64'
+11-18 03:43:39.746  4827  4827 F DEBUG   : Guest architecture: 'arm64'
+11-18 03:43:39.746  4827  4827 F DEBUG   : Timestamp: 2026-11-18 03:43:39.647948980+0000
+11-18 03:43:39.746  4827  4827 F DEBUG   : Process uptime: 2s
+11-18 03:43:39.746  4827  4827 F DEBUG   : Cmdline: org.chromium.chrome.fdroidvariant
+11-18 03:43:39.746  4827  4827 F DEBUG   : pid: 4790, tid: 4790, name: e.fdroidvariant  >>> org.chromium.chrome.fdroidvariant <<<
+11-18 03:43:39.746  4827  4827 F DEBUG   : uid: 10210
+11-18 03:43:39.746  4827  4827 F DEBUG   : signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x00007d811cd6c478
+11-18 03:43:39.746  4827  4827 F DEBUG   :     rax 00007d8455a50448  rbx 00007d8201ac1890  rcx 000000005c000000  rdx 0000000000000000
+11-18 03:43:39.746  4827  4827 F DEBUG   :     r8  00007ffdd1c53cb8  r9  0000000000000000  r10 00007d8461401030  r11 3a42270a432f678c
+11-18 03:43:39.746  4827  4827 F DEBUG   :     r12 00007d846140103d  r13 0000000000000000  r14 00007d843eedbc92  r15 0000000000000000
+11-18 03:43:39.746  4827  4827 F DEBUG   :     rdi 00007d8201ac1890  rsi 00007d843eedbc92
+11-18 03:43:39.746  4827  4827 F DEBUG   :     rbp 00007d8391b0b0d0  rsp 00007ffdd1c53d38  rip 00007d811cd6c478
+11-18 03:43:39.746  4827  4827 F DEBUG   : 12 total frames
+11-18 03:43:39.746  4827  4827 F DEBUG   : backtrace:
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #00 pc 000000000c406478  /data/app/~~JKJFsigI9x4EQgEa3o-9NQ==/org.chromium.chrome.fdroidvariant-1lPYyfRnTJmpBeQUKtsqkg==/base.apk (offset 0x4d84000)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #01 pc 00000000000dfd9c  /system/lib64/libandroid_runtime.so (android::jnihelp::ThrowException(_JNIEnv*, char const*, char const*, ...)+316) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #02 pc 000000000000aecf  [anon:scudo:primary]
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #03 pc 000000000018ca14  /system/lib64/libandroid_runtime.so (android::NativeOpenNonAssetFd(_JNIEnv*, _jclass*, long, int, _jstring*, _jlongArray*)+772) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #04 pc 0000000000000007  <unknown>
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #05 pc 00000000001845d4  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (art_jni_trampoline+196)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #06 pc 00000000007f641f  [stack]
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #07 pc 0000000000178c5d  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (android.content.res.AssetManager.openNonAssetFd+237)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #08 pc 00000000007f641f  [stack]
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #09 pc 0000000000178a99  [anon_shmem:dalvik-jit-code-cache] (offset 0x2000000) (android.content.res.AssetManager.openNonAssetFd+153)
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #10 pc 00000000007f6017  [stack]
+11-18 03:43:39.746  4827  4827 F DEBUG   :       #11 pc 0000000000212154  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+756) (BuildId: 62338b1c62e3991543c9b8b8bae2b361)
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x0  00007d8201ac1890  x1  00000000000030c6  x2  000000000000002f  x3  00007d810c296720
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x4  0000000000000000  x5  0000000000000001  x6  0000000000000000  x7  00007d810c296319
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x8  00007d818f061ce0  x9  ffffff80ffffffd8  x10 0000000000009129  x11 00007d8113992b4f
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x12 000000000000001b  x13 000000000000000c  x14 000000000000007f  x15 0000000000000000
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x16 0000000000000000  x17 0000000000000000  x18 00007d810aa98000  x19 00007d8201ac1890
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x20 00007d810c296810  x21 0000000000000000  x22 0000000000000001  x23 0000000000000000
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x24 00007d8461401029  x25 00007d8201ac1890  x26 00007d7e00019920  x27 00007d7e00039440
+11-18 03:43:39.751  4827  4827 F DEBUG   :     x28 0000000000000001  x29 00007d810c296760  lr  00007d811539243c  sp  00007d810c296670
+11-18 03:43:39.751  4827  4827 F DEBUG   :     pc  00007d818f061ce0  pst 0000000000000000
+lines from org.chromium.chrome.fdroidvariant mentioning Play services: 0
+

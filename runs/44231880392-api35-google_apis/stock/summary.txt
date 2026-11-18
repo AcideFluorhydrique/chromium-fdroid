@@ -1,0 +1,45 @@
+stock
+package org.chromium.chrome
+crash lines: 110
+11-18 03:50:21.769  6474  6474 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x7d8115b41a58 in tid 6474 (chromium.chrome), pid 6474 (chromium.chrome)
+11-18 03:50:21.977  6497  6497 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+11-18 03:50:21.977  6497  6497 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys'
+11-18 03:50:21.977  6497  6497 F DEBUG   : Revision: '0'
+11-18 03:50:21.977  6497  6497 F DEBUG   : ABI: 'x86_64'
+11-18 03:50:21.977  6497  6497 F DEBUG   : Guest architecture: 'arm64'
+11-18 03:50:21.977  6497  6497 F DEBUG   : Timestamp: 2026-11-18 03:50:21.838471386+0000
+11-18 03:50:21.977  6497  6497 F DEBUG   : Process uptime: 1s
+11-18 03:50:21.977  6497  6497 F DEBUG   : Cmdline: org.chromium.chrome
+11-18 03:50:21.977  6497  6497 F DEBUG   : pid: 6474, tid: 6474, name: chromium.chrome  >>> org.chromium.chrome <<<
+11-18 03:50:21.977  6497  6497 F DEBUG   : uid: 10213
+11-18 03:50:21.977  6497  6497 F DEBUG   : signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x00007d8115b41a58
+11-18 03:50:21.977  6497  6497 F DEBUG   :     rax 00007d8455aec3c8  rbx 00007d8201ac1890  rcx 000000005c000000  rdx 000000005c000000
+11-18 03:50:21.977  6497  6497 F DEBUG   :     r8  00000000fffffffc  r9  0000000000000000  r10 00007d8461401021  r11 3a42270a432f678c
+11-18 03:50:21.977  6497  6497 F DEBUG   :     r12 00007d8461401021  r13 0000000000000000  r14 00007d843eedbc92  r15 0000000000000000
+11-18 03:50:21.977  6497  6497 F DEBUG   :     rdi 00007d8201ac1890  rsi 00007d843eedbc92
+11-18 03:50:21.977  6497  6497 F DEBUG   :     rbp 00007d8391ae4a90  rsp 00007ffdd1c57fc8  rip 00007d8115b41a58
+11-18 03:50:21.978  6497  6497 F DEBUG   : 11 total frames
+11-18 03:50:21.978  6497  6497 F DEBUG   : backtrace:
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #00 pc 00000000051dba58  /data/app/~~rbJIFokLBd9SN3LotF_mBg==/org.chromium.chrome-dJcqvpq4lXU2vm00uWj6Bg==/base.apk (offset 0x2d70000)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #01 pc 00000000000dfd9c  /system/lib64/libandroid_runtime.so (android::jnihelp::ThrowException(_JNIEnv*, char const*, char const*, ...)+316) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #02 pc 000000000001dacf  [anon:scudo:primary]
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #03 pc 000000000018ca14  /system/lib64/libandroid_runtime.so (android::NativeOpenNonAssetFd(_JNIEnv*, _jclass*, long, int, _jstring*, _jlongArray*)+772) (BuildId: 74e467b22a4c3107eac51948743c9977)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #04 pc 0000000000000007  <unknown>
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #05 pc 00000000001f7609  /system/framework/x86_64/boot-framework.oat (art_jni_trampoline+169) (BuildId: bc047a67a4076b80992fbdfabdfba12acbd1924a)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #06 pc 00000000007fa297  [stack]
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #07 pc 0000000000287264  /system/framework/x86_64/boot-framework.oat (android.content.res.AssetManager.openNonAssetFd+196) (BuildId: bc047a67a4076b80992fbdfabdfba12acbd1924a)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #08 pc 00000000007fa297  [stack]
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #09 pc 0000000000287417  /system/framework/x86_64/boot-framework.oat (android.content.res.AssetManager.openNonAssetFd+55) (BuildId: bc047a67a4076b80992fbdfabdfba12acbd1924a)
+11-18 03:50:21.978  6497  6497 F DEBUG   :       #10 pc 0000000000000002  <unknown>
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x0  00007d8201ac1890  x1  0000000000003026  x2  00007d80c0047e30  x3  00007d810d71fa40
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x4  0000000000000000  x5  0000000000000001  x6  0000000000000000  x7  00007d810d71f859
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x8  00007d818f0b8bb0  x9  00007d810d71fa10  x10 00007d810d71fa90  x11 00007d81110f3c28
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x12 000000000000000c  x13 0000000000000008  x14 000000000051001b  x15 0000000000000000
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x16 0000000000000000  x17 0000000000000000  x18 00007d810bf20000  x19 00007d8201ac1890
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x20 00007d810d71fb28  x21 0000000000000000  x22 0000000000000001  x23 0000000000000000
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x24 00007d846140101d  x25 00007d8201ac1890  x26 0000000000000001  x27 00007d7e00060580
+11-18 03:50:21.985  6497  6497 F DEBUG   :     x28 0000000000000000  x29 00007d810d71fa80  lr  00007d81182b0bb8  sp  00007d810d71f990
+11-18 03:50:21.985  6497  6497 F DEBUG   :     pc  00007d818f0b8bb0  pst 0000000000000000
+11-18 03:50:21.985  6497  6497 F DEBUG   :   
+lines from org.chromium.chrome mentioning Play services: 0
+

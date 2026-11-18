@@ -16,6 +16,17 @@ on:
         required: false
         default: "35"
         type: string
+      target:
+        description: "google_apis = 有 Play 服務；default = 純 AOSP，沒有任何 Google 服務（像 GSI）"
+        required: false
+        default: "google_apis"
+        type: choice
+        options: [google_apis, default]
+      microg:
+        description: "先裝 microG GmsCore（配 target=default，測有 microG 的情況）"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: read
@@ -50,6 +61,17 @@ jobs:
           rm -rf dl
           ls -la apks
 
+      - name: Download microG
+        if: inputs.microg
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p microg
+          gh release download -R microg/GmsCore -p 'com.google.android.gms-*.apk' -D microg
+          ls microg
+          f=$(ls microg/*.apk | grep -v -- '-hw' | head -1)
+          mv "$f" microg/gmscore.apk
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -60,20 +82,20 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ inputs.api_level }}
-          target: google_apis
+          target: ${{ inputs.target }}
           arch: x86_64
           ram-size: 4096M
           disk-size: 8G
           cores: 4
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
+          script: if [ -f microg/gmscore.apk ]; then adb install -r -g microg/gmscore.apk && adb shell pm list packages | grep -i gms; fi; for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
 
       - name: Push results to the emulator-results branch
         if: always()
         run: |
           [ -d results ] || exit 0
-          dest="runs/${{ github.run_id }}-api${{ inputs.api_level }}"
+          dest="runs/${{ github.run_id }}-api${{ inputs.api_level }}-${{ inputs.target }}${{ inputs.microg && '-microg' || '' }}"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git clone -q --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" -b emulator-results res 2>/dev/null \

@@ -33,6 +33,10 @@ Usage: gms_variant.py <src dir> <spec>
                  Google Maven: the same version (stable or alpha/beta/rc) if
                  published, else the newest stable one, by overwriting the
                  CIPD file in place.
+  androidx-keep=GROUPS
+                 With androidx=release: keep Chromium's snapshot for these
+                 androidx groups (androidx.<group>, e.g. preference,
+                 recyclerview, core), when a release is too old.
   gnargs         Print GN args that switch off ML Kit (use_mlkit_for_aicore)
                  and ARCore/OpenXR/Cardboard. enable_vr is set to true: it would
                  follow those to false, and Chromium 158 for Android does not
@@ -48,6 +52,16 @@ Usage: gms_variant.py <src dir> <spec>
                  nogms (never use Play services even when installed:
                  ExternalAuthUtils reports them missing, location uses
                  Android's LocationManager).
+
+  nosysroot      Build the host tools against the build machine's own system
+                 instead of Chromium's prebuilt Debian sysroot: prints
+                 use_sysroot = false and use_clang_modules = false (the module
+                 map generator needs the sysroot), and stops base/BUILD.gn from
+                 linking -latomic on Android when use_sysroot is false (the
+                 NDK has no libatomic; Chromium builds its own atomic support).
+  tools=NAMES    Replace prebuilt build tools with releases from Maven
+                 (build_tools_maven.py): r8, turbine, aapt2, protoc,
+                 optionally name:version.
 
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
@@ -458,7 +472,7 @@ ANDROIDX_CONSTANTS = [
 ]
 
 
-def androidx_releases(src):
+def androidx_releases(src, keep=()):
     import json
     google = 'https://dl.google.com/dl/android/maven2'
     bom = json.load(open(os.path.join(src, 'third_party/androidx/bill_of_materials.json')))
@@ -466,6 +480,9 @@ def androidx_releases(src):
     for e in bom:
         g, n, v = e['group'], e['name'], e['version']
         if not v.endswith('-SNAPSHOT'):
+            continue
+        if any(g == 'androidx.' + k for k in keep):
+            print(f'androidx: keeping {g}:{n} {v} (androidx-keep)', file=sys.stderr)
             continue
         d = os.path.join(src, 'third_party/androidx/cipd/libs', re.sub(r'[.\-]', '_', f'{g}_{n}'))
         if not os.path.isdir(d):
@@ -629,6 +646,8 @@ def main():
     src, spec = sys.argv[1], sys.argv[2].split()
     args = []
     genstubs = 'genstubs' in spec or 'genstubs=download' in spec
+    keep = [k for item in spec if item.startswith('androidx-keep=')
+            for k in item.partition('=')[2].split(',') if k]
     stubs = 'stubs' in spec or genstubs
     if genstubs and 'gms=microg' not in spec:
         sys.exit('genstubs needs gms=microg (it compiles against the microG jar)')
@@ -648,14 +667,27 @@ def main():
             assert (key, value) in (('stubs', ''), ('genstubs', ''), ('genstubs', 'download')), item
         elif key == 'androidx':
             assert value == 'release', item
-            androidx_releases(src)
+            androidx_releases(src, keep)
             # The committed .info files describe the snapshot .aars; let gn gen
             # regenerate them for the releases (Chromium's own switch for this).
             args.append('update_android_aar_prebuilts = true')
+        elif key == 'androidx-keep':
+            pass
+        elif key == 'nosysroot':
+            patch_file(os.path.join(src, 'base/BUILD.gn'),
+                       'if (!use_sysroot && (is_android || is_chromeos || (is_linux && !is_castos)) &&',
+                       'if (!use_sysroot && (is_chromeos || (is_linux && !is_castos)) &&')
+            print('base/BUILD.gn: no -latomic on Android without the sysroot', file=sys.stderr)
+            args += ['use_sysroot = false', 'use_clang_modules = false']
         elif key == 'gnargs':
             args += GN_ARGS
         elif key == 'patch':
             apply_patches(src, value.split(','))
+        elif key == 'tools':
+            # python3 -I leaves the script's directory out of sys.path.
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import build_tools_maven
+            build_tools_maven.apply(src, value)
         else:
             sys.exit(f'unknown spec item {item}')
     if stubs:

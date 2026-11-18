@@ -50,9 +50,28 @@ def nodes():
     return out
 
 
-def tap(*patterns, wait=3, tries=3):
-    """Tap the first node whose text, description or id matches one of patterns."""
-    for _ in range(tries):
+_SIZE = []
+
+
+def screen():
+    if not _SIZE:
+        m = re.search(r'(\d+)x(\d+)', adb('shell', 'wm', 'size'))
+        _SIZE.extend(map(int, m.groups()) if m else (1080, 2400))
+    return _SIZE
+
+
+def scroll():
+    w, h = screen()
+    adb('shell', 'input', 'swipe', str(w // 2), str(h * 3 // 4), str(w // 2), str(h // 3), '400')
+    time.sleep(2)
+
+
+def tap(*patterns, wait=3, tries=3, scrolls=0):
+    """Tap the first node whose text, description or id matches one of patterns,
+    scrolling down up to `scrolls` times to find it."""
+    for attempt in range(tries + scrolls):
+        if attempt >= tries:
+            scroll()
         for text, desc, rid, x, y in nodes():
             for p in patterns:
                 if re.search(p, text, re.I) or re.search(p, desc, re.I) or re.search(p, rid, re.I):
@@ -110,17 +129,16 @@ def main():
     shot(out, '1-page')
 
     tap(r'^More options$', r'^Customize and control', r'menu_button')
-    tap(r'^Settings$')
+    tap(r'^Settings$', scrolls=3)
     shot(out, '2-settings')
-    tap(r'^Privacy and security$')
+    tap(r'^Privacy and security$', scrolls=2)
     shot(out, '3-privacy')
-    adb('shell', 'input', 'swipe', '540', '1800', '540', '700', '400')
-    time.sleep(2)
+    scroll()
     shot(out, '4-privacy-scrolled')
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     time.sleep(1)
-    tap(r'^Accessibility$')
-    tap(r'Simplified view')
+    tap(r'^Accessibility$', scrolls=4)
+    tap(r'Simplified view', scrolls=3)
     shot(out, '5-accessibility')
     for _ in range(3):
         adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')

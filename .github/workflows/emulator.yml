@@ -84,6 +84,7 @@ jobs:
           api-level: ${{ inputs.api_level }}
           target: ${{ inputs.target }}
           arch: x86_64
+          profile: pixel_6
           ram-size: 4096M
           disk-size: 8G
           cores: 4

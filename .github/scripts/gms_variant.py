@@ -44,7 +44,10 @@ Usage: gms_variant.py <src dir> <spec>
                  castoff (never add the Cast route providers, so the Cast
                  stubs never run), status (no Status.getConnectionResult(),
                  which microG lacks), fido (Fido2ApiCall's private Play
-                 services Binder calls fail instead of using GmsClient).
+                 services Binder calls fail instead of using GmsClient),
+                 nogms (never use Play services even when installed:
+                 ExternalAuthUtils reports them missing, location uses
+                 Android's LocationManager).
 
 google_play_services_package is not a GN build argument (it is set with
 if (!defined(...)) in //build/config/android/config.gni), so gms=... edits
@@ -427,6 +430,21 @@ def apply_patches(src, names):
         path = os.path.join(src, 'chrome/browser/password_manager/android/java/src/org/chromium/chrome/browser/password_manager/PasswordManagerAndroidBackendUtil.java')
         patch_file(path, '((ApiException) exception).getStatus().getConnectionResult();', 'null;')
         print('patched PasswordManagerAndroidBackendUtil: no getConnectionResult()', file=sys.stderr)
+    if 'nogms' in names:
+        # Never use Google Play services, even when the device has them (the
+        # microG libraries are only there so the Java compiles): every
+        # "can we use Play services" check in Chromium goes through
+        # ExternalAuthUtils, and location picks GMS's fused provider separately.
+        ea = os.path.join(src, 'components/externalauth/android/java/src/org/chromium/components/externalauth/ExternalAuthUtils.java')
+        patch_file(ea, '    protected int checkGooglePlayServicesAvailable(final Context context) {\n',
+                   '    protected int checkGooglePlayServicesAvailable(final Context context) {\n'
+                   '        if (true) return ConnectionResult.SERVICE_MISSING; // F-Droid build: never use Play services.\n')
+        patch_file(ea, '    public boolean canUseGooglePlayServices(final UserRecoverableErrorHandler errorHandler) {\n',
+                   '    public boolean canUseGooglePlayServices(final UserRecoverableErrorHandler errorHandler) {\n'
+                   '        if (true) return false; // F-Droid build: never use Play services, and never prompt for them.\n')
+        lp = os.path.join(src, 'services/device/geolocation/android/java/src/org/chromium/device/geolocation/LocationProviderFactory.java')
+        patch_file(lp, '        if (sUseGmsCoreLocationProvider\n', '        if (false && sUseGmsCoreLocationProvider\n')
+        print('patched ExternalAuthUtils and LocationProviderFactory: never use Play services', file=sys.stderr)
     if 'fido' in names:
         patch_fido(os.path.join(src, 'components/webauthn/android/java/src/org/chromium/components/webauthn/Fido2ApiCall.java'))
 

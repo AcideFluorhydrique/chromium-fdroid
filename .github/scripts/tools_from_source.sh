@@ -99,6 +99,8 @@ rollup-wasm)
   node npm-test/package/dist/bin/rollup a.js --format es | tee bundle.txt
   grep -q "41" bundle.txt && ! grep -q unused bundle.txt
   cp wasm-node/bindings_wasm_bg.wasm pkg/rollup-wasm
+  # wasm-bindgen's JS glue belongs to this exact wasm (its import names).
+  cp wasm-node/bindings_wasm.js pkg/rollup-wasm.js
   ver="rollup $v wasm (wasm-bindgen $bg, $(rustc --version | cut -d' ' -f2)); bundles with it"
   ;;
 esac

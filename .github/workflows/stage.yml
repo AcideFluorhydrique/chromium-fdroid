@@ -38,6 +38,10 @@ on:
       fdroid_tree:
         type: boolean
         default: false
+      # tools-from-source.yml 的 run（owner/repo/run_id）：tsc、esbuild、gperf、rollup 的 wasm 換成從原始碼編的
+      tools_from:
+        type: string
+        default: ""
       gn_args:
         description: "額外的 GN args，接在 args.gn 最後（只有 stage 1 用得到）"
         type: string
@@ -148,7 +152,7 @@ jobs:
         run: df -h
 
       - name: Checkout ci scripts
-        if: inputs.stage == 1 && (inputs.own_toolchain || inputs.variant != '' || inputs.fdroid_tree)
+        if: inputs.stage == 1 && (inputs.own_toolchain || inputs.variant != '' || inputs.fdroid_tree || inputs.tools_from != '')
         uses: actions/checkout@v4
         with:
           path: ci
@@ -256,6 +260,19 @@ jobs:
       - name: Swap in own toolchain
         if: inputs.stage == 1 && inputs.own_toolchain
         run: python3 ci/.github/scripts/swap_toolchain.py src tc
+
+      - name: Swap in tools built from source
+        if: inputs.stage == 1 && inputs.tools_from != ''
+        env:
+          FROM: ${{ inputs.tools_from }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$FROM" =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/([0-9]+)$ ]] || { echo "tools_from 格式要是 owner/repo/run_id: '$FROM'"; exit 1; }
+          gh run download "${BASH_REMATCH[2]}" -R "${BASH_REMATCH[1]}" -p 'tool-*' -D tools-dl
+          mkdir -p tools && find tools-dl -type f -exec mv -t tools {} +
+          rm -rf tools-dl && ls -la tools
+          python3 -I ci/.github/scripts/swap_tools.py src tools
+          rm -rf tools
 
       # gms_variant.py：換掉不自由的 Java 函式庫（microG、stub、補丁），見 java.yml
       - name: Apply variant

@@ -27,6 +27,11 @@ on:
         required: false
         default: false
         type: boolean
+      capture:
+        description: "錄下模擬器的網路流量（-tcpdump），加上 Chromium 的 NetLog，列出每個 APK 連了哪些主機（traffic.md）"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   actions: read
@@ -89,8 +94,16 @@ jobs:
           disk-size: 8G
           cores: 4
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ inputs.capture && format('-tcpdump {0}/traffic.pcap', github.workspace) || '' }}
           script: if [ -f microg/gmscore.apk ]; then adb install -r -g microg/gmscore.apk && adb shell pm list packages | grep -i gms; fi; for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
+
+      - name: Hosts contacted
+        if: always() && inputs.capture
+        run: |
+          [ -d results ] || exit 0
+          python3 -I .github/scripts/traffic_hosts.py traffic.pcap results
+          cat results/traffic.md >> "$GITHUB_STEP_SUMMARY"
+          [ -f traffic.pcap ] && gzip -9c traffic.pcap > results/traffic.pcap.gz || true
 
       - name: Push results to the emulator-results branch
         if: always()
@@ -103,7 +116,7 @@ jobs:
             || { git init -q res && cd res && git checkout -q -b emulator-results && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" && cd ..; }
           mkdir -p "res/$dest"
           cp -r results/* "res/$dest/"
-          gzip -9 "res/$dest"/*/logcat.txt || true
+          gzip -9 "res/$dest"/*/logcat.txt "res/$dest"/*/netlog.json || true
           cd res
           git add -A
           git commit -q -m "Emulator results for run ${{ github.run_id }} (API ${{ inputs.api_level }})"

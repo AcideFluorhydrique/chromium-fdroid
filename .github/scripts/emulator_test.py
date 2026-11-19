@@ -3,9 +3,11 @@
 
 Usage: emulator_test.py <apk> <label> <out dir>
 
-Steps: install, skip the first-run screens, open a page, open
-Settings > Privacy and security (screenshot, scrolled), open an article and
-try Reader mode (Simplified view), then save logcat. Screens are found with
+Steps: install, skip the first-run screens, stay idle on about:blank for
+IDLE_SECONDS (to see what a fresh install connects to on its own), open a page,
+open Settings > Privacy and security (screenshot, scrolled), open an article
+and try Reader mode (Simplified view), then save logcat and Chromium's NetLog.
+The start and end of each phase go to phases.tsv, for traffic_hosts.py. Screens are found with
 `uiautomator dump`, so this does not depend on Chromium's internal activities.
 """
 
@@ -17,6 +19,7 @@ import time
 import xml.etree.ElementTree as ET
 
 ARTICLE = 'https://en.wikipedia.org/wiki/Web_browser'
+IDLE_SECONDS = 180
 
 
 def adb(*args, check=False, timeout=180):
@@ -134,15 +137,30 @@ def main():
     pkg = subprocess.run([aapt2, 'dump', 'packagename', apk], capture_output=True, text=True).stdout.strip()
     print(f'{label}: package {pkg}', flush=True)
     adb('logcat', '-c')
+    # Root, to read the NetLog from the app's data directory afterwards.
+    adb('root')
+    adb('wait-for-device')
     print(adb('install', '-r', '-g', apk, timeout=600), flush=True)
+    netlog = f'/data/data/{pkg}/netlog.json'
     # Chromium reads its command line from here when it is the debug app on a
-    # debuggable system image; this skips the first-run screens.
-    adb('shell', 'echo "_ --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line')
+    # debuggable system image; this skips the first-run screens and records
+    # every network request in a NetLog.
+    adb('shell', f'echo "_ --disable-fre --no-default-browser-check --no-first-run '
+                 f'--log-net-log={netlog}" > /data/local/tmp/chrome-command-line')
     adb('shell', 'am', 'set-debug-app', '--persistent', pkg)
 
-    launch(pkg, 'https://example.com')
+    phases = []
+    t0 = time.time()
+    launch(pkg, 'about:blank')
     time.sleep(25)
     skip_first_run()
+    time.sleep(IDLE_SECONDS)
+    phases.append(('start-idle', t0, time.time()))
+    shot(out, '0-idle')
+
+    t0 = time.time()
+    launch(pkg, 'https://example.com')
+    time.sleep(15)
     shot(out, '1-page')
 
     tap(r'^More options$', r'^Customize and control', r'menu_button')
@@ -166,6 +184,16 @@ def main():
     shot(out, '6-article')
     if tap(r'^View$', r'Simplified view', r'reader', wait=8, tries=3):
         shot(out, '7-reader-mode')
+
+    phases.append(('browse', t0, time.time()))
+    with open(os.path.join(out, 'phases.tsv'), 'w') as f:
+        f.writelines(f'{n}\t{a:.3f}\t{b:.3f}\n' for n, a, b in phases)
+    adb('shell', 'am', 'force-stop', pkg)
+    time.sleep(2)
+    data = subprocess.run(['adb', 'exec-out', 'cat', netlog], capture_output=True).stdout
+    with open(os.path.join(out, 'netlog.json'), 'wb') as f:
+        f.write(data)
+    print(f'netlog: {len(data)} bytes', flush=True)
 
     log = adb('logcat', '-d', timeout=120)
     with open(os.path.join(out, 'logcat.txt'), 'w') as f:

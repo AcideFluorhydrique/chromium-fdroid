@@ -137,10 +137,28 @@ def open_menu():
             break
 
 
-def open_settings():
+SETTINGS_ACTIVITY = 'org.chromium.chrome.browser.settings.SettingsActivity'
+
+
+def settings_activity(pkg):
+    """Open Chromium's native Settings (the androidx preference screens with
+    SlidingPaneLayout) directly. It is not exported, which adb root allows."""
+    out = adb('shell', 'am', 'start', '-W', '-n', f'{pkg}/{SETTINGS_ACTIVITY}')
+    print(f'settings activity: {out.strip()}', flush=True)
+    time.sleep(4)
+    return 'Error' not in out
+
+
+def open_settings(pkg):
     open_menu()
     found = tap(r'^Settings$', scrolls=4)
     _SCROLL_X.clear()
+    if not found:
+        # The menu did not scroll far enough (seen on pixel_6): close it and
+        # go straight to the Settings activity.
+        adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+        time.sleep(1)
+        found = settings_activity(pkg)
     return found
 
 
@@ -203,7 +221,7 @@ def main():
     time.sleep(15)
     shot(out, '1-page')
 
-    open_settings()
+    open_settings(pkg)
     shot(out, '2-settings')
     tap(r'^Privacy and security$', scrolls=2)
     shot(out, '3-privacy')
@@ -229,14 +247,26 @@ def main():
     launch(pkg, 'about:blank')
     time.sleep(5)
     rotate(True)
-    open_settings()
+    open_settings(pkg)
     shot(out, '8-settings-rotated')
     tap(r'^Privacy and security$', scrolls=2)
     shot(out, '9-privacy-rotated')
     for _ in range(3):
         adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
         time.sleep(1)
-    rotate(False)
+    # On tablets the menu opens Settings in a tab; the native Settings screens
+    # (where the SlidingPaneLayout clipping was) are shot here in both
+    # orientations.
+    for rotated in (True, False):
+        rotate(rotated)
+        suffix = '-rotated' if rotated else ''
+        if settings_activity(pkg):
+            shot(out, f'10-native-settings{suffix}')
+            tap(r'^Privacy and security$', scrolls=2)
+            shot(out, f'11-native-privacy{suffix}')
+        for _ in range(3):
+            adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+            time.sleep(1)
 
     phases.append(('browse', t0, time.time()))
     with open(os.path.join(out, 'phases.tsv'), 'w') as f:

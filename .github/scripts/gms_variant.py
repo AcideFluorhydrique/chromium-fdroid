@@ -60,7 +60,7 @@ Usage: gms_variant.py <src dir> <spec>
                  linking -latomic on Android when use_sysroot is false (the
                  NDK has no libatomic; Chromium builds its own atomic support).
   tools=NAMES    Replace prebuilt build tools with releases from Maven
-                 (build_tools_maven.py): r8, turbine, aapt2, protoc,
+                 (build_tools_maven.py): r8, turbine, aapt2, protoc, kotlinc,
                  optionally name:version.
 
 google_play_services_package is not a GN build argument (it is set with

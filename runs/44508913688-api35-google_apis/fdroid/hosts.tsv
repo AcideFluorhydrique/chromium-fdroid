@@ -1,0 +1,12 @@
+source	host	count
+netlog	auth.wikimedia.org	2
+netlog	clients2.google.com	4
+netlog	content-autofill.googleapis.com	4
+netlog	edgedl.me.gvt1.com	72
+netlog	en.wikipedia.org	138
+netlog	example.com	15
+netlog	thumb.wikimedia.org	9
+netlog	update.googleapis.com	77
+netlog	upload.wikimedia.org	8
+netlog	www.google.com	45
+netlog	www.googleapis.com	8

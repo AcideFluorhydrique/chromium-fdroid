@@ -25,6 +25,13 @@ Used by gms_variant.py:  tools=r8,turbine,aapt2,protoc
            com.google.protobuf:protoc:4.<version>:linux-x86_64 on Maven
            Central, at the version DEPS pins (v35.1 -> 4.35.1).
 
+  kotlinc  The jars in third_party/kotlinc/current/lib <- the same artifacts
+           on Maven Central, at the version in each jar's manifest (the
+           compiler's own version from build.txt). compile_kt.py runs the
+           compiler's main class on the JVM instead of the GraalVM
+           native-image kotlinc-graalvm, and kotlin-preloader.jar (not on
+           Maven, only used by bin/kotlinc) is no longer a build input.
+
 Every download is printed with its sha256, next to the file it replaces.
 """
 
@@ -251,6 +258,97 @@ def swap_protoc(src, version=None):
                 f'com.google.protobuf:protoc:{version}:linux-x86_64 from Maven Central')
 
 
+# lib/<jar> -> (group, artifact); None as version means the jar manifest's.
+KOTLINC_JARS = {
+    'kotlin-compiler.jar': ('org.jetbrains.kotlin', 'kotlin-compiler'),
+    'kotlin-stdlib.jar': ('org.jetbrains.kotlin', 'kotlin-stdlib'),
+    'kotlin-reflect.jar': ('org.jetbrains.kotlin', 'kotlin-reflect'),
+    'kotlin-script-runtime.jar': ('org.jetbrains.kotlin', 'kotlin-script-runtime'),
+    'kotlin-scripting-common.jar': ('org.jetbrains.kotlin', 'kotlin-scripting-common'),
+    'kotlin-scripting-jvm.jar': ('org.jetbrains.kotlin', 'kotlin-scripting-jvm'),
+    'kotlin-scripting-compiler.jar': ('org.jetbrains.kotlin', 'kotlin-scripting-compiler'),
+    'kotlin-scripting-compiler-impl.jar': ('org.jetbrains.kotlin', 'kotlin-scripting-compiler-impl'),
+    'jvm-abi-gen.jar': ('org.jetbrains.kotlin', 'jvm-abi-gen'),
+    'compose-compiler-plugin.jar': ('org.jetbrains.kotlin', 'kotlin-compose-compiler-plugin'),
+    'annotations-13.0.jar': ('org.jetbrains', 'annotations'),
+    'kotlinx-coroutines-core-jvm.jar': ('org.jetbrains.kotlinx', 'kotlinx-coroutines-core-jvm'),
+}
+# Classpath for running the compiler without bin/kotlinc and its preloader.
+KOTLINC_CLASSPATH = ['kotlin-compiler.jar', 'kotlin-stdlib.jar', 'kotlin-reflect.jar',
+                     'kotlin-script-runtime.jar', 'kotlinx-coroutines-core-jvm.jar',
+                     'annotations-13.0.jar']
+
+
+def jar_version(path):
+    try:
+        man = zipfile.ZipFile(path).read('META-INF/MANIFEST.MF').decode(errors='replace')
+    except (KeyError, zipfile.BadZipFile):
+        return None
+    m = re.search(r'^Implementation-Version:\s*(\S+)', man, re.M)
+    return m[1] if m else None
+
+
+def swap_kotlinc(src, version=None):
+    home = os.path.join(src, 'third_party/kotlinc/current')
+    lib = os.path.join(home, 'lib')
+    bt = os.path.join(home, 'build.txt')
+    build_txt = (open(bt).read().strip() if os.path.exists(bt)
+                 else jar_version(os.path.join(lib, 'kotlin-compiler.jar')) or '')
+    m = re.match(r'(\d+\.\d+\.\d+)', build_txt)
+    if not (version or m):
+        sys.exit(f'kotlinc: cannot tell the compiler version ({build_txt!r}); use tools=kotlinc:<version>')
+    kv = version or m[1]
+    print(f'kotlinc: Chromium ships {build_txt}; compiler {kv}', file=sys.stderr)
+    pom = fetch(f'{CENTRAL}/org/jetbrains/kotlin/kotlin-compiler/{kv}/kotlin-compiler-{kv}.pom').decode()
+    pom_versions = dict(re.findall(r'<artifactId>([^<]+)</artifactId>\s*<version>([^<]+)</version>', pom))
+    same = diff = 0
+    for name, (g, a) in KOTLINC_JARS.items():
+        path = os.path.join(lib, name)
+        if not os.path.exists(path):
+            print(f'kotlinc: {name} not in this kotlinc', file=sys.stderr)
+            continue
+        if name == 'annotations-13.0.jar':
+            v = '13.0'
+        elif g == 'org.jetbrains.kotlin' and a not in ('kotlin-reflect', 'kotlin-stdlib'):
+            v = kv
+        else:
+            v = jar_version(path) or pom_versions.get(a) or kv
+            v = re.match(r'[0-9][0-9A-Za-z.\-]*', v)[0]
+        data = fetch(f"{CENTRAL}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}.jar")
+        old = open(path, 'rb').read()
+        same += old == data
+        diff += old != data
+        print(f'kotlinc: {name} <- {g}:{a}:{v} from Maven Central, sha256 {sha(data)}; '
+              f'{"identical to" if old == data else "replaces"} the CIPD file ({sha(old)[:16]})',
+              file=sys.stderr)
+        overwrite(path, data)
+    print(f'kotlinc: {same} jars identical to Chromium\'s, {diff} replaced', file=sys.stderr)
+
+    # Run the compiler on the JVM (the else branch compile_kt.py uses on
+    # other hosts runs bin/kotlinc, which needs kotlin-preloader.jar).
+    cp = ', '.join(f"os.path.join(build_utils.KOTLIN_HOME, 'lib', '{j}')" for j in KOTLINC_CLASSPATH)
+    sub_once(os.path.join(src, 'build/android/gyp/compile_kt.py'),
+             r"    if sys\.platform == 'linux' and platform\.machine\(\) == 'x86_64':\n",
+             "    if False:  # F-Droid build: no GraalVM native-image kotlinc\n")
+    sub_once(os.path.join(src, 'build/android/gyp/compile_kt.py'),
+             r"        kotlinc_cmd = \[\n            build_utils\.KOTLINC_PATH,\n.*?'-J-Xmx1G',\n        \]\n",
+             "        kotlinc_cmd = [\n"
+             "            build_utils.JAVA_PATH,\n"
+             "            '-Xmx1G',\n"
+             f"            '-cp', ':'.join([{cp}]),\n"
+             "            'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler',\n"
+             "            '-kotlin-home',\n"
+             "            build_utils.KOTLIN_HOME,\n"
+             "            '-Xdisable-default-scripting-plugin',\n"
+             "        ]\n", flags=re.M | re.S)
+    gni = os.path.join(src, 'build/config/android/config.gni')
+    for rel in ('bin/kotlinc-graalvm', 'lib/kotlin-preloader.jar'):
+        sub_once(gni, r'^\s*"//third_party/kotlinc/current/' + re.escape(rel) + r'",\n', '')
+        remove(os.path.join(home, rel))
+    print('kotlinc: compile_kt.py runs K2JVMCompiler on the JVM; removed kotlinc-graalvm '
+          'and kotlin-preloader.jar', file=sys.stderr)
+
+
 def apply(src, value):
     for item in value.split(','):
         name, _, version = item.partition(':')
@@ -262,8 +360,10 @@ def apply(src, value):
             swap_aapt2(src, version or None)
         elif name == 'protoc':
             swap_protoc(src, version or None)
+        elif name == 'kotlinc':
+            swap_kotlinc(src, version or None)
         else:
-            sys.exit(f'unknown tool {name!r} (r8, turbine, aapt2, protoc)')
+            sys.exit(f'unknown tool {name!r} (r8, turbine, aapt2, protoc, kotlinc)')
 
 
 if __name__ == '__main__':

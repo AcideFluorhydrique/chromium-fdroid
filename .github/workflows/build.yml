@@ -52,6 +52,11 @@ on:
         required: false
         default: ""
         type: string
+      tools_from:
+        description: "tsc、esbuild、gperf、rollup 的 wasm 改用 tools-from-source.yml 編好的（owner/repo/run_id）"
+        required: false
+        default: ""
+        type: string
       fdroid_tree:
         description: "F-Droid 的原始碼處理：不同步 skip-deps.txt 的 DEPS、prune_binaries.py、NDK 用 sdkmanager"
         required: false
@@ -134,6 +139,7 @@ jobs:
       variant: ${{ inputs.variant }}
       gn_args: ${{ inputs.gn_args }}
       fdroid_tree: ${{ inputs.fdroid_tree || false }}
+      tools_from: ${{ inputs.tools_from }}
 
   stage2:
     needs: [resolve, stage1]

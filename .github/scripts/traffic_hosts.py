@@ -121,16 +121,28 @@ def tls_sni(tcp):
     return None
 
 
-def netlog_hosts(path):
-    """Hosts of the URLs in a (possibly truncated) NetLog file."""
+def netlog_hosts(path, phases):
+    """{phase: Counter(host)} for the URLs in a (possibly truncated) NetLog.
+
+    Each event's "time" is in ms since constants.timeTickOffset (epoch ms);
+    an event's params come before its time, so a URL is dated by the next
+    "time" after it. URLs outside every phase go under "other"."""
     try:
         text = open(path, errors='replace').read()
     except OSError:
-        return collections.Counter()
-    hosts = collections.Counter()
-    for m in re.finditer(r'"(?:url|original_url)":"(https?|wss?)://([^/":?]+)', text):
-        hosts[m[2].lower().split(':')[0]] += 1
-    return hosts
+        return {}
+    m = re.search(r'"timeTickOffset":"?(\d+)', text)
+    offset = int(m[1]) / 1000 if m else None
+    out = collections.defaultdict(collections.Counter)
+    for m in re.finditer(r'"(?:url|original_url)":"(?:https?|wss?)://([^/":?]+)', text):
+        host = m[1].lower()
+        t = re.compile(r'"time":"(\d+)"').search(text, m.end())
+        phase = 'other'
+        if t and offset is not None:
+            ts = offset + int(t[1]) / 1000
+            phase = next((n for n, s, e in phases if s <= ts <= e), 'other')
+        out[phase][host] += 1
+    return out
 
 
 def main():
@@ -144,6 +156,7 @@ def main():
 
     seen = collections.defaultdict(collections.Counter)  # (label, phase) -> host -> count
     other = collections.Counter()
+    times = []
     if os.path.exists(pcap):
         for ts, linktype, data in packets(pcap):
             ip = ip_payload(linktype, data)
@@ -159,6 +172,7 @@ def main():
                 kind = 'tls'
             if not host:
                 continue
+            times.append(ts)
             where = next(((l, n) for l, n, s, e in phases if s <= ts <= e), None)
             if where:
                 seen[where][f'{host} ({kind})'] += 1
@@ -166,26 +180,31 @@ def main():
                 other[f'{host} ({kind})'] += 1
 
     lines = ['## Network traffic per APK and phase', '',
-             'From the emulator packet capture (DNS queries and TLS server names) and '
-             "Chromium's NetLog (every URL the browser requested). The capture includes "
-             'other apps active in the same window.', '']
+             "From Chromium's NetLog (every URL the browser requested, dated by the "
+             'NetLog\'s own clock), and the emulator packet capture (DNS queries and TLS '
+             'server names of the whole emulator, so other apps are included).', '']
     for label in labels:
         lines += [f'### {label}', '']
-        net = netlog_hosts(os.path.join(results, label, 'netlog.json'))
-        rows = []
+        own = [(n, s, e) for l, n, s, e in phases if l == label]
+        net = netlog_hosts(os.path.join(results, label, 'netlog.json'), own)
+        rows = [(f'netlog:{p}', h, c) for p, hosts in net.items() for h, c in hosts.items()]
         for (l, phase), hosts in seen.items():
             if l == label:
-                rows += [(phase, h, c) for h, c in hosts.items()]
-        rows += [('netlog', h, c) for h, c in net.items()]
+                rows += [(f'capture:{phase}', h, c) for h, c in hosts.items()]
         with open(os.path.join(results, label, 'hosts.tsv'), 'w') as f:
             f.write('source\thost\tcount\n')
             f.writelines(f'{p}\t{h}\t{c}\n' for p, h, c in sorted(rows))
-        for phase in [n for l, n, s, e in phases if l == label] + ['netlog']:
-            hs = sorted({h for p, h, c in rows if p == phase})
+        for phase in [n for n, s, e in own] + ['other']:
+            hs = sorted(net.get(phase, {}))
+            if phase == 'other' and not hs:
+                continue
             lines.append(f'- **{phase}** ({len(hs)}): ' + (', '.join(f'`{h}`' for h in hs) or 'none'))
         lines.append('')
-    if other:
-        lines += ['### Outside any test phase', '', ', '.join(f'`{h}`' for h in sorted(other)), '']
+    allcap = sorted(set(other) | {h for hosts in seen.values() for h in hosts})
+    if allcap:
+        span = f'{min(times):.0f}-{max(times):.0f}' if times else '?'
+        lines += [f'### Whole emulator capture (packet times {span})', '',
+                  ', '.join(f'`{h}`' for h in allcap), '']
     text = '\n'.join(lines) + '\n'
     with open(os.path.join(results, 'traffic.md'), 'w') as f:
         f.write(text)

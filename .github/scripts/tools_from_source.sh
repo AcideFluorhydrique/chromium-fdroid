@@ -67,7 +67,11 @@ tsc)
   echo "typescript-go needs Go $gover; Debian has $(go version)"
   goroot=$(build_go "$gover")
   export PATH="$goroot/bin:$PATH"
-  (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -o ../pkg/tsc ./cmd/tsgo)
+  # noembed: read lib.*.d.ts from the directory next to the binary, like
+  # Chromium's own tsc (third_party/typescript/linux-amd64/src/lib/). With the
+  # libraries embedded, ts_library.py reports them as undeclared dependencies.
+  (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -tags noembed -o ../pkg/tsc ./cmd/tsgo)
+  strings pkg/tsc | grep -q 'bundled:/libs/lib.es5.d.ts' && { echo "tsc still embeds its libraries"; exit 1; } || true
   ver="tsc $(pkg/tsc --version 2>&1 | head -1)"
   ;;
 rollup-wasm)

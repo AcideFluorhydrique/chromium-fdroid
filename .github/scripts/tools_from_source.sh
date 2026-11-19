@@ -82,7 +82,7 @@ golang)
   # toolchain Dawn's DEPS pins (third_party/dawn/tools/golang). Build that Go
   # release from source and ship the whole GOROOT.
   rev=$(grep -oP "'dawn_revision': '\K[0-9a-f]+" <<<"$deps")
-  ddeps=$(gitiles "dawn/dawn/+/$rev/DEPS")
+  ddeps=$(curl -fsSL "https://dawn.googlesource.com/dawn/+/$rev/DEPS?format=TEXT" | base64 -d)
   v=$(grep -A12 "tools/golang" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1)
   [ -n "$v" ] || { echo "no Go version for tools/golang in Dawn's DEPS at $rev"; exit 1; }
   echo "dawn $rev, Go $v"

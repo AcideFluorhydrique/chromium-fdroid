@@ -52,6 +52,11 @@ on:
         required: false
         default: ""
         type: string
+      fdroid_tree:
+        description: "F-Droid 的原始碼處理：不同步 skip-deps.txt 的 DEPS、prune_binaries.py、NDK 用 sdkmanager"
+        required: false
+        default: false
+        type: boolean
       gn_args:
         description: "額外的 GN args，接在 args.gn 最後，例如 use_sysroot = false（實驗用）"
         required: false
@@ -128,6 +133,7 @@ jobs:
       rebuild_only: ${{ inputs.rebuild_only }}
       variant: ${{ inputs.variant }}
       gn_args: ${{ inputs.gn_args }}
+      fdroid_tree: ${{ inputs.fdroid_tree || false }}
 
   stage2:
     needs: [resolve, stage1]

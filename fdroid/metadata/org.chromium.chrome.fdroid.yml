@@ -1,0 +1,132 @@
+# DRAFT of the fdroiddata metadata for Chromium (fdroiddata#3911). Not tested
+# with fdroidserver yet; every "TODO" is an open question or missing piece.
+# Copy to fdroiddata as metadata/<application id>.yml.
+#
+# Approach: Repo is this repository (chromium-fdroid), tagged once per Chromium
+# version (tag = Chromium version, e.g. 158.0.8127.36). The build fetches
+# Chromium's source at that tag in prebuild and runs the scripts from this
+# repository, which are the same ones the GitHub Actions workflows use.
+#
+# TODO application id: org.chromium.chrome.fdroid is a placeholder. It can't be
+# org.chromium.chrome (different signature from upstream builds); ask the
+# F-Droid maintainers. The id is set at build time with the GN argument
+# chrome_public_manifest_package, so it is free to choose.
+
+Categories:
+  - Internet  # TODO: check the current fdroiddata category list (a browser category may exist)
+License: BSD-3-Clause
+AuthorName: The Chromium Authors
+WebSite: https://www.chromium.org/
+SourceCode: https://chromium.googlesource.com/chromium/src
+IssueTracker: https://issues.chromium.org/issues
+Changelog: https://chromereleases.googleblog.com/
+
+AutoName: Chromium
+
+# Vanilla Chromium with only the changes F-Droid's inclusion policy needs
+# (agreed on fdroiddata#3911): Play services, Firebase, ML Kit, Play Core and
+# ARCore are replaced or removed, but Chromium still talks to Google services
+# at runtime.
+AntiFeatures:
+  NonFreeNet:
+    en-US: >-
+      Connects to Google services by default, such as Safe Browsing, the
+      variations (field trial) server, component updates and the Discover feed
+      on the new tab page. TODO: replace with the list measured by
+      emulator.yml (traffic.md).
+
+RepoType: git
+Repo: https://github.com/AcideFluorhydrique/chromium-fdroid.git
+
+# One build per ABI. Chromium's own version codes
+# (build/util/android_chrome_version.py, chrome_public_apk):
+#   BUILD * 100000 + PATCH * 100 + ABI digit
+#   arm 00, arm64 04 (64-bit only), x64 09
+# e.g. 158.0.8127.36 -> 812703600 / 812703604 / 812703609.
+Builds:
+  - versionName: 158.0.8127.36
+    versionCode: 812703604
+    commit: 158.0.8127.36  # TODO: tag this repository per Chromium version
+    timeout: 86400  # TODO: ask what the build server allows; 4 cores take ~15 h
+    sudo:
+      - apt-get update
+      # TODO: the exact list; toolchain_debian.sh and install-build-deps.sh
+      # install their own packages today and must not need root later.
+      - apt-get install -y build-essential clang lld llvm cmake ninja-build pkg-config
+        python3 python3-setuptools git curl xz-utils zstd file zlib1g-dev
+        libssl-dev libncurses-dev libzstd-dev libxml2-dev rustup golang-go
+        openjdk-25-jdk-headless gperf
+    ndk: 30.0.16248370  # the version Chromium's DEPS pins (android_ndk_version)
+    srclibs:
+      - depot_tools@<commit>  # TODO: pinned depot_tools, as fdroiddata srclib
+    prebuild:
+      # TODO: wrap all of this in one script in this repository,
+      # fdroid/build.sh prebuild|build <version> <cpu>, so the metadata stays
+      # short and the same script runs on GitHub Actions.
+      - export PATH=$$depot_tools$$:$PATH DEPOT_TOOLS_UPDATE=0
+      # 1. Chromium's source at the version tag, and its DEPS without the
+      #    developer-only ones (fdroid/skip-deps.txt).
+      - git init src && git -C src fetch --depth 1 https://chromium.googlesource.com/chromium/src.git
+        refs/tags/$$VERSION$$ && git -C src checkout FETCH_HEAD
+      - python3 fdroid/write_gclient.py > .gclient  # TODO: write (custom_deps from skip-deps.txt)
+      # TODO: --nohooks and run only the hooks the build needs, so the Google
+      # toolchain (clang, Rust, Node, sysroot) is never downloaded at all.
+      - gclient sync --no-history -j 8
+      # 2. Delete the flagged files the build never reads.
+      - python3 fdroid/prune_binaries.py src reports/$$VERSION$$/prune-list.txt.gz
+      # 3. NDK from the build server's SDK instead of CIPD.
+      - rm -rf src/third_party/android_toolchain/ndk && ln -s $$NDK$$ src/third_party/android_toolchain/ndk
+      # 4. Toolchain from source with Debian's compilers (clang, Rust,
+      #    GN/Ninja/Node), and the prebuilt tools the build reads (tsc,
+      #    esbuild, gperf, rollup's wasm). TODO: these scripts install
+      #    packages with apt themselves; move that to sudo above.
+      - bash .github/scripts/toolchain_debian.sh clang-hostsys
+      - bash .github/scripts/toolchain_debian.sh rust-rustup
+      - bash .github/scripts/toolchain_debian.sh tools
+      - python3 .github/scripts/swap_toolchain.py src pkg
+      # TODO: swap in tsc, esbuild, gperf and rollup's wasm (tools_from_source.sh);
+      # the GitHub Actions APK builds do not do this yet either.
+      # 5. Non-free libraries out, prebuilt Java build tools from Maven.
+      - python3 .github/scripts/gms_variant.py src "androidx=release stubs genstubs gms=microg
+        drop=playcore,mlkit,impress gnargs patch=cast,shape,castoff,status,fido,nogms
+        tools=r8,turbine,aapt2,protoc nosysroot" > variant.gn
+      # TODO: kotlinc, the JDK and the Android SDK are still from CIPD.
+    scanignore:
+      # fdroid/scanignore.txt (reviewed by hand, issue #7)
+      - src/base/android/java/src/org/chromium/base/BundleUtils.java
+      - src/base/android/java/src/org/chromium/base/WrappedClassLoader.java
+      - src/components/language/content/browser/ulp_language_code_locator/geolanguage-data_rank*.bin
+      - src/package.json
+      - src/third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin
+    build:
+      - export PATH=$$depot_tools$$:$PATH DEPOT_TOOLS_UPDATE=0
+      # fdroidserver joins the lines of a section with "&&" into one shell
+      # command, so each line must keep the working directory unchanged.
+      - mkdir -p src/out/Default
+      - printf '%s\n' 'target_os = "android"' 'target_cpu = "arm64"' 'is_debug = false'
+        'is_component_build = false' 'symbol_level = 0' 'blink_symbol_level = 0'
+        'v8_symbol_level = 0' 'treat_warnings_as_errors = false' 'android_static_analysis = "off"'
+        'use_siso = false' 'dcheck_always_on = false' 'use_mold = false'
+        'chrome_public_manifest_package = "org.chromium.chrome.fdroid"' > src/out/Default/args.gn
+      - cat variant.gn >> src/out/Default/args.gn
+      - (cd src && buildtools/linux64/gn gen out/Default)
+      - src/third_party/ninja/ninja -C src/out/Default -j $(nproc) chrome_public_apk
+      # TODO: Chromium signs the APK with its debug key; check whether
+      # fdroidserver needs it unsigned.
+    output: src/out/Default/apks/ChromePublic.apk
+
+  # TODO: arm (812703600) and x64 (812703609) builds, identical except
+  # target_cpu, versionCode and (for arm) no nosysroot change needed.
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^\d+\.\d+\.\d+\.\d+$
+# TODO: the tag name gives the version, but the version code needs BUILD and
+# PATCH. Plan: commit fdroid/VERSION ("versionCode=812703600", the arm code)
+# with each tag and derive the other ABIs with VercodeOperation.
+UpdateCheckData: fdroid/VERSION|versionCode=(\d+)|.|
+VercodeOperation:
+  - '%c + 4'
+  - '%c'
+  - '%c + 9'
+CurrentVersion: 158.0.8127.36
+CurrentVersionCode: 812703604

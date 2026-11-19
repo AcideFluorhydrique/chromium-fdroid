@@ -35,7 +35,9 @@ build_go() {
   echo "$PWD/go-$tag"
 }
 
-gitiles() { curl -fsSL "https://chromium.googlesource.com/$1?format=TEXT" | base64 -d; }
+# googlesource answers 429/503/504 now and then; retry.
+fetch_retry() { curl -fsSL --retry 6 --retry-all-errors --retry-delay 20 "$1"; }
+gitiles() { fetch_retry "https://chromium.googlesource.com/$1?format=TEXT" | base64 -d; }
 deps=$(gitiles "chromium/src/+/refs/tags/$VERSION/DEPS")
 mkdir -p pkg
 
@@ -82,7 +84,7 @@ golang)
   # toolchain Dawn's DEPS pins (third_party/dawn/tools/golang). Build that Go
   # release from source and ship the whole GOROOT.
   rev=$(grep -oP "'dawn_revision': '\K[0-9a-f]+" <<<"$deps")
-  ddeps=$(curl -fsSL "https://dawn.googlesource.com/dawn/+/$rev/DEPS?format=TEXT" | base64 -d)
+  ddeps=$(fetch_retry "https://dawn.googlesource.com/dawn/+/$rev/DEPS?format=TEXT" | base64 -d)
   echo "dawn $rev: $(grep -c . <<<"$ddeps") lines of DEPS"
   grep -n -A8 "tools/golang" <<<"$ddeps" || true
   grep -n "go_version" <<<"$ddeps" || true

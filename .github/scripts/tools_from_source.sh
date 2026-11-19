@@ -72,7 +72,10 @@ tsc)
   # libraries embedded, ts_library.py reports them as undeclared dependencies.
   (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -tags noembed -o ../pkg/tsc ./cmd/tsgo)
   grep -rl --include='*.go' 'go:build noembed' tsgo-src/internal | head -3 || echo "warning: no noembed build tag found in typescript-go"
-  ver="tsc $(pkg/tsc --version 2>&1 | head -1)"
+  # Built with noembed, tsc reads lib.*.d.ts next to itself even for
+  # --version, so run it next to the libraries from the source tree.
+  mkdir -p tsc-check && cp pkg/tsc tsc-check/ && cp tsgo-src/_submodules/TypeScript/src/lib/*.d.ts tsc-check/ 2>/dev/null || true
+  ver="tsc $( (tsc-check/tsc --version 2>&1 || true) | head -1) (noembed)"
   ;;
 rollup-wasm)
   # third_party/node/node_modules ships @rollup/wasm-node's prebuilt

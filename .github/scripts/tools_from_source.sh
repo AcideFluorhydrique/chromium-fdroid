@@ -83,7 +83,13 @@ golang)
   # release from source and ship the whole GOROOT.
   rev=$(grep -oP "'dawn_revision': '\K[0-9a-f]+" <<<"$deps")
   ddeps=$(curl -fsSL "https://dawn.googlesource.com/dawn/+/$rev/DEPS?format=TEXT" | base64 -d)
-  v=$(grep -A12 "tools/golang" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1)
+  echo "dawn $rev: $(grep -c . <<<"$ddeps") lines of DEPS"
+  grep -n -A8 "tools/golang" <<<"$ddeps" || true
+  grep -n "go_version" <<<"$ddeps" || true
+  # The version is either inline in the tools/golang entry or in a var
+  # such as 'dawn_go_version'.
+  v=$( { grep -oP "go_version'\s*:\s*'version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" <<<"$ddeps" || true
+         grep -A12 "tools/golang" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" || true; } | head -1)
   [ -n "$v" ] || { echo "no Go version for tools/golang in Dawn's DEPS at $rev"; exit 1; }
   echo "dawn $rev, Go $v"
   goroot=$(build_go "$v")

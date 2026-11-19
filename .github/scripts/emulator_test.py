@@ -93,9 +93,14 @@ def rotate(on):
     time.sleep(4)
 
 
+_SCROLL_X = []
+
+
 def scroll():
+    """Swipe up, in the middle of the screen or over the open app menu."""
     w, h = screen()
-    adb('shell', 'input', 'swipe', str(w // 2), str(h * 3 // 4), str(w // 2), str(h // 3), '400')
+    x = _SCROLL_X[0] if _SCROLL_X else w // 2
+    adb('shell', 'input', 'swipe', str(x), str(h * 3 // 4), str(x), str(h // 3), '400')
     time.sleep(2)
 
 
@@ -123,6 +128,20 @@ def open_menu():
     # The button itself, not menu_button_wrapper / app_menu_button_container
     # around it (tapping those on tablets and in landscape did not open the menu).
     tap(r'^More options$', r'^Customize and control', r'id/menu_button$', r'menu_button')
+    # On wide screens the menu is a short popup at the top right and Settings
+    # is below its fold: scroll inside the popup, since a swipe in the middle
+    # of the screen closes it.
+    for text, desc, rid, x, y in nodes():
+        if re.search(r'^(New tab|New Incognito tab|History|Bookmarks|Downloads)$', text):
+            _SCROLL_X[:] = [x]
+            break
+
+
+def open_settings():
+    open_menu()
+    found = tap(r'^Settings$', scrolls=4)
+    _SCROLL_X.clear()
+    return found
 
 
 def launch(pkg, url):
@@ -184,8 +203,7 @@ def main():
     time.sleep(15)
     shot(out, '1-page')
 
-    open_menu()
-    tap(r'^Settings$', scrolls=3)
+    open_settings()
     shot(out, '2-settings')
     tap(r'^Privacy and security$', scrolls=2)
     shot(out, '3-privacy')
@@ -211,8 +229,7 @@ def main():
     launch(pkg, 'about:blank')
     time.sleep(5)
     rotate(True)
-    open_menu()
-    tap(r'^Settings$', scrolls=4)
+    open_settings()
     shot(out, '8-settings-rotated')
     tap(r'^Privacy and security$', scrolls=2)
     shot(out, '9-privacy-rotated')

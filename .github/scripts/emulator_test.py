@@ -6,7 +6,8 @@ Usage: emulator_test.py <apk> <label> <out dir>
 Steps: install, skip the first-run screens, stay idle on about:blank for
 IDLE_SECONDS (to see what a fresh install connects to on its own), open a page,
 open Settings > Privacy and security (screenshot, scrolled), open an article
-and try Reader mode (Simplified view), then save logcat and Chromium's NetLog.
+and try Reader mode (Simplified view), Settings again with the screen turned
+90 degrees, then save logcat and Chromium's NetLog.
 The start and end of each phase go to phases.tsv, for traffic_hosts.py. Screens are found with
 `uiautomator dump`, so this does not depend on Chromium's internal activities.
 """
@@ -19,7 +20,8 @@ import time
 import xml.etree.ElementTree as ET
 
 ARTICLE = 'https://en.wikipedia.org/wiki/Web_browser'
-IDLE_SECONDS = 180
+# Shorter when only screenshots matter (emulator.yml sets it to 20 without capture).
+IDLE_SECONDS = int(os.environ.get('IDLE_SECONDS', '180'))
 
 
 def adb(*args, check=False, timeout=180):
@@ -71,13 +73,24 @@ def nodes():
 
 
 _SIZE = []
+_ROTATED = []
 
 
 def screen():
     if not _SIZE:
         m = re.search(r'(\d+)x(\d+)', adb('shell', 'wm', 'size'))
         _SIZE.extend(map(int, m.groups()) if m else (1080, 2400))
-    return _SIZE
+    # `wm size` is the natural orientation; swap after rotate().
+    return _SIZE[::-1] if _ROTATED else _SIZE
+
+
+def rotate(on):
+    """Turn the screen 90 degrees from its natural orientation (phone: landscape,
+    tablet: portrait), or back."""
+    adb('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0')
+    adb('shell', 'settings', 'put', 'system', 'user_rotation', '1' if on else '0')
+    _ROTATED[:] = [True] if on else []
+    time.sleep(4)
 
 
 def scroll():
@@ -184,6 +197,21 @@ def main():
     shot(out, '6-article')
     if tap(r'^View$', r'Simplified view', r'reader', wait=8, tries=3):
         shot(out, '7-reader-mode')
+
+    # The same Settings screens turned 90 degrees: wide layouts (two panes,
+    # SlidingPaneLayout) only show up above a certain width.
+    launch(pkg, 'about:blank')
+    time.sleep(5)
+    rotate(True)
+    tap(r'^More options$', r'^Customize and control', r'menu_button')
+    tap(r'^Settings$', scrolls=4)
+    shot(out, '8-settings-rotated')
+    tap(r'^Privacy and security$', scrolls=2)
+    shot(out, '9-privacy-rotated')
+    for _ in range(3):
+        adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+        time.sleep(1)
+    rotate(False)
 
     phases.append(('browse', t0, time.time()))
     with open(os.path.join(out, 'phases.tsv'), 'w') as f:

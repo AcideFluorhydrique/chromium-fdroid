@@ -1,6 +1,7 @@
 name: Test APKs in an emulator
 
-# 在 GitHub runner 的 Android 模擬器（KVM）裡裝 APK、截圖 設定→隱私和安全性 和 Reader mode、收 logcat，
+# 在 GitHub runner 的 Android 模擬器（KVM）裡裝 APK、截圖 設定→隱私和安全性 和 Reader mode
+# （直的、轉 90 度各一次；profiles 可以一次測多種螢幕大小）、收 logcat，
 # 結果推到 emulator-results 分支（截圖可以直接在 GitHub 上看）。
 # x86_64 映像檔內建 ARM 轉譯，可以跑我們的 arm64 APK。
 
@@ -33,6 +34,11 @@ on:
         default: "ubuntu-24.04"
         type: choice
         options: [ubuntu-24.04, ubuntu-24.04-arm]
+      profiles:
+        description: "空白分隔的 AVD 裝置設定，每個開一個平行的 job，例如 pixel_6 pixel_fold pixel_tablet（螢幕寬度不同，設定頁的排版也不同）"
+        required: false
+        default: "pixel_6"
+        type: string
       capture:
         description: "錄下模擬器的網路流量（-tcpdump），加上 Chromium 的 NetLog，列出每個 APK 連了哪些主機（traffic.md）"
         required: false
@@ -44,7 +50,23 @@ permissions:
   contents: write
 
 jobs:
+  profiles:
+    runs-on: ubuntu-24.04
+    outputs:
+      list: ${{ steps.p.outputs.list }}
+    steps:
+      - id: p
+        env:
+          PROFILES: ${{ inputs.profiles }}
+        run: echo "list=$(printf '%s\n' ${PROFILES:-pixel_6} | jq -Rnc '[inputs | select(length > 0)]')" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: profiles
+    name: test (${{ matrix.profile }})
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ${{ fromJSON(needs.profiles.outputs.list) }}
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 180
     steps:
@@ -100,13 +122,13 @@ jobs:
           api-level: ${{ inputs.api_level }}
           target: ${{ inputs.target }}
           arch: ${{ inputs.runner == 'ubuntu-24.04-arm' && 'arm64-v8a' || 'x86_64' }}
-          profile: pixel_6
+          profile: ${{ matrix.profile }}
           ram-size: 4096M
           disk-size: 8G
           cores: 4
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none ${{ inputs.capture && format('-tcpdump {0}/traffic.pcap', github.workspace) || '' }}
-          script: if [ -f microg/gmscore.apk ]; then adb install -r -g microg/gmscore.apk && adb shell pm list packages | grep -i gms; fi; for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
+          script: export IDLE_SECONDS=${{ inputs.capture && '180' || '20' }}; if [ -f microg/gmscore.apk ]; then adb install -r -g microg/gmscore.apk && adb shell pm list packages | grep -i gms; fi; for apk in apks/*.apk; do l=$(basename "$apk" .apk); python3 .github/scripts/emulator_test.py "$apk" "$l" "results/$l" || echo "test of $l failed"; done
 
       - name: Hosts contacted
         if: always() && inputs.capture
@@ -120,7 +142,7 @@ jobs:
         if: always()
         run: |
           [ -d results ] || exit 0
-          dest="runs/${{ github.run_id }}-api${{ inputs.api_level }}-${{ inputs.target }}${{ inputs.microg && '-microg' || '' }}"
+          dest="runs/${{ github.run_id }}-api${{ inputs.api_level }}-${{ inputs.target }}${{ inputs.microg && '-microg' || '' }}-${{ matrix.profile }}"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git clone -q --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" -b emulator-results res 2>/dev/null \
@@ -130,6 +152,6 @@ jobs:
           gzip -9 "res/$dest"/*/logcat.txt "res/$dest"/*/netlog.json || true
           cd res
           git add -A
-          git commit -q -m "Emulator results for run ${{ github.run_id }} (API ${{ inputs.api_level }})"
+          git commit -q -m "Emulator results for run ${{ github.run_id }} (API ${{ inputs.api_level }}, ${{ matrix.profile }})"
           for i in 1 2 3; do git push -q origin emulator-results && break; git pull -q --rebase origin emulator-results; done
           echo "https://github.com/${{ github.repository }}/tree/emulator-results/$dest" >> "$GITHUB_STEP_SUMMARY"

@@ -30,10 +30,18 @@ AutoName: Chromium
 AntiFeatures:
   NonFreeNet:
     en-US: >-
-      Connects to Google services by default, such as Safe Browsing, the
-      variations (field trial) server, component updates and the Discover feed
-      on the new tab page. TODO: replace with the list measured by
-      emulator.yml (traffic.md).
+      Connects to Google services by default: component updates
+      (update.googleapis.com, clients2.google.com, edgedl.me.gvt1.com, right
+      after the first start), the autofill server
+      (content-autofill.googleapis.com, when filling in forms), and Google as
+      the default search engine and new tab page (www.google.com,
+      fonts.gstatic.com).
+
+# Measured with emulator.yml (Chromium's NetLog, Android 15 emulator, with and
+# without Google services, 158.0.8127.36 F-Droid variant with patch=nogms):
+# no Safe Browsing or variations server requests were seen in a 3-minute idle
+# phase plus a short browse. TODO: compare with a vanilla build and a longer
+# run before relying on this.
 
 RepoType: git
 Repo: https://github.com/AcideFluorhydrique/chromium-fdroid.git

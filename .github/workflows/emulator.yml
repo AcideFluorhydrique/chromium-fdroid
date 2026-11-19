@@ -27,6 +27,12 @@ on:
         required: false
         default: false
         type: boolean
+      runner:
+        description: "ubuntu-24.04 = x86_64 模擬器（測 x64 APK）；ubuntu-24.04-arm = 試試 arm64 模擬器（需要 /dev/kvm）"
+        required: false
+        default: "ubuntu-24.04"
+        type: choice
+        options: [ubuntu-24.04, ubuntu-24.04-arm]
       capture:
         description: "錄下模擬器的網路流量（-tcpdump），加上 Chromium 的 NetLog，列出每個 APK 連了哪些主機（traffic.md）"
         required: false
@@ -39,7 +45,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +83,11 @@ jobs:
           f=$(ls microg/*.apk | grep -v -- '-hw' | head -1)
           mv "$f" microg/gmscore.apk
 
+      - name: Check KVM
+        run: |
+          echo "host: $(uname -m)"
+          ls -l /dev/kvm || { echo "::error::no /dev/kvm on ${{ inputs.runner }}: the Android emulator cannot use hardware acceleration here"; exit 1; }
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -88,7 +99,7 @@ jobs:
         with:
           api-level: ${{ inputs.api_level }}
           target: ${{ inputs.target }}
-          arch: x86_64
+          arch: ${{ inputs.runner == 'ubuntu-24.04-arm' && 'arm64-v8a' || 'x86_64' }}
           profile: pixel_6
           ram-size: 4096M
           disk-size: 8G

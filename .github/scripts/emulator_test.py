@@ -105,8 +105,10 @@ def tap(*patterns, wait=3, tries=3, scrolls=0):
     for attempt in range(tries + scrolls):
         if attempt >= tries:
             scroll()
-        for text, desc, rid, x, y in nodes():
-            for p in patterns:
+        found = nodes()
+        # Earlier patterns win, so a precise pattern can come before a loose one.
+        for p in patterns:
+            for text, desc, rid, x, y in found:
                 if re.search(p, text, re.I) or re.search(p, desc, re.I) or re.search(p, rid, re.I):
                     adb('shell', 'input', 'tap', str(x), str(y))
                     print(f'tapped {p!r} ({text or desc or rid})', flush=True)
@@ -115,6 +117,12 @@ def tap(*patterns, wait=3, tries=3, scrolls=0):
         time.sleep(2)
     print(f'not found: {patterns}', flush=True)
     return False
+
+
+def open_menu():
+    # The button itself, not menu_button_wrapper / app_menu_button_container
+    # around it (tapping those on tablets and in landscape did not open the menu).
+    tap(r'^More options$', r'^Customize and control', r'id/menu_button$', r'menu_button')
 
 
 def launch(pkg, url):
@@ -176,7 +184,7 @@ def main():
     time.sleep(15)
     shot(out, '1-page')
 
-    tap(r'^More options$', r'^Customize and control', r'menu_button')
+    open_menu()
     tap(r'^Settings$', scrolls=3)
     shot(out, '2-settings')
     tap(r'^Privacy and security$', scrolls=2)
@@ -203,7 +211,7 @@ def main():
     launch(pkg, 'about:blank')
     time.sleep(5)
     rotate(True)
-    tap(r'^More options$', r'^Customize and control', r'menu_button')
+    open_menu()
     tap(r'^Settings$', scrolls=4)
     shot(out, '8-settings-rotated')
     tap(r'^Privacy and security$', scrolls=2)
@@ -223,9 +231,15 @@ def main():
         f.write(data)
     print(f'netlog: {len(data)} bytes', flush=True)
 
-    log = adb('logcat', '-d', timeout=120)
-    with open(os.path.join(out, 'logcat.txt'), 'w') as f:
-        f.write(log)
+    # Straight to a file: on the tablet profiles `adb logcat -d` took longer
+    # than two minutes to come back through a pipe.
+    path = os.path.join(out, 'logcat.txt')
+    with open(path, 'wb') as f:
+        try:
+            subprocess.run(['adb', 'logcat', '-d'], stdout=f, timeout=600)
+        except subprocess.TimeoutExpired:
+            print('logcat timed out, keeping what was read', flush=True)
+    log = open(path, encoding='utf-8', errors='replace').read()
     crashes = [l for l in log.splitlines()
                if 'FATAL EXCEPTION' in l or 'Fatal signal' in l or ('AndroidRuntime' in l and ' E ' in l)
                or (' F DEBUG' in l)]

@@ -35,7 +35,7 @@ on:
         type: choice
         options: [ubuntu-24.04, ubuntu-24.04-arm]
       profiles:
-        description: "空白分隔的 AVD 裝置設定，每個開一個平行的 job，例如 pixel_6 pixel_fold pixel_tablet（螢幕寬度不同，設定頁的排版也不同）"
+        description: "空白分隔的 AVD 裝置設定，每個開一個平行的 job，例如 pixel_6 medium_tablet pixel_tablet（avdmanager list device 的 id；runner 上沒有 pixel_fold。螢幕寬度不同，設定頁的排版也不同）"
         required: false
         default: "pixel_6"
         type: string

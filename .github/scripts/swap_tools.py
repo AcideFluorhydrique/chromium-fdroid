@@ -11,6 +11,7 @@ both versions.
 import hashlib
 import os
 import shutil
+import subprocess
 import sys
 
 # file from tools-from-source.yml -> (path in src, executable)
@@ -23,6 +24,12 @@ TOOLS = {
 }
 
 
+# GOROOT tarball -> directory it replaces (Dawn's code generator runs this Go).
+DIRS = {
+    'golang': 'third_party/dawn/tools/golang/linux-amd64',
+}
+
+
 def sha(path):
     with open(path, 'rb') as f:
         return hashlib.sha256(f.read()).hexdigest()[:16]
@@ -30,7 +37,7 @@ def sha(path):
 
 def main():
     src, tools = sys.argv[1:3]
-    missing = [n for n in TOOLS if not os.path.isfile(os.path.join(tools, n))]
+    missing = [n for n in list(TOOLS) + list(DIRS) if not os.path.isfile(os.path.join(tools, n))]
     if missing:
         sys.exit(f'missing from {tools}: {" ".join(missing)}')
     lines = ['## Prebuilt tools built from source', '', '| tool | path | before | after |', '|---|---|---|---|']
@@ -45,6 +52,15 @@ def main():
         shutil.copyfile(os.path.join(tools, name), dst)
         os.chmod(dst, 0o755 if exe else 0o644)
         lines.append(f'| {name} | `{rel}` | `{before}` | `{sha(dst)}` |')
+    for name, rel in DIRS.items():
+        dst = os.path.join(src, rel)
+        if os.path.isdir(dst):
+            subprocess.run(['chmod', '-R', 'u+w', dst], check=True)
+            shutil.rmtree(dst)
+        os.makedirs(dst)
+        subprocess.run(['tar', '-C', dst, '-xzf', os.path.join(tools, name)], check=True)
+        ver = subprocess.run([os.path.join(dst, 'bin', 'go'), 'version'], capture_output=True, text=True).stdout.strip()
+        lines.append(f'| {name} | `{rel}` | (directory) | {ver} |')
     text = '\n'.join(lines) + '\n'
     print(text)
     summary = os.environ.get('GITHUB_STEP_SUMMARY')

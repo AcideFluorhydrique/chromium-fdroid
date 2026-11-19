@@ -77,6 +77,21 @@ tsc)
   mkdir -p tsc-check && cp pkg/tsc tsc-check/ && cp tsgo-src/_submodules/TypeScript/src/lib/*.d.ts tsc-check/ 2>/dev/null || true
   ver="tsc $( (tsc-check/tsc --version 2>&1 || true) | head -1) (noembed)"
   ;;
+golang)
+  # Dawn runs its code generator (tint, generate-sources-gn.py) with the Go
+  # toolchain Dawn's DEPS pins (third_party/dawn/tools/golang). Build that Go
+  # release from source and ship the whole GOROOT.
+  rev=$(grep -oP "'dawn_revision': '\K[0-9a-f]+" <<<"$deps")
+  ddeps=$(gitiles "dawn/dawn/+/$rev/DEPS")
+  v=$(grep -A12 "tools/golang" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1)
+  [ -n "$v" ] || { echo "no Go version for tools/golang in Dawn's DEPS at $rev"; exit 1; }
+  echo "dawn $rev, Go $v"
+  goroot=$(build_go "$v")
+  "$goroot/bin/go" version
+  # The GOROOT without its git data, test data and build cache.
+  tar -C "$goroot" --exclude=.git --exclude='*/testdata' --exclude=pkg/obj -czf pkg/golang .
+  ver="$("$goroot/bin/go" version) (GOROOT tarball)"
+  ;;
 rollup-wasm)
   # third_party/node/node_modules ships @rollup/wasm-node's prebuilt
   # bindings_wasm_bg.wasm; build it from rollup's Rust source with Debian's

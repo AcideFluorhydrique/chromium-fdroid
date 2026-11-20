@@ -1,0 +1,6 @@
+vanilla
+package org.chromium.chrome.fdroidtest.vanilla
+crash lines: 0
+
+lines from org.chromium.chrome.fdroidtest.vanilla mentioning Play services: 0
+

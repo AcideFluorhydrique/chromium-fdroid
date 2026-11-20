@@ -1,0 +1,16 @@
+source	host	count
+netlog:browse	auth.wikimedia.org	2
+netlog:browse	content-autofill.googleapis.com	4
+netlog:browse	en.wikipedia.org	138
+netlog:browse	example.com	8
+netlog:browse	fonts.gstatic.com	9
+netlog:browse	thumb.wikimedia.org	9
+netlog:browse	upload.wikimedia.org	8
+netlog:browse	www.google.com	30
+netlog:other	example.com	5
+netlog:other	www.google.com	1
+netlog:start-idle	clients2.google.com	4
+netlog:start-idle	edgedl.me.gvt1.com	72
+netlog:start-idle	fonts.gstatic.com	4
+netlog:start-idle	update.googleapis.com	78
+netlog:start-idle	www.google.com	19

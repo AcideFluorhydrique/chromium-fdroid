@@ -12,7 +12,10 @@ part=$1
 ws=$(pwd)
 export DEBIAN_FRONTEND=noninteractive
 
+# NO_APT=1: the packages are installed already (F-Droid's sudo: section, see
+# fdroid/build.sh), so this script never needs root.
 apt_install() {
+  [ -n "${NO_APT:-}" ] && return 0
   for i in 1 2 3 4 5; do
     apt-get update -q -o Acquire::Retries=5 && apt-get install -y -q -o Acquire::Retries=5 "$@" && return
     echo "apt failed, retrying in 60s ($i/5)"; sleep 60
@@ -51,16 +54,19 @@ clang|clang-hostsys)
     done
     export OWN_TOOLS_URL=file://$up
   fi
-  # The Android NDK from F-Droid's sdkmanager, at the version Chromium pins.
-  apt_install sdkmanager
-  ndk=$(grep -oP "'android_ndk_version': Str\('\d+@\K[0-9.]+" src/DEPS)
-  echo "NDK $ndk"
-  export ANDROID_HOME=$ws/android-sdk
-  mkdir -p "$ANDROID_HOME"
-  sdkmanager --sdk_root="$ANDROID_HOME" "ndk;$ndk"
-  mkdir -p src/third_party/android_toolchain
-  rm -rf src/third_party/android_toolchain/ndk
-  ln -s "$ANDROID_HOME/ndk/$ndk" src/third_party/android_toolchain/ndk
+  # The Android NDK from F-Droid's sdkmanager, at the version Chromium pins
+  # (or the one in $ANDROID_NDK, which fdroid/build.sh has linked already).
+  if [ -z "${ANDROID_NDK:-}" ]; then
+    apt_install sdkmanager
+    ndk=$(grep -oP "'android_ndk_version': Str\('\d+@\K[0-9.]+" src/DEPS)
+    echo "NDK $ndk"
+    export ANDROID_HOME=$ws/android-sdk
+    mkdir -p "$ANDROID_HOME"
+    sdkmanager --sdk_root="$ANDROID_HOME" "ndk;$ndk"
+    mkdir -p src/third_party/android_toolchain
+    rm -rf src/third_party/android_toolchain/ndk
+    ln -s "$ANDROID_HOME/ndk/$ndk" src/third_party/android_toolchain/ndk
+  fi
 
   python3 ci/.github/scripts/patch_toolchain_scripts.py src
   python3 src/tools/clang/scripts/build.py \

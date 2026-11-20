@@ -1,0 +1,160 @@
+#!/bin/bash
+# Build Chromium for F-Droid: the steps of the GitHub Actions "all-in" build
+# (build.yml with fdroid_tree, own toolchain, tools_from and the variant), in
+# one script for an fdroiddata recipe, like Fennec's prebuild.sh / build.sh.
+#
+# Usage, from the root of this repository (fdroidserver's build directory):
+#   fdroid/build.sh prebuild <chromium version> <cpu>
+#   fdroid/build.sh build    <chromium version> <cpu>
+# <cpu> is arm, arm64 or x64. Writes fdroid-out/ChromePublic-unsigned.apk.
+#
+# prebuild only fetches and trims the source (fdroidserver scans the tree
+# after it); build compiles the toolchain and the tools from source, swaps in
+# the Java libraries and build tools from Maven, and builds the APK, the way
+# Fennec's build step builds LLVM and lets Gradle download from Maven.
+#
+# Environment:
+#   ANDROID_NDK   NDK directory (fdroidserver's $$NDK$$, from the recipe's ndk:)
+#   DEPOT_TOOLS   depot_tools checkout (fdroidserver's $$depot_tools$$ srclib);
+#                 cloned when unset
+#   PACKAGE_NAME  application id (default org.chromium.chrome.fdroid)
+#   JOBS          parallel jobs (default: nproc)
+#   JAVA_HOME     JDK to use instead of the CIPD one (not tried yet)
+#
+# The Debian packages it needs are in the recipe's sudo: section (the scripts
+# it calls are run with NO_APT=1 and never use apt themselves).
+set -euo pipefail
+
+cmd=${1:?prebuild or build} version=${2:?chromium version} cpu=${3:?arm, arm64 or x64}
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "bad version: $version"; exit 1; }
+case "$cpu" in arm|arm64|x64) ;; *) echo "bad cpu: $cpu"; exit 1 ;; esac
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+cd "$root"
+export NO_APT=1 VERSION=$version DEPOT_TOOLS_UPDATE=0
+PACKAGE_NAME=${PACKAGE_NAME:-org.chromium.chrome.fdroid}
+JOBS=${JOBS:-$(nproc)}
+# The toolchain and tools scripts expect this repository at ci/.
+[ -e ci ] || ln -s . ci
+
+# The F-Droid variant (fdroiddata#3911): androidx releases from Google Maven,
+# microG instead of Play services, stubs for the rest, Play Core / ML Kit /
+# Impress out, the small patches, the prebuilt Java build tools from Maven
+# Central and Google Maven, and no Google sysroot.
+VARIANT="androidx=release stubs genstubs gms=microg drop=playcore,mlkit,impress gnargs
+  patch=cast,shape,castoff,status,fido,nogms tools=r8,turbine,aapt2,protoc,kotlinc nosysroot"
+TOOLS_FROM_SOURCE="gperf esbuild tsc rollup-wasm golang"
+
+depot_tools() {
+  if [ -z "${DEPOT_TOOLS:-}" ]; then
+    DEPOT_TOOLS=$root/depot_tools
+    [ -d "$DEPOT_TOOLS" ] || git clone -q --depth 1 \
+      https://chromium.googlesource.com/chromium/tools/depot_tools.git "$DEPOT_TOOLS"
+  fi
+  export PATH=$DEPOT_TOOLS:$PATH
+}
+
+prebuild() {
+  depot_tools
+
+  echo "== chromium/src $version"
+  rm -rf src && git init -q src
+  for i in 1 2 3 4; do
+    git -C src fetch -q --depth 1 https://chromium.googlesource.com/chromium/src.git \
+      "refs/tags/$version" && break
+    sleep $((i * 60))
+  done
+  git -C src checkout -q FETCH_HEAD
+
+  echo "== DEPS without the ones chrome_public_apk does not need (fdroid/skip-deps.txt)"
+  skip=$(grep -v '^#' fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+  cat > .gclient <<GCLIENT
+solutions = [{
+  "name": "src",
+  "url": "https://chromium.googlesource.com/chromium/src.git",
+  "managed": False,
+  "custom_deps": {$skip},
+  "custom_vars": {"checkout_pgo_profiles": False},
+}]
+target_os = ["android"]
+GCLIENT
+  # TODO: the hooks download Google's prebuilt clang, Rust, Node, GN and
+  # Ninja, which build replaces; --nohooks plus the few hooks the build needs
+  # would keep them out of the scanned tree.
+  gclient sync --no-history -j 8
+
+  echo "== delete the flagged files chrome_public_apk never reads"
+  python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt.gz"
+
+  # GN and the build scripts run third_party/cpython3/host/bin/python3, which
+  # the prune list removes: use Debian's Python.
+  rm -rf src/third_party/cpython3/host
+  mkdir -p src/third_party/cpython3/host/bin
+  ln -s "$(command -v python3)" src/third_party/cpython3/host/bin/python3
+
+  # TODO (not tried yet): Debian's JDK in place of the CIPD one. Chromium's
+  # build reads third_party/jdk/current; the version must match DEPS.
+  if [ -n "${JAVA_HOME:-}" ]; then
+    echo "== JDK from the build server: $JAVA_HOME"
+    rm -rf src/third_party/jdk/current
+    ln -s "$JAVA_HOME" src/third_party/jdk/current
+  fi
+
+  echo "== NDK from the build server: ${ANDROID_NDK:?set ANDROID_NDK}"
+  rm -rf src/third_party/android_toolchain/ndk
+  mkdir -p src/third_party/android_toolchain
+  ln -s "$ANDROID_NDK" src/third_party/android_toolchain/ndk
+}
+
+build() {
+  depot_tools
+  : "${ANDROID_NDK:?set ANDROID_NDK}"
+
+  echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
+  rm -rf pkg
+  for part in clang-hostsys rust-rustup tools; do
+    bash .github/scripts/toolchain_debian.sh "$part"
+  done
+  python3 .github/scripts/swap_toolchain.py src pkg
+
+  echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"
+  rm -rf tools-build && mkdir tools-build
+  for tool in $TOOLS_FROM_SOURCE; do
+    (cd tools-build && bash "$root/.github/scripts/tools_from_source.sh" "$tool")
+  done
+  python3 -I .github/scripts/swap_tools.py src tools-build/pkg
+  rm -rf tools-build
+
+  echo "== F-Droid variant"
+  # shellcheck disable=SC2086
+  python3 .github/scripts/gms_variant.py src "$(echo $VARIANT)" > variant.gn
+
+  echo "== gn gen ($cpu, $PACKAGE_NAME)"
+  mkdir -p src/out/Default
+  cat > src/out/Default/args.gn <<ARGS
+target_os = "android"
+target_cpu = "$cpu"
+is_debug = false
+is_component_build = false
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+treat_warnings_as_errors = false
+android_static_analysis = "off"
+use_siso = false
+use_mold = false
+dcheck_always_on = false
+chrome_public_manifest_package = "$PACKAGE_NAME"
+ARGS
+  cat variant.gn >> src/out/Default/args.gn
+  (cd src && buildtools/linux64/gn gen out/Default)
+
+  echo "== ninja"
+  src/third_party/ninja/ninja -C src/out/Default -j "$JOBS" chrome_public_apk
+
+  mkdir -p fdroid-out
+  python3 -I fdroid/unsign_apk.py src/out/Default/apks/ChromePublic.apk \
+    fdroid-out/ChromePublic-unsigned.apk
+}
+
+"$cmd"

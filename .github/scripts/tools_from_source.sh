@@ -8,7 +8,9 @@ set -euo pipefail
 
 tool=$1
 export DEBIAN_FRONTEND=noninteractive
+# NO_APT=1: the packages are installed already (fdroid/build.sh).
 for i in 1 2 3 4 5; do
+  [ -n "${NO_APT:-}" ] && break
   apt-get update -q -o Acquire::Retries=5 && apt-get install -y -q -o Acquire::Retries=5 \
     ca-certificates curl git build-essential golang-go && break
   sleep 60
@@ -106,7 +108,7 @@ rollup-wasm)
   # rustc and its wasm32 std, then run rollup with it.
   v=$(gitiles "chromium/src/+/refs/tags/$VERSION/third_party/node/package.json" | grep -oP '"@rollup/wasm-node": "\K[0-9.]+')
   echo "@rollup/wasm-node $v"
-  for i in 1 2 3; do apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
+  for i in 1 2 3; do [ -n "${NO_APT:-}" ] && break; apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
   rustc --version
   git clone -q --depth 1 -b "v$v" https://github.com/rollup/rollup.git rollup-src
   bg=$(grep -A2 'name = "wasm-bindgen"' rollup-src/rust/Cargo.lock | grep -oP 'version = "\K[^"]+')

@@ -118,13 +118,12 @@ build() {
 
   echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
   rm -rf pkg
-  if [ -n "${TOOLCHAIN_PKG:-}" ]; then
-    cp -a "$TOOLCHAIN_PKG" pkg
-  else
-    for part in clang-hostsys rust-rustup tools; do
-      bash .github/scripts/toolchain_debian.sh "$part"
-    done
-  fi
+  mkdir -p pkg
+  [ -n "${TOOLCHAIN_PKG:-}" ] && cp -a "$TOOLCHAIN_PKG"/. pkg/
+  # Build every part that TOOLCHAIN_PKG does not already provide.
+  for part in clang-hostsys:clang rust-rustup:rust tools:tools; do
+    [ -f "pkg/${part#*:}.tar.zst" ] || bash .github/scripts/toolchain_debian.sh "${part%%:*}"
+  done
   python3 .github/scripts/swap_toolchain.py src pkg
 
   echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"

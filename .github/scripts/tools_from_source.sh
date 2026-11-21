@@ -109,6 +109,12 @@ rollup-wasm)
   v=$(gitiles "chromium/src/+/refs/tags/$VERSION/third_party/node/package.json" | grep -oP '"@rollup/wasm-node": "\K[0-9.]+')
   echo "@rollup/wasm-node $v"
   for i in 1 2 3; do [ -n "${NO_APT:-}" ] && break; apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
+  # Without Debian's rustc (it conflicts with the rustup package the toolchain
+  # build needs, see fdroid/build.sh), use a stable toolchain from rustup.
+  if ! command -v rustc >/dev/null && command -v rustup >/dev/null; then
+    rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+    PATH=$(dirname "$(rustup which --toolchain stable cargo)"):$PATH
+  fi
   rustc --version
   git clone -q --depth 1 -b "v$v" https://github.com/rollup/rollup.git rollup-src
   bg=$(grep -A2 'name = "wasm-bindgen"' rollup-src/rust/Cargo.lock | grep -oP 'version = "\K[^"]+')

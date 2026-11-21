@@ -8,7 +8,9 @@ set -euo pipefail
 
 tool=$1
 export DEBIAN_FRONTEND=noninteractive
+# NO_APT=1: the packages are installed already (fdroid/build.sh).
 for i in 1 2 3 4 5; do
+  [ -n "${NO_APT:-}" ] && break
   apt-get update -q -o Acquire::Retries=5 && apt-get install -y -q -o Acquire::Retries=5 \
     ca-certificates curl git build-essential golang-go && break
   sleep 60
@@ -35,7 +37,9 @@ build_go() {
   echo "$PWD/go-$tag"
 }
 
-gitiles() { curl -fsSL "https://chromium.googlesource.com/$1?format=TEXT" | base64 -d; }
+# googlesource answers 429/503/504 now and then; retry.
+fetch_retry() { curl -fsSL --retry 6 --retry-all-errors --retry-delay 20 "$1"; }
+gitiles() { fetch_retry "https://chromium.googlesource.com/$1?format=TEXT" | base64 -d; }
 deps=$(gitiles "chromium/src/+/refs/tags/$VERSION/DEPS")
 mkdir -p pkg
 
@@ -67,8 +71,36 @@ tsc)
   echo "typescript-go needs Go $gover; Debian has $(go version)"
   goroot=$(build_go "$gover")
   export PATH="$goroot/bin:$PATH"
-  (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -o ../pkg/tsc ./cmd/tsgo)
-  ver="tsc $(pkg/tsc --version 2>&1 | head -1)"
+  # noembed: read lib.*.d.ts from the directory next to the binary, like
+  # Chromium's own tsc (third_party/typescript/linux-amd64/src/lib/). With the
+  # libraries embedded, ts_library.py reports them as undeclared dependencies.
+  (cd tsgo-src && go version && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath -tags noembed -o ../pkg/tsc ./cmd/tsgo)
+  grep -rl --include='*.go' 'go:build noembed' tsgo-src/internal | head -3 || echo "warning: no noembed build tag found in typescript-go"
+  # Built with noembed, tsc reads lib.*.d.ts next to itself even for
+  # --version, so run it next to the libraries from the source tree.
+  mkdir -p tsc-check && cp pkg/tsc tsc-check/ && cp tsgo-src/_submodules/TypeScript/src/lib/*.d.ts tsc-check/ 2>/dev/null || true
+  ver="tsc $( (tsc-check/tsc --version 2>&1 || true) | head -1) (noembed)"
+  ;;
+golang)
+  # Dawn runs its code generator (tint, generate-sources-gn.py) with the Go
+  # toolchain Dawn's DEPS pins (third_party/dawn/tools/golang). Build that Go
+  # release from source and ship the whole GOROOT.
+  rev=$(grep -oP "'dawn_revision': '\K[0-9a-f]+" <<<"$deps")
+  ddeps=$(fetch_retry "https://dawn.googlesource.com/dawn/+/$rev/DEPS?format=TEXT" | base64 -d)
+  echo "dawn $rev: $(grep -c . <<<"$ddeps") lines of DEPS"
+  grep -n -A8 "tools/golang" <<<"$ddeps" || true
+  grep -n "go_version" <<<"$ddeps" || true
+  # The version is either inline in the tools/golang entry or in a var
+  # such as 'dawn_go_version'.
+  v=$( { grep -oP "go_version'\s*:\s*'version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" <<<"$ddeps" || true
+         grep -A12 "tools/golang" <<<"$ddeps" | grep -oP "version:\d+@\K[0-9]+\.[0-9]+(\.[0-9]+)?" || true; } | head -1)
+  [ -n "$v" ] || { echo "no Go version for tools/golang in Dawn's DEPS at $rev"; exit 1; }
+  echo "dawn $rev, Go $v"
+  goroot=$(build_go "$v")
+  "$goroot/bin/go" version
+  # The GOROOT without its git data, test data and build cache.
+  tar -C "$goroot" --exclude=.git --exclude='*/testdata' --exclude=pkg/obj -czf pkg/golang .
+  ver="$("$goroot/bin/go" version) (GOROOT tarball)"
   ;;
 rollup-wasm)
   # third_party/node/node_modules ships @rollup/wasm-node's prebuilt
@@ -76,7 +108,7 @@ rollup-wasm)
   # rustc and its wasm32 std, then run rollup with it.
   v=$(gitiles "chromium/src/+/refs/tags/$VERSION/third_party/node/package.json" | grep -oP '"@rollup/wasm-node": "\K[0-9.]+')
   echo "@rollup/wasm-node $v"
-  for i in 1 2 3; do apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
+  for i in 1 2 3; do [ -n "${NO_APT:-}" ] && break; apt-get install -y -q rustc cargo libstd-rust-dev-wasm32 lld binaryen nodejs npm && break; sleep 60; done
   rustc --version
   git clone -q --depth 1 -b "v$v" https://github.com/rollup/rollup.git rollup-src
   bg=$(grep -A2 'name = "wasm-bindgen"' rollup-src/rust/Cargo.lock | grep -oP 'version = "\K[^"]+')
@@ -99,6 +131,8 @@ rollup-wasm)
   node npm-test/package/dist/bin/rollup a.js --format es | tee bundle.txt
   grep -q "41" bundle.txt && ! grep -q unused bundle.txt
   cp wasm-node/bindings_wasm_bg.wasm pkg/rollup-wasm
+  # wasm-bindgen's JS glue belongs to this exact wasm (its import names).
+  cp wasm-node/bindings_wasm.js pkg/rollup-wasm.js
   ver="rollup $v wasm (wasm-bindgen $bg, $(rustc --version | cut -d' ' -f2)); bundles with it"
   ;;
 esac

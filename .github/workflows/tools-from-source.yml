@@ -13,7 +13,7 @@ on:
       tools:
         description: '要編哪些，JSON 陣列'
         required: false
-        default: '["gperf","esbuild","tsc"]'
+        default: '["gperf","esbuild","tsc","rollup-wasm","golang"]'
         type: string
 
 jobs:
@@ -41,5 +41,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: tool-${{ matrix.tool }}
-          path: pkg/${{ matrix.tool }}
+          path: pkg/${{ matrix.tool }}*
           retention-days: 14

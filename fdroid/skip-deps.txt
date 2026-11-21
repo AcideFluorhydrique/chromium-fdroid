@@ -33,3 +33,13 @@ src/third_party/updater/chromium_linux64/cipd
 src/third_party/updater/chromium_linux64_sans_iid/cipd
 src/third_party/updater/chrome_linux64/cipd
 src/third_party/updater/chrome_linux64_sans_iid/cipd
+# Prebuilt Android build tools chrome_public_apk never reads (0 build inputs in
+# reports/158.0.8127.36/android-tools.md, with android_static_analysis = "off").
+src/third_party/android_build_tools/aapt2/linux-amd64
+src/third_party/android_build_tools/bundletool/cipd
+src/third_party/android_build_tools/error_prone/cipd
+src/third_party/android_build_tools/error_prone_javac/cipd
+src/third_party/android_build_tools/lint/cipd
+src/third_party/android_build_tools/nullaway/cipd
+src/third_party/jdk/linux-amd64
+src/third_party/jdk11

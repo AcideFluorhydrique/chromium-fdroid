@@ -20,6 +20,12 @@
 #   PACKAGE_NAME  application id (default org.chromium.chrome.fdroid)
 #   JOBS          parallel jobs (default: nproc)
 #   JAVA_HOME     JDK to use instead of the CIPD one (not tried yet)
+# For testing the script on GitHub Actions (6-hour jobs) only:
+#   TOOLCHAIN_PKG directory with toolchain artifacts (*.tar.zst) of earlier
+#                 toolchain builds, used instead of building the toolchain here
+#   TOOLS_PKG     directory with the tools-from-source artifacts, likewise
+#   NINJA_TIMEOUT stop ninja after this many seconds and exit 0
+#   NINJA_DEADLINE the same as a Unix time
 #
 # The Debian packages it needs are in the recipe's sudo: section (the scripts
 # it calls are run with NO_APT=1 and never use apt themselves).
@@ -112,16 +118,24 @@ build() {
 
   echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
   rm -rf pkg
-  for part in clang-hostsys rust-rustup tools; do
-    bash .github/scripts/toolchain_debian.sh "$part"
-  done
+  if [ -n "${TOOLCHAIN_PKG:-}" ]; then
+    cp -a "$TOOLCHAIN_PKG" pkg
+  else
+    for part in clang-hostsys rust-rustup tools; do
+      bash .github/scripts/toolchain_debian.sh "$part"
+    done
+  fi
   python3 .github/scripts/swap_toolchain.py src pkg
 
   echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"
   rm -rf tools-build && mkdir tools-build
-  for tool in $TOOLS_FROM_SOURCE; do
-    (cd tools-build && bash "$root/.github/scripts/tools_from_source.sh" "$tool")
-  done
+  if [ -n "${TOOLS_PKG:-}" ]; then
+    cp -a "$TOOLS_PKG" tools-build/pkg
+  else
+    for tool in $TOOLS_FROM_SOURCE; do
+      (cd tools-build && bash "$root/.github/scripts/tools_from_source.sh" "$tool")
+    done
+  fi
   python3 -I .github/scripts/swap_tools.py src tools-build/pkg
   rm -rf tools-build
 
@@ -150,7 +164,17 @@ ARGS
   (cd src && buildtools/linux64/gn gen out/Default)
 
   echo "== ninja"
-  src/third_party/ninja/ninja -C src/out/Default -j "$JOBS" chrome_public_apk
+  [ -n "${NINJA_DEADLINE:-}" ] && NINJA_TIMEOUT=$((NINJA_DEADLINE - $(date +%s)))
+  if [ -n "${NINJA_TIMEOUT:-}" ]; then
+    [ "$NINJA_TIMEOUT" -gt 60 ] || { echo "no time left for ninja"; return 0; }
+    rc=0
+    timeout -s INT "$NINJA_TIMEOUT" src/third_party/ninja/ninja -C src/out/Default -j "$JOBS" \
+      chrome_public_apk || rc=$?
+    if [ "$rc" = 124 ]; then echo "ninja stopped after ${NINJA_TIMEOUT}s (NINJA_TIMEOUT)"; return 0; fi
+    [ "$rc" = 0 ] || exit "$rc"
+  else
+    src/third_party/ninja/ninja -C src/out/Default -j "$JOBS" chrome_public_apk
+  fi
 
   mkdir -p fdroid-out
   python3 -I fdroid/unsign_apk.py src/out/Default/apks/ChromePublic.apk \

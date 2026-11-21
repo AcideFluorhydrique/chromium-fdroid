@@ -28,7 +28,7 @@ on:
       toolchain_from:
         description: "工具鏈 artifact（chromium-tc-*）的 run，空白分隔 owner/repo/run_id，後面的蓋過前面的"
         required: false
-        default: "AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951 AcideFluorhydrique/chromium-fdroid/43711783516"
+        default: "AcideFluorhydrique/chromium-fdroid/43573902951 AcideFluorhydrique/chromium-fdroid/43711783516"
         type: string
       tools_from:
         description: "tools-from-source 的 run（tool-* artifact）"
@@ -74,7 +74,9 @@ jobs:
           i=0
           for s in $TC_FROM; do
             i=$((i + 1))
-            gh run download "${s##*/}" -R "${s%/*}" -p 'chromium-tc-*' -D "dl/$i"
+            # Artifacts expire; build.sh builds whatever part is missing.
+            gh run download "${s##*/}" -R "${s%/*}" -p 'chromium-tc-*' -D "dl/$i" || echo "::warning::no toolchain artifacts in run ${s##*/}"
+            mkdir -p "dl/$i"
             find "dl/$i" -name '*.tar.zst' -exec mv -f -t tc {} +
           done
           gh run download "${TOOLS_FROM##*/}" -R "${TOOLS_FROM%/*}" -p 'tool-*' -D dl/tools

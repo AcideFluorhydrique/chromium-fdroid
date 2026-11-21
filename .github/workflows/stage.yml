@@ -33,6 +33,15 @@ on:
       variant:
         type: string
         default: ""
+      # F-Droid 的原始碼處理：不同步 fdroid/skip-deps.txt 的 DEPS、用 prune_binaries.py 刪掉
+      # 編譯不會讀的被標記檔案、NDK 改用 sdkmanager（F-Droid 編譯伺服器也是這樣拿 NDK）
+      fdroid_tree:
+        type: boolean
+        default: false
+      # tools-from-source.yml 的 run（owner/repo/run_id）：tsc、esbuild、gperf、rollup 的 wasm 換成從原始碼編的
+      tools_from:
+        type: string
+        default: ""
       gn_args:
         description: "額外的 GN args，接在 args.gn 最後（只有 stage 1 用得到）"
         type: string
@@ -143,13 +152,14 @@ jobs:
         run: df -h
 
       - name: Checkout ci scripts
-        if: inputs.stage == 1 && (inputs.own_toolchain || inputs.variant != '')
+        if: inputs.stage == 1 && (inputs.own_toolchain || inputs.variant != '' || inputs.fdroid_tree || inputs.tools_from != '')
         uses: actions/checkout@v4
         with:
           path: ci
           sparse-checkout: |
             .github/scripts
             fdroid
+            reports
 
       # ---------- stage 1：抓原始碼 ----------
 
@@ -176,20 +186,51 @@ jobs:
       # src 已經手動 checkout 到指定 tag，設成 unmanaged 讓 gclient 只同步 DEPS
       - name: gclient sync
         if: inputs.stage == 1
+        env:
+          FDROID_TREE: ${{ inputs.fdroid_tree }}
         run: |
           PGO=False
           [ "$OFFICIAL" = "true" ] && PGO=True
+          DEPS_SKIP=""
+          if [ "$FDROID_TREE" = "true" ]; then
+            DEPS_SKIP=$(grep -v '^#' ci/fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+          fi
           cat > .gclient <<GCLIENT
           solutions = [{
             "name": "src",
             "url": "https://chromium.googlesource.com/chromium/src.git",
             "managed": False,
-            "custom_deps": {},
+            "custom_deps": {$DEPS_SKIP},
             "custom_vars": {"checkout_pgo_profiles": $PGO},
           }]
           target_os = ["android"]
           GCLIENT
           gclient sync --no-history -j 8
+          du -sh src
+
+      - name: F-Droid tree (prune, NDK from sdkmanager)
+        if: inputs.stage == 1 && inputs.fdroid_tree
+        run: |
+          list=ci/reports/$VERSION/prune-list.txt.gz
+          [ -f "$list" ] || { echo "no $list: run scan.yml for $VERSION first"; exit 1; }
+          python3 -I ci/fdroid/prune_binaries.py src "$list"
+          # GN 和所有 build 腳本都用 third_party/cpython3/host/bin/python3 執行，它不是 ninja 的
+          # input，所以會被 prune 掉；F-Droid 編譯時本來就該用系統（Debian）的 Python
+          rm -rf src/third_party/cpython3/host
+          mkdir -p src/third_party/cpython3/host/bin
+          ln -s "$(command -v python3)" src/third_party/cpython3/host/bin/python3
+          src/third_party/cpython3/host/bin/python3 --version
+          ndk=$(grep -oP "'android_ndk_version': Str\('\d+@\K[0-9.]+" src/DEPS)
+          echo "NDK $ndk from sdkmanager"
+          pip install --quiet --break-system-packages sdkmanager
+          export ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk
+          mkdir -p "$ANDROID_HOME"
+          sdkmanager --sdk_root="$ANDROID_HOME" "ndk;$ndk"
+          rm -rf src/third_party/android_toolchain/ndk
+          # 後面要打包進 chromium-src，所以複製進來，不用 symlink
+          cp -a "$ANDROID_HOME/ndk/$ndk" src/third_party/android_toolchain/ndk
+          rm -rf "$ANDROID_HOME"
+          grep Pkg.Revision src/third_party/android_toolchain/ndk/source.properties
           du -sh src
 
       # toolchain.yml 自己從原始碼編的 clang / rust / gn / ninja / node
@@ -225,6 +266,19 @@ jobs:
       - name: Swap in own toolchain
         if: inputs.stage == 1 && inputs.own_toolchain
         run: python3 ci/.github/scripts/swap_toolchain.py src tc
+
+      - name: Swap in tools built from source
+        if: inputs.stage == 1 && inputs.tools_from != ''
+        env:
+          FROM: ${{ inputs.tools_from }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$FROM" =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/([0-9]+)$ ]] || { echo "tools_from 格式要是 owner/repo/run_id: '$FROM'"; exit 1; }
+          gh run download "${BASH_REMATCH[2]}" -R "${BASH_REMATCH[1]}" -p 'tool-*' -D tools-dl
+          mkdir -p tools && find tools-dl -type f -exec mv -t tools {} +
+          rm -rf tools-dl && ls -la tools
+          python3 -I ci/.github/scripts/swap_tools.py src tools
+          rm -rf tools
 
       # gms_variant.py：換掉不自由的 Java 函式庫（microG、stub、補丁），見 java.yml
       - name: Apply variant

@@ -1,0 +1,93 @@
+AntiFeatures:
+  NonFreeNet:
+    en-US: >-
+      Connects to Google services by default: component updates
+      (update.googleapis.com, clients2.google.com, edgedl.me.gvt1.com, right
+      after the first start), the autofill server
+      (content-autofill.googleapis.com, when filling in forms), and Google as
+      the default search engine and new tab page (www.google.com,
+      fonts.gstatic.com).
+Categories:
+  - Browser
+  - Internet
+License: BSD-3-Clause
+AuthorName: The Chromium Authors
+WebSite: https://www.chromium.org/
+SourceCode: https://chromium.googlesource.com/chromium/src
+IssueTracker: https://github.com/AcideFluorhydrique/chromium-fdroid/issues
+Changelog: https://chromereleases.googleblog.com/
+
+Name: Chromium
+
+RepoType: git
+Repo: https://github.com/AcideFluorhydrique/chromium-fdroid.git
+
+# DRAFT for fdroiddata#3911, not run with fdroidserver yet. The commit and
+# the depot_tools srclib revision are placeholders.
+Builds:
+  - versionName: 158.0.8127.36
+    versionCode: 812703604
+    commit: TODO-commit-of-chromium-fdroid
+    timeout: 86400
+    sudo:
+      - apt-get update
+      - apt-get install -y build-essential clang lld llvm cmake ninja-build pkg-config
+        python3 python3-setuptools git curl xz-utils zstd file zlib1g-dev libzstd-dev
+        libxml2-dev libssl-dev libncurses-dev rustup golang-go rustc cargo libstd-rust-dev-wasm32
+        binaryen nodejs npm gperf openjdk-25-jdk-headless
+    output: fdroid-out/ChromePublic-unsigned.apk
+    srclibs:
+      - depot_tools@TODO
+    prebuild: DEPOT_TOOLS=$$depot_tools$$ ANDROID_NDK=$$NDK$$ fdroid/build.sh prebuild
+      $$VERSION$$ arm64
+    build: DEPOT_TOOLS=$$depot_tools$$ ANDROID_NDK=$$NDK$$ fdroid/build.sh build $$VERSION$$
+      arm64
+    scanignore:
+      - src/base/android/java/src/org/chromium/base/BundleUtils.java
+      - src/base/android/java/src/org/chromium/base/WrappedClassLoader.java
+      - src/components/language/content/browser/ulp_language_code_locator/geolanguage-data_rank*.bin
+      - src/package.json
+      - src/third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin
+    ndk: 30.0.16248370
+
+MaintainerNotes: |-
+  Vanilla Chromium with only the changes F-Droid's inclusion policy needs
+  (fdroiddata#3911): androidx releases from Google Maven, microG in place of
+  Play services, signature-only stubs for the remaining Google libraries,
+  Play Core / ML Kit / Impress removed, a few small patches. Everything is
+  done by fdroid/build.sh in the Repo, which the GitHub Actions builds of that
+  repository run too:
+
+  prebuild: chromium/src at the version tag; gclient sync without the
+  DEPS chrome_public_apk does not need (fdroid/skip-deps.txt); deletes the
+  flagged files the build never reads (fdroid/prune_binaries.py with
+  reports/<version>/prune-list.txt.gz, generated from the scanner findings
+  and the chrome_public_apk build graph); Debian's Python; the NDK given by
+  the recipe.
+
+  build: clang, Rust, GN, Ninja and Node built from source with Debian's
+  compilers; gperf, esbuild, tsc, rollup's wasm and Dawn's Go built from
+  source; r8, turbine, aapt2, protoc and kotlinc from Google Maven / Maven
+  Central; then gn gen, ninja and an unsigned copy of the APK
+  (fdroid/unsign_apk.py; Chromium signs it with its debug key).
+
+  The build takes about 20 hours on 4 cores.
+
+  Version codes are Chromium's own (build/util/android_chrome_version.py):
+  BUILD * 100000 + PATCH * 100 + ABI digit, ABI 00 = arm, 04 = arm64,
+  09 = x64. Example: 158.0.8127.36 arm64 = 812703604.
+
+  New versions: https://chromiumdash.appspot.com/releases?platform=Android
+  (Stable). The Repo needs reports/<version>/prune-list.txt.gz for each
+  version (its scan.yml workflow writes it).
+
+  NDK version: grep android_ndk_version src/DEPS
+
+  Scanner: microG's com.google.android.gms classes and the stubs in
+  fdroid/stubs are expected (they replace Play services).
+
+ArchivePolicy: 3
+AutoUpdateMode: None
+UpdateCheckMode: None
+CurrentVersion: 158.0.8127.36
+CurrentVersionCode: 812703604

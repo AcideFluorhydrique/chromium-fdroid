@@ -1,0 +1,13 @@
+Chromium is the open-source web browser project that Google Chrome is built from.
+
+This is Chromium for Android as the Chromium project releases it, with only the changes F-Droid needs to build it from source:
+
+* microG in place of Google Play services; features that only work with Google Play services may be missing
+* Google Play Core, ML Kit and Impress removed
+* the Google libraries the build still links against replaced by empty stubs
+
+Everything else is unchanged: the same rendering engine, the same settings, the same updates. It is built with the Chromium version number of each stable release.
+
+Note that, like Chromium itself, it connects to Google services by default: component updates, the autofill server, and Google as the default search engine. You can change the search engine in Settings.
+
+The build scripts are at https://github.com/AcideFluorhydrique/chromium-fdroid

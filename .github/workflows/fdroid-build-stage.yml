@@ -173,7 +173,8 @@ jobs:
       - name: Pack the workspace for the next stage
         if: steps.recipe.outputs.done == 'false'
         run: |
-          rm -rf tc tools scan
+          # The container's builder user owns everything under the workspace.
+          sudo rm -rf tc tools
           mkdir -p pkg
           sudo tar -cpf - repo | zstd -T0 -3 | split -b 1900M -d - pkg/work.tar.zst.
           sudo rm -rf repo

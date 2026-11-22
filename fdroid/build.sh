@@ -178,7 +178,11 @@ ARGS
 
 run_ninja() {
   echo "== ninja"
-  [ -n "${NINJA_DEADLINE:-}" ] && NINJA_TIMEOUT=$((NINJA_DEADLINE - $(date +%s)))
+  if [ -n "${NINJA_DEADLINE:-}" ]; then
+    left=$((NINJA_DEADLINE - $(date +%s)))
+    # Both set: whichever comes first.
+    [ -n "${NINJA_TIMEOUT:-}" ] && [ "$NINJA_TIMEOUT" -lt "$left" ] || NINJA_TIMEOUT=$left
+  fi
   if [ -n "${NINJA_TIMEOUT:-}" ]; then
     [ "$NINJA_TIMEOUT" -gt 60 ] || { echo "no time left for ninja"; return 0; }
     rc=0

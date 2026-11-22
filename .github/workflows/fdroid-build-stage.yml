@@ -30,6 +30,11 @@ on:
         type: boolean
         required: false
         default: true
+      ninja_minutes:
+        description: "for testing the hand-over: stop ninja after this many minutes"
+        type: string
+        required: false
+        default: ""
     outputs:
       done:
         description: "true when this stage produced the APK"
@@ -108,6 +113,7 @@ jobs:
           VERSION: ${{ inputs.version }}
           CPU: ${{ inputs.cpu }}
           SCAN: ${{ inputs.scan }}
+          NINJA_MINUTES: ${{ inputs.ninja_minutes }}
         run: |
           # Stop ninja an hour before the job limit: packing and uploading the
           # workspace for the next stage takes about 30 minutes.
@@ -149,12 +155,19 @@ jobs:
             fi
           fi
           echo "::group::build"
+          limit=""
+          [ -z "$NINJA_MINUTES" ] || limit="NINJA_TIMEOUT=$((NINJA_MINUTES * 60))"
           time run "ANDROID_NDK=/opt/android-sdk/ndk/$ndk TOOLCHAIN_PKG=/w/tc TOOLS_PKG=/w/tools \
-            NINJA_DEADLINE=$DEADLINE fdroid/build.sh build $VERSION $CPU"
+            NINJA_DEADLINE=$DEADLINE $limit fdroid/build.sh build $VERSION $CPU"
           echo "::endgroup::"
           INSIDE
-          docker run --rm -v "$GITHUB_WORKSPACE:/w" -e STAGE -e VERSION -e CPU -e SCAN -e DEADLINE="$deadline" \
-            debian:trixie bash /w/inside.sh
+          rc=0
+          docker run --rm -v "$GITHUB_WORKSPACE:/w" -e STAGE -e VERSION -e CPU -e SCAN -e NINJA_MINUTES \
+            -e DEADLINE="$deadline" debian:trixie bash /w/inside.sh || rc=$?
+          # The container made its builder user the owner of the whole workspace,
+          # its root included; give it back to the runner for the steps after.
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
+          [ "$rc" = 0 ] || exit "$rc"
           if [ -f repo/fdroid-out/ChromePublic-unsigned.apk ]; then
             ls -l repo/fdroid-out
             echo "done=true" >> "$GITHUB_OUTPUT"

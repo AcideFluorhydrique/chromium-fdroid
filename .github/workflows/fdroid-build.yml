@@ -39,6 +39,11 @@ on:
         required: false
         default: true
         type: boolean
+      ninja_minutes:
+        description: "測試交棒用：每一棒的 ninja 只跑這麼多分鐘（空白 = 跑到期限）"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   actions: read
@@ -54,6 +59,7 @@ jobs:
       toolchain_from: ${{ inputs.toolchain_from }}
       tools_from: ${{ inputs.tools_from }}
       scan: ${{ inputs.scan }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
   stage2:
     needs: stage1
@@ -63,6 +69,7 @@ jobs:
       stage: 2
       version: ${{ inputs.version }}
       cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
   stage3:
     needs: stage2
@@ -72,6 +79,7 @@ jobs:
       stage: 3
       version: ${{ inputs.version }}
       cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
   stage4:
     needs: stage3
@@ -81,3 +89,4 @@ jobs:
       stage: 4
       version: ${{ inputs.version }}
       cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}

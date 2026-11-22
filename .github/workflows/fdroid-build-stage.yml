@@ -81,11 +81,16 @@ jobs:
           rm -rf dl
           ls -lh tc tools
 
+      - name: Previous stage
+        id: prev
+        if: inputs.stage > 1
+        run: echo "n=$((${{ inputs.stage }} - 1))" >> "$GITHUB_OUTPUT"
+
       - name: Download the previous stage's workspace
         if: inputs.stage > 1
         uses: actions/download-artifact@v4
         with:
-          name: fdroid-recipe-work-${{ inputs.stage - 1 }}
+          name: fdroid-recipe-work-${{ steps.prev.outputs.n }}
           path: pkg
 
       - name: Restore the workspace

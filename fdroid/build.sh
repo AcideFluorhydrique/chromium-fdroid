@@ -73,13 +73,14 @@ prebuild() {
   git -C src checkout -q FETCH_HEAD
 
   echo "== DEPS without the ones chrome_public_apk does not need (fdroid/skip-deps.txt)"
-  skip=$(grep -v '^#' fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+  # Deleted from src/DEPS: custom_deps = None would skip only the git ones.
+  python3 -I fdroid/skip_deps.py src/DEPS fdroid/skip-deps.txt
   cat > .gclient <<GCLIENT
 solutions = [{
   "name": "src",
   "url": "https://chromium.googlesource.com/chromium/src.git",
   "managed": False,
-  "custom_deps": {$skip},
+  "custom_deps": {},
   "custom_vars": {"checkout_pgo_profiles": False},
 }]
 target_os = ["android"]

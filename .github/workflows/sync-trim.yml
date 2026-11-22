@@ -1,6 +1,6 @@
 name: Sync without dev-only DEPS
 
-# 用 fdroid/skip-deps.txt 讓 gclient sync 不下載測試、benchmark、開發工具用的 DEPS（custom_deps = None），
+# 用 fdroid/skip-deps.txt 讓 gclient sync 不下載測試、benchmark、開發工具用的 DEPS（fdroid/skip_deps.py 從 src/DEPS 刪掉），
 # 再檢查 chrome_public_apk 的編譯圖：每個輸入檔都還在，就代表這些 DEPS 可以不同步。
 
 on:
@@ -62,20 +62,23 @@ jobs:
 
       - name: gclient sync
         run: |
-          deps=$(grep -v '^#' ci/fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+          # custom_deps = None 只跳過 git 的 DEPS（gclient 把 CIPD 的 dep 叫做 "路徑:套件"，對不上），
+          # 所以直接從 src/DEPS 刪掉這些條目
+          python3 -I ci/fdroid/skip_deps.py src/DEPS ci/fdroid/skip-deps.txt
           cat > .gclient <<'GCLIENT'
           solutions = [{
             "name": "src",
             "url": "https://chromium.googlesource.com/chromium/src.git",
             "managed": False,
-            "custom_deps": CUSTOM_DEPS,
+            "custom_deps": {},
             "custom_vars": {},
           }]
           target_os = ["android"]
           GCLIENT
-          sed -i "s|CUSTOM_DEPS|{ $deps }|" .gclient
-          cat .gclient
           gclient sync --no-history -j 8
+          # third_party/cpython3/host 也在 skip-deps 裡：GN 用系統的 Python（和 fdroid/build.sh 一樣）
+          mkdir -p src/third_party/cpython3/host/bin
+          ln -sfn "$(command -v python3)" src/third_party/cpython3/host/bin/python3
           du -sh src
 
       # 用 chrome_public_apk 的編譯圖（不編譯）判斷哪些被標記的檔案真的會被編譯用到

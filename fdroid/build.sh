@@ -115,6 +115,17 @@ GCLIENT
 build() {
   depot_tools
   : "${ANDROID_NDK:?set ANDROID_NDK}"
+  # A second run after an interrupted ninja (relay jobs on GitHub Actions)
+  # skips straight to ninja: the toolchain, tools and variant are in place.
+  if [ -f src/out/Default/.fdroid-configured ]; then
+    echo "== configured already, continuing ninja"
+  else
+    configure
+  fi
+  run_ninja
+}
+
+configure() {
 
   echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
   rm -rf pkg
@@ -161,7 +172,10 @@ chrome_public_manifest_package = "$PACKAGE_NAME"
 ARGS
   cat variant.gn >> src/out/Default/args.gn
   (cd src && buildtools/linux64/gn gen out/Default)
+  touch src/out/Default/.fdroid-configured
+}
 
+run_ninja() {
   echo "== ninja"
   [ -n "${NINJA_DEADLINE:-}" ] && NINJA_TIMEOUT=$((NINJA_DEADLINE - $(date +%s)))
   if [ -n "${NINJA_TIMEOUT:-}" ]; then

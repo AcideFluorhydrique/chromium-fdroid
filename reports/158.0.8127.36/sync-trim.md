@@ -2,6 +2,6 @@
 
 Skipped 41 DEPS entries listed in fdroid/skip-deps.txt.
 
-- synced src size: 39G
+- synced src size: 30G
 - gn gen: ok
 - chrome_public_apk build inputs: 196886, missing on disk: 0

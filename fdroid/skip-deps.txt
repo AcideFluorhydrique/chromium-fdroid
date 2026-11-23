@@ -38,9 +38,9 @@ src/third_party/updater/chrome_linux64_sans_iid/cipd
 # reports/158.0.8127.36/android-tools.md, with android_static_analysis = "off").
 src/third_party/android_build_tools/aapt2/linux-amd64
 src/third_party/android_build_tools/bundletool/cipd
-src/third_party/android_build_tools/error_prone/cipd
-src/third_party/android_build_tools/error_prone_javac/cipd
 src/third_party/android_build_tools/lint/cipd
-src/third_party/android_build_tools/nullaway/cipd
 src/third_party/jdk/linux-amd64
 src/third_party/jdk11
+# Not skipped although static analysis is off: chrome/browser/xsurface sets
+# enable_errorprone = true, so the build needs android_build_tools/error_prone,
+# error_prone_javac and nullaway (ninja validations, not in ninja -t inputs).

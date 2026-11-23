@@ -102,6 +102,9 @@ jobs:
           src/third_party/ninja/ninja -C src/out/Default -t inputs chrome_public_apk > build-inputs.txt
           missing=$(cd src/out/Default && while read -r f; do case "$f" in ../../*) [ -e "$f" ] || echo "${f#../../}";; esac; done < ../../../build-inputs.txt)
           n=$(printf '%s' "$missing" | grep -c . || true)
+          # -t inputs leaves out validations (Error Prone runs as one), a dry run checks them too
+          dry=ok
+          src/third_party/ninja/ninja -C src/out/Default -n chrome_public_apk > /dev/null 2> ninja-n.log || dry=FAILED
           {
             echo "## Sync without dev-only DEPS ($VERSION)"
             echo
@@ -111,8 +114,10 @@ jobs:
             echo "- gn gen: $(grep -q '^Done' gn.log && echo ok || echo FAILED)"
             echo "- chrome_public_apk build inputs: $(wc -l < build-inputs.txt), missing on disk: $n"
             if [ "$n" -gt 0 ]; then echo; echo '```'; printf '%s\n' "$missing" | head -50; echo '```'; fi
+            echo "- ninja -n chrome_public_apk (validations included): $dry"
+            if [ "$dry" != ok ]; then echo; echo '```'; head -20 ninja-n.log; echo '```'; fi
           } | tee sync-trim.md >> "$GITHUB_STEP_SUMMARY"
-          grep -q '^Done' gn.log
+          grep -q '^Done' gn.log && [ "$dry" = ok ]
 
       - name: Commit report
         if: always()

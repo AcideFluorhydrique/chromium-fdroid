@@ -6,7 +6,7 @@ name: Try fdroid/build.sh in Debian
 # unprivileged user, with fdroidserver's scanner in between.
 #
 # F-Droid runs build once; GitHub's jobs stop after 6 hours, so here build is
-# relayed over up to four jobs (fdroid-build-stage.yml): each stops ninja
+# relayed over up to six jobs (fdroid-build-stage.yml): each stops ninja
 # before the limit and hands the whole workspace to the next, whose build
 # continues where ninja stopped. To save time, stage 1 takes the toolchain and
 # the tools built from source from earlier runs (the same scripts built them).
@@ -44,6 +44,11 @@ on:
         required: false
         default: ""
         type: string
+      resume_from:
+        description: "接著另一個 run 沒編完的工作目錄：owner/repo/run_id/fdroid-recipe-work-N（空白 = 從頭開始）"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   actions: read
@@ -60,6 +65,7 @@ jobs:
       tools_from: ${{ inputs.tools_from }}
       scan: ${{ inputs.scan }}
       ninja_minutes: ${{ inputs.ninja_minutes }}
+      resume_from: ${{ inputs.resume_from }}
 
   stage2:
     needs: stage1
@@ -87,6 +93,26 @@ jobs:
     uses: ./.github/workflows/fdroid-build-stage.yml
     with:
       stage: 4
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
+
+  stage5:
+    needs: stage4
+    if: needs.stage4.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 5
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
+
+  stage6:
+    needs: stage5
+    if: needs.stage5.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 6
       version: ${{ inputs.version }}
       cpu: ${{ inputs.cpu }}
       ninja_minutes: ${{ inputs.ninja_minutes }}

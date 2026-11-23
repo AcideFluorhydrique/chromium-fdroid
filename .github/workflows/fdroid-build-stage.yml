@@ -35,6 +35,11 @@ on:
         type: string
         required: false
         default: ""
+      resume_from:
+        description: "stage 1 only: owner/repo/run_id/artifact of a workspace another run packed, to continue that build"
+        type: string
+        required: false
+        default: ""
     outputs:
       done:
         description: "true when this stage produced the APK"
@@ -59,12 +64,12 @@ jobs:
           df -h /
 
       - uses: actions/checkout@v4
-        if: inputs.stage == 1
+        if: inputs.stage == 1 && inputs.resume_from == ''
         with:
           path: repo
 
       - name: Download toolchain and tools from earlier runs
-        if: inputs.stage == 1
+        if: inputs.stage == 1 && inputs.resume_from == ''
         env:
           GH_TOKEN: ${{ github.token }}
           TC_FROM: ${{ inputs.toolchain_from }}
@@ -98,8 +103,19 @@ jobs:
           name: fdroid-recipe-work-${{ steps.prev.outputs.n }}
           path: pkg
 
+      - name: Download a workspace another run packed
+        if: inputs.stage == 1 && inputs.resume_from != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FROM: ${{ inputs.resume_from }}
+        run: |
+          # owner/repo/run_id/artifact
+          name=${FROM##*/}; rest=${FROM%/*}; run=${rest##*/}; repo=${rest%/*}
+          gh run download "$run" -R "$repo" -n "$name" -D pkg
+          ls -lh pkg
+
       - name: Restore the workspace
-        if: inputs.stage > 1
+        if: inputs.stage > 1 || inputs.resume_from != ''
         run: |
           cat pkg/work.tar.zst.* | zstd -d -T0 | sudo tar -xpf - -C "$GITHUB_WORKSPACE"
           rm -rf pkg
@@ -109,15 +125,16 @@ jobs:
       - name: Recipe in debian:trixie
         id: recipe
         env:
-          STAGE: ${{ inputs.stage }}
+          # A stage 1 that resumes another run's workspace runs like a later stage.
+          STAGE: ${{ inputs.resume_from == '' && inputs.stage || 0 }}
           VERSION: ${{ inputs.version }}
           CPU: ${{ inputs.cpu }}
           SCAN: ${{ inputs.scan }}
           NINJA_MINUTES: ${{ inputs.ninja_minutes }}
         run: |
-          # Stop ninja an hour before the job limit: packing and uploading the
-          # workspace for the next stage takes about 30 minutes.
-          deadline=$((JOB_START + 358 * 60 - 60 * 60))
+          # Stop ninja 35 minutes before the job limit: packing and uploading
+          # the workspace for the next stage took 10-12 minutes.
+          deadline=$((JOB_START + 358 * 60 - 35 * 60))
           cat > inside.sh <<'INSIDE'
           set -euo pipefail
           export DEBIAN_FRONTEND=noninteractive

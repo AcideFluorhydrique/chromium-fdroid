@@ -132,18 +132,19 @@ jobs:
           print(f"echo {b['ndk']} > /w/ndk-version")
           PY
           time bash /w/sudo.sh > /w/sudo.log 2>&1 || { tail -50 /w/sudo.log; exit 1; }
-          # The build server has the NDK already; here it comes from sdkmanager.
+          # The build server has the NDK already; here it comes from sdkmanager,
+          # once: it lives in the workspace and goes to the next stage with it, so
+          # its files keep their times (a fresh copy would be newer than every
+          # object file and ninja would compile everything for Android again).
           apt-get install -y -q sdkmanager python3-venv > /dev/null
           ndk=$(cat /w/ndk-version)
-          sdkmanager --sdk_root=/opt/android-sdk "ndk;$ndk" > /dev/null
+          [ -d "/w/android-sdk/ndk/$ndk" ] || sdkmanager --sdk_root=/w/android-sdk "ndk;$ndk" > /dev/null
           useradd -m builder
           chown -R builder /w
           run() { su builder -c "cd /w/repo && $*"; }
-          # prebuild linked the NDK into src; point it at this container's copy.
-          [ "$STAGE" = 1 ] || run "ln -sfn /opt/android-sdk/ndk/$ndk src/third_party/android_toolchain/ndk"
           if [ "$STAGE" = 1 ]; then
             echo "::group::prebuild"
-            time run "ANDROID_NDK=/opt/android-sdk/ndk/$ndk fdroid/build.sh prebuild $VERSION $CPU"
+            time run "ANDROID_NDK=/w/android-sdk/ndk/$ndk fdroid/build.sh prebuild $VERSION $CPU"
             echo "::endgroup::"
             if [ "$SCAN" = true ]; then
               echo "::group::scanner"
@@ -157,7 +158,7 @@ jobs:
           echo "::group::build"
           limit=""
           [ -z "$NINJA_MINUTES" ] || limit="NINJA_TIMEOUT=$((NINJA_MINUTES * 60))"
-          time run "ANDROID_NDK=/opt/android-sdk/ndk/$ndk TOOLCHAIN_PKG=/w/tc TOOLS_PKG=/w/tools \
+          time run "ANDROID_NDK=/w/android-sdk/ndk/$ndk TOOLCHAIN_PKG=/w/tc TOOLS_PKG=/w/tools \
             NINJA_DEADLINE=$DEADLINE $limit fdroid/build.sh build $VERSION $CPU"
           echo "::endgroup::"
           INSIDE
@@ -189,8 +190,8 @@ jobs:
           # The container's builder user owns everything under the workspace.
           sudo rm -rf tc tools
           mkdir -p pkg
-          sudo tar -cpf - repo | zstd -T0 -3 | split -b 1900M -d - pkg/work.tar.zst.
-          sudo rm -rf repo
+          sudo tar -cpf - repo android-sdk | zstd -T0 -3 | split -b 1900M -d - pkg/work.tar.zst.
+          sudo rm -rf repo android-sdk
           ls -lh pkg
 
       - uses: actions/upload-artifact@v4

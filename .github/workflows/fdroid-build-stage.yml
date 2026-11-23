@@ -138,7 +138,12 @@ jobs:
           # object file and ninja would compile everything for Android again).
           apt-get install -y -q sdkmanager python3-venv > /dev/null
           ndk=$(cat /w/ndk-version)
-          [ -d "/w/android-sdk/ndk/$ndk" ] || sdkmanager --sdk_root=/w/android-sdk "ndk;$ndk" > /dev/null
+          # (F-Droid's sdkmanager reads ANDROID_HOME and ignores --sdk_root.)
+          if [ ! -d "/w/android-sdk/ndk/$ndk" ]; then
+            mkdir -p /w/android-sdk
+            ANDROID_HOME=/w/android-sdk sdkmanager "ndk;$ndk" > /dev/null
+          fi
+          ls "/w/android-sdk/ndk/$ndk/source.properties"
           useradd -m builder
           chown -R builder /w
           run() { su builder -c "cd /w/repo && $*"; }

@@ -16,6 +16,7 @@ src/third_party/llvm-libclang
 src/buildtools/linux64
 src/third_party/ninja
 src/third_party/node/linux
-# clang-format and mold: not used (use_mold = false).
+# clang-format: ours or Debian's (Crubit's generated headers); mold: not
+# used (use_mold = false).
 src/buildtools/linux64-format
 src/buildtools/third_party/mold/cipd

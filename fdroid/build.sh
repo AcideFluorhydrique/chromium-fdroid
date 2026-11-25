@@ -142,6 +142,13 @@ configure() {
   # V8's metagen loads libclang through its Python bindings (Google's
   # llvm-libclang package is in fdroid/replaced-deps.txt).
   python3 -I fdroid/llvm_libclang.py src
+  # Crubit's generated headers go through clang-format (Google's package is
+  # in fdroid/replaced-deps.txt): ours if the clang build has it, else Debian's.
+  cf=src/third_party/llvm-build/Release+Asserts/bin/clang-format
+  [ -x "$cf" ] || cf=$(command -v clang-format) || { echo "no clang-format (Debian package clang-format)"; exit 1; }
+  mkdir -p src/buildtools/linux64-format
+  ln -sfn "$(readlink -f "$cf")" src/buildtools/linux64-format/clang-format
+  echo "clang-format: $(src/buildtools/linux64-format/clang-format --version)"
 
   echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"
   rm -rf tools-build && mkdir tools-build

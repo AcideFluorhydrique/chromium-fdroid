@@ -197,7 +197,17 @@ run_ninja() {
   fi
   if [ -n "${NINJA_DRY_RUN:-}" ]; then
     # Test mode: check that every input of chrome_public_apk is there
-    # (validations included) without compiling anything.
+    # (validations included) without compiling anything. ninja stops at the
+    # first missing file, so first list every source path the .ninja files
+    # name that does not exist.
+    (cd src/out/Default && find . -name '*.ninja' -print0 | xargs -0 grep -oh '\.\./\.\./[^ :|$]*' \
+      | sort -u | while read -r f; do [ -e "$f" ] || echo "${f#../../}"; done) > ninja-missing.txt
+    if [ -s ninja-missing.txt ]; then
+      echo "== $(wc -l < ninja-missing.txt) files the build graph names are missing (not all of them"
+      echo "   need be chrome_public_apk inputs):"
+      sed 's|/[^/]*$||' ninja-missing.txt | sort | uniq -c | sort -rn | head -40
+      head -60 ninja-missing.txt
+    fi
     src/third_party/ninja/ninja -C src/out/Default -n chrome_public_apk > ninja-dry-run.log
     echo "ninja -n chrome_public_apk: ok ($(wc -l < ninja-dry-run.log) lines)"
     return 0

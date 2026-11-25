@@ -16,6 +16,7 @@ every other host.
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 JAVA_WRAPPER = """#!/bin/sh
@@ -32,9 +33,18 @@ def main():
         os.remove(out)
     elif os.path.isdir(out):
         shutil.rmtree(out)
-    os.makedirs(os.path.join(out, 'bin'))
+    # bin/, lib/ and lib/server/ are directories of symlinks, so files can be
+    # added; everything else links to the JDK's.
+    mirrored = {'bin', 'lib', os.path.join('lib', 'server')}
+    for d in sorted(mirrored):
+        os.makedirs(os.path.join(out, d), exist_ok=True)
+        for name in os.listdir(os.path.join(jdk, d)):
+            rel = os.path.join(d, name)
+            if rel in mirrored or d == 'bin':
+                continue
+            os.symlink(os.path.join(jdk, rel), os.path.join(out, rel))
     for name in os.listdir(jdk):
-        if name != 'bin':
+        if name not in mirrored:
             os.symlink(os.path.join(jdk, name), os.path.join(out, name))
     for name in os.listdir(os.path.join(jdk, 'bin')):
         target = os.path.join(jdk, 'bin', name)
@@ -42,6 +52,23 @@ def main():
     with open(os.path.join(out, 'bin', 'java'), 'w') as f:
         f.write(JAVA_WRAPPER)
     os.chmod(os.path.join(out, 'bin', 'java'), 0o755)
+
+    # The files build/config/android/jdk.gni lists as build inputs.
+    gni = open(os.path.join(src, 'build/config/android/jdk.gni')).read()
+    def names(var):
+        m = re.search(var + r' = \[(.*?)\]', gni, re.S)
+        return re.findall(r'"([^"]+)"', m[1]) if m else []
+    wanted = names('_jdk_files') + [l + '.so' for l in names('_jdk_libs') + names('_linux_only_jdk_libs')]
+    jsa = os.path.join(out, 'lib', 'server', 'classes.jsa')
+    if 'lib/server/classes.jsa' in wanted and not os.path.exists(jsa):
+        # The default CDS archive, as the JDK build makes it.
+        subprocess.run([os.path.join(out, 'bin', 'java.chromium'), '-Xshare:dump',
+                        f'-XX:SharedArchiveFile={jsa}'], check=True, stdout=subprocess.DEVNULL)
+        print('third_party/jdk/current: generated lib/server/classes.jsa (java -Xshare:dump)')
+    missing = [w for w in wanted if not os.path.exists(os.path.join(out, w))]
+    if missing:
+        sys.exit(f'{jdk} lacks what build/config/android/jdk.gni lists: {" ".join(missing)} '
+                 '(Debian: openjdk-NN-jdk, not -headless)')
 
     path = os.path.join(src, 'build/android/gyp/compile_java.py')
     s = open(path).read()

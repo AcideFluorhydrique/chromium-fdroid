@@ -18,3 +18,17 @@ third_party/r8/custom_r8.jar
 # Google's ARCore client (non-free). Its BUILD.gn still names the aar and gn
 # gen reads every aar, so build puts an empty placeholder there.
 third_party/arcore-android-sdk-client/cipd
+# Gradle build files the GN build never reads (Chromium keeps android_deps'
+# and androidx' for its fetch scripts; the rest belong to samples), which
+# name Play services, Firebase and unknown Maven repositories.
+third_party/android_deps/build.gradle
+third_party/android_deps/cipd/build.gradle
+third_party/androidx/build.gradle
+third_party/androidx/cipd/build.gradle
+third_party/libaddressinput/src/android/build.gradle
+third_party/arcore-android-sdk/src/samples
+third_party/cardboard/src/sdk/build.gradle
+third_party/cardboard/src/paperscope/build.gradle
+third_party/cardboard/src/hellocardboard-android/build.gradle
+third_party/tflite/src/tensorflow/lite/java/demo
+third_party/libwebp/src/build.gradle

@@ -139,6 +139,9 @@ configure() {
     [ -f "pkg/${part#*:}.tar.zst" ] || bash .github/scripts/toolchain_debian.sh "${part%%:*}"
   done
   python3 .github/scripts/swap_toolchain.py src pkg
+  # V8's metagen loads libclang through its Python bindings (Google's
+  # llvm-libclang package is in fdroid/replaced-deps.txt).
+  python3 -I fdroid/llvm_libclang.py src
 
   echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"
   rm -rf tools-build && mkdir tools-build

@@ -7,7 +7,8 @@
 # Google's sysroots: the F-Droid variant builds without them (nosysroot).
 src/build/linux/debian_bullseye_amd64-sysroot
 src/build/linux/debian_bullseye_i386-sysroot
-# Google's clang, Rust and libclang: built from source.
+# Google's clang, Rust and libclang: built from source (libclang for V8's
+# metagen: fdroid/llvm_libclang.py).
 src/third_party/llvm-build/Release+Asserts
 src/third_party/rust-toolchain
 src/third_party/llvm-libclang

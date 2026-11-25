@@ -170,6 +170,8 @@ configure() {
   # build_tools_maven.py (tools= below) reads the r8 and kotlinc versions there.
   export FDROID_CIPD_PINS=$pins
   python3 -I fdroid/maven_libs.py src "$pins"
+  # Never released to Google Maven: build it from AOSP's source.
+  python3 -I fdroid/sidecar_aar.py src
 
   echo "== F-Droid variant"
   # shellcheck disable=SC2086

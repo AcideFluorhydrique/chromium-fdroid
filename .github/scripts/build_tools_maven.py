@@ -362,7 +362,16 @@ def swap_kotlinc(src, version=None):
             v = (os.path.exists(path) and jar_version(path)) or pom_versions.get(a) or kv
             v = re.match(r'[0-9][0-9A-Za-z.\-]*', v)[0]
         data = fetch(f"{CENTRAL}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}.jar")
+        pinned = cipd_pins().get('files', {}).get(f'third_party/kotlinc/current/lib/{name}')
+        if not synced and pinned and sha(data) != pinned and v != kv:
+            # The pom's version is the dependency's, not necessarily the one
+            # kotlinc bundles: take the compiler's version if that is the CIPD file.
+            other = fetch(f"{CENTRAL}/{g.replace('.', '/')}/{a}/{kv}/{a}-{kv}.jar")
+            if sha(other) == pinned:
+                v, data = kv, other
         old = open(path, 'rb').read() if os.path.exists(path) else b''
+        if not synced:
+            old = data if sha(data) == pinned else b''
         same += old == data
         diff += old != data
         print(f'kotlinc: {name} <- {g}:{a}:{v} from Maven Central, sha256 {sha(data)}; '

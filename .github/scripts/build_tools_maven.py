@@ -36,6 +36,7 @@ Every download is printed with its sha256, next to the file it replaces.
 """
 
 import hashlib
+import json
 import io
 import os
 import re
@@ -64,6 +65,7 @@ def versions(repo, group, name):
 def overwrite(path, data, mode=0o644):
     # CIPD installs its files read-only (and may hard-link them from its cache).
     d = os.path.dirname(path)
+    os.makedirs(d, exist_ok=True)
     os.chmod(d, 0o755)
     if os.path.lexists(path):
         os.chmod(path, 0o644)
@@ -78,7 +80,16 @@ def sha(data):
 
 
 def deps_text(src):
-    return open(os.path.join(src, 'DEPS')).read()
+    # DEPS as Chromium has it: fdroid/skip_deps.py cut entries out of src/DEPS.
+    r = subprocess.run(['git', '-C', src, 'show', 'HEAD:DEPS'], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else open(os.path.join(src, 'DEPS')).read()
+
+
+def cipd_pins():
+    """reports/<version>/cipd-pins.json (record_cipd.py), for packages prebuild
+    did not sync (fdroid/replaced-deps.txt): $FDROID_CIPD_PINS."""
+    path = os.environ.get('FDROID_CIPD_PINS')
+    return json.load(open(path)) if path else {}
 
 
 def swap_binary(name, path, data, source):
@@ -176,11 +187,15 @@ def public_api_only(java):
 def swap_r8(src, version=None):
     jdk = os.path.join(src, 'third_party/jdk/current/bin')
     r8 = os.path.join(src, 'third_party/r8/cipd/lib/r8.jar')
-    out = subprocess.run([os.path.join(jdk, 'java'), '-cp', r8, 'com.android.tools.r8.R8', '--version'],
-                         capture_output=True, text=True).stdout.strip()
-    current = (re.search(r'R8 (\S+)', out) or [None, None])[1]
-    print(f'r8: Chromium ships {out.splitlines()[0] if out else "?"} '
-          f'(sha256 {hashlib.sha256(open(r8, "rb").read()).hexdigest()[:16]})', file=sys.stderr)
+    if os.path.exists(r8):
+        out = subprocess.run([os.path.join(jdk, 'java'), '-cp', r8, 'com.android.tools.r8.R8', '--version'],
+                             capture_output=True, text=True).stdout.strip()
+        current = (re.search(r'R8 (\S+)', out) or [None, None])[1]
+        print(f'r8: Chromium ships {out.splitlines()[0] if out else "?"} '
+              f'(sha256 {hashlib.sha256(open(r8, "rb").read()).hexdigest()[:16]})', file=sys.stderr)
+    else:
+        current = cipd_pins().get('r8_version')
+        print(f'r8: not synced; Chromium ships R8 {current} (cipd-pins.json)', file=sys.stderr)
     available = versions(GOOGLE, 'com.android.tools', 'r8')
     if version:
         why = 'given'
@@ -215,6 +230,33 @@ def swap_r8(src, version=None):
              r'^_custom_d8_binary_path = .*\n', '')
     remove(os.path.join(src, 'third_party/r8/cipd/bin/custom_d8'))
     print('r8: dex.py runs CustomD8 from the jars; removed cipd/bin/custom_d8', file=sys.stderr)
+    global_synthetics(src, jdk, r8)
+
+
+def global_synthetics(src, jdk, r8):
+    """third_party/r8/cipd/lib/global_synthetics.dex.jar, the way
+    third_party/r8/3pp/3pp.py builds it, from the r8.jar now in place."""
+    out = os.path.join(src, 'third_party/r8/cipd/lib/global_synthetics.dex.jar')
+    min_api = re.search(r"^_MIN_SUPPORTED_SDK_VERSION = '(\d+)'",
+                        open(os.path.join(src, 'third_party/r8/3pp/3pp.py')).read(), re.M)[1]
+    tmp = tempfile.mkdtemp()
+    java = os.path.join(jdk, 'java')
+    globals_path = os.path.join(tmp, 'desugar.globals')
+    dex_dir = os.path.join(tmp, 'dex')
+    os.makedirs(dex_dir)
+    subprocess.run([java, '-cp', r8, 'com.android.tools.r8.GlobalSyntheticsGenerator',
+                    '--min-api', min_api, '--output', globals_path], check=True)
+    subprocess.run([java, '-cp', r8, 'com.android.tools.r8.D8', '--no-desugaring', '--min-api', min_api,
+                    '--globals', globals_path, '--output', dex_dir], check=True)
+    if sorted(os.listdir(dex_dir)) != ['classes.dex']:
+        sys.exit(f'r8: expected a single classes.dex, got {os.listdir(dex_dir)}')
+    remove(out)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with zipfile.ZipFile(out, 'w') as z:
+        z.write(os.path.join(dex_dir, 'classes.dex'), 'classes.dex')
+    shutil.rmtree(tmp)
+    print(f'r8: built global_synthetics.dex.jar (min-api {min_api}), sha256 '
+          f'{sha(open(out, "rb").read())[:16]}', file=sys.stderr)
 
 
 def swap_turbine(src, version=None):
@@ -292,8 +334,13 @@ def swap_kotlinc(src, version=None):
     home = os.path.join(src, 'third_party/kotlinc/current')
     lib = os.path.join(home, 'lib')
     bt = os.path.join(home, 'build.txt')
-    build_txt = (open(bt).read().strip() if os.path.exists(bt)
-                 else jar_version(os.path.join(lib, 'kotlin-compiler.jar')) or '')
+    synced = os.path.isdir(lib)
+    if synced:
+        build_txt = (open(bt).read().strip() if os.path.exists(bt)
+                     else jar_version(os.path.join(lib, 'kotlin-compiler.jar')) or '')
+    else:
+        # Not synced (fdroid/replaced-deps.txt): fetch every jar.
+        build_txt = cipd_pins().get('kotlinc_build') or ''
     m = re.match(r'(\d+\.\d+\.\d+)', build_txt)
     if not (version or m):
         sys.exit(f'kotlinc: cannot tell the compiler version ({build_txt!r}); use tools=kotlinc:<version>')
@@ -304,7 +351,7 @@ def swap_kotlinc(src, version=None):
     same = diff = 0
     for name, (g, a) in KOTLINC_JARS.items():
         path = os.path.join(lib, name)
-        if not os.path.exists(path):
+        if synced and not os.path.exists(path):
             print(f'kotlinc: {name} not in this kotlinc', file=sys.stderr)
             continue
         if name == 'annotations-13.0.jar':
@@ -312,10 +359,10 @@ def swap_kotlinc(src, version=None):
         elif g == 'org.jetbrains.kotlin' and a not in ('kotlin-reflect', 'kotlin-stdlib'):
             v = kv
         else:
-            v = jar_version(path) or pom_versions.get(a) or kv
+            v = (os.path.exists(path) and jar_version(path)) or pom_versions.get(a) or kv
             v = re.match(r'[0-9][0-9A-Za-z.\-]*', v)[0]
         data = fetch(f"{CENTRAL}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}.jar")
-        old = open(path, 'rb').read()
+        old = open(path, 'rb').read() if os.path.exists(path) else b''
         same += old == data
         diff += old != data
         print(f'kotlinc: {name} <- {g}:{a}:{v} from Maven Central, sha256 {sha(data)}; '
@@ -323,6 +370,19 @@ def swap_kotlinc(src, version=None):
               file=sys.stderr)
         overwrite(path, data)
     print(f'kotlinc: {same} jars identical to Chromium\'s, {diff} replaced', file=sys.stderr)
+    if not synced:
+        with open(bt, 'w') as f:
+            f.write(build_txt + '\n')
+        # bin/kotlinc is a build input (config.gni) though compile_kt.py runs
+        # the compiler on the JVM (below): a script that does the same.
+        kotlinc = os.path.join(home, 'bin', 'kotlinc')
+        os.makedirs(os.path.dirname(kotlinc), exist_ok=True)
+        with open(kotlinc, 'w') as f:
+            f.write('#!/bin/sh\n# F-Droid build: the Kotlin compiler from the Maven Central jars in ../lib.\n'
+                    'lib=$(dirname "$0")/../lib\n'
+                    'exec java -cp "' + ':'.join(f'$lib/{j}' for j in KOTLINC_CLASSPATH) + '" '
+                    'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -kotlin-home "$lib/.." "$@"\n')
+        os.chmod(kotlinc, 0o755)
 
     # Run the compiler on the JVM (the else branch compile_kt.py uses on
     # other hosts runs bin/kotlinc, which needs kotlin-preloader.jar).

@@ -162,6 +162,13 @@ configure() {
   python3 -I .github/scripts/swap_tools.py src tools-build/pkg
   rm -rf tools-build
 
+  echo "== androidx and android_deps from Google Maven / Maven Central"
+  pins=$root/reports/$version/cipd-pins.json
+  [ -f "$pins" ] || { echo "no $pins: run sync-trim.yml for $version first"; exit 1; }
+  # build_tools_maven.py (tools= below) reads the r8 and kotlinc versions there.
+  export FDROID_CIPD_PINS=$pins
+  python3 -I fdroid/maven_libs.py src "$pins"
+
   echo "== F-Droid variant"
   # shellcheck disable=SC2086
   python3 .github/scripts/gms_variant.py src "$(echo $VARIANT)" > variant.gn

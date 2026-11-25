@@ -20,3 +20,13 @@ src/third_party/node/linux
 # used (use_mold = false).
 src/buildtools/linux64-format
 src/buildtools/third_party/mold/cipd
+# Java libraries and build tools: from Google Maven / Maven Central
+# (fdroid/maven_libs.py; build_tools_maven.py through gms_variant.py tools=),
+# using reports/<version>/cipd-pins.json from sync-trim.yml.
+src/third_party/androidx/cipd
+src/third_party/android_deps/cipd
+src/third_party/kotlinc/current
+src/third_party/r8/cipd
+src/third_party/turbine/cipd
+src/third_party/android_build_tools/aapt2/cipd
+src/third_party/android_build_tools/protoc/cipd

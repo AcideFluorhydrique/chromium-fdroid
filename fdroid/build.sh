@@ -94,6 +94,8 @@ GCLIENT
 
   echo "== delete the flagged files chrome_public_apk never reads"
   python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt.gz"
+  # The androidx and android_deps libraries: build fetches them from Maven.
+  python3 -I fdroid/maven_libs.py --delete src "reports/$version/cipd-pins.json"
 
   # GN and the build scripts run third_party/cpython3/host/bin/python3, which
   # the prune list removes: use Debian's Python.

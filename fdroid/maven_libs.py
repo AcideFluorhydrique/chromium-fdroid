@@ -2,10 +2,13 @@
 """Put third_party/androidx/cipd and third_party/android_deps/cipd together
 from Google Maven and Maven Central.
 
-Usage: maven_libs.py <chromium src dir> <cipd-pins.json>
+Usage: maven_libs.py [--delete] <chromium src dir> <cipd-pins.json>
 
-prebuild does not sync these CIPD packages (fdroid/replaced-deps.txt). Which
-files they hold comes from reports/<version>/cipd-pins.json (written by
+The CIPD packages hold the libraries' .aar/.jar files and text files Maven
+does not have (BUILD.gn, bill_of_materials.json, LICENSE, README.chromium,
+.info). prebuild syncs them and deletes every .aar/.jar (--delete), so the
+scanner sees only the text; build fetches the libraries again. Which files
+they are comes from reports/<version>/cipd-pins.json (written by
 sync-trim.yml); the Maven coordinates from the bill_of_materials.json next to
 each BUILD.gn: libs/<group_name with . and - as _>/<name>.<ext> is
 <group>:<name>:<version>@<ext>. Releases are fetched at their version;
@@ -98,17 +101,37 @@ def resolve(group, name, version):
     return None, f'{group}:{name}:{version} is on neither Google Maven nor Maven Central'
 
 
+LIB = re.compile(r'(third_party/(?:androidx|android_deps))/cipd/libs/([^/]+)/([^/]+)\.(aar|jar)$')
+
+
+def delete(src, pins):
+    n = size = 0
+    for rel in pins:
+        path = os.path.join(src, rel)
+        if LIB.match(rel) and os.path.lexists(path):
+            size += os.lstat(path).st_size
+            os.chmod(os.path.dirname(path), 0o755)
+            os.remove(path)
+            n += 1
+    print(f'maven_libs: deleted {n} .aar/.jar files ({size / 2**20:.0f} MiB) from the androidx and '
+          f'android_deps CIPD packages; build fetches them from Maven')
+
+
 def main():
-    src, pins_path = sys.argv[1:3]
+    args = sys.argv[1:]
+    remove = args[0] == '--delete'
+    src, pins_path = args[-2:]
     pins = json.load(open(pins_path))['files']
+    if remove:
+        return delete(src, pins)
     coords = coordinates(src)
     wanted = []
     unknown = []
     nonfree = []
     for rel, sha in pins.items():
-        m = re.match(r'(third_party/(?:androidx|android_deps))/cipd/libs/([^/]+)/([^/]+)\.(aar|jar)$', rel)
+        m = LIB.match(rel)
         if not m:
-            if any(rel.startswith(p + '/cipd/') for p in PACKAGES):
+            if any(rel.startswith(p + '/cipd/') for p in PACKAGES) and not os.path.exists(os.path.join(src, rel)):
                 unknown.append(rel)
             continue
         pkg, d, base, ext = m.groups()

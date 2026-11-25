@@ -1,1 +1,1 @@
-C part 1: full openjdk-25-jdk, jdk_layout.py checks jdk.gni's files
+dry run: no SIGPIPE from the missing-file list

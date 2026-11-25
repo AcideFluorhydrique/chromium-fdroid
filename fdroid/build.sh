@@ -231,8 +231,9 @@ run_ninja() {
     if [ -s ninja-missing.txt ]; then
       echo "== $(wc -l < ninja-missing.txt) files the build graph names are missing (not all of them"
       echo "   need be chrome_public_apk inputs):"
-      sed 's|/[^/]*$||' ninja-missing.txt | sort | uniq -c | sort -rn | head -40
-      head -60 ninja-missing.txt
+      # (head closes the pipe early: not a failure under pipefail)
+      { sed 's|/[^/]*$||' ninja-missing.txt | sort | uniq -c | sort -rn | head -40; } || true
+      head -60 ninja-missing.txt || true
     fi
     src/third_party/ninja/ninja -C src/out/Default -n chrome_public_apk > ninja-dry-run.log
     echo "ninja -n chrome_public_apk: ok ($(wc -l < ninja-dry-run.log) lines)"

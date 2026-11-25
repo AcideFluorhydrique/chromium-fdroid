@@ -129,9 +129,8 @@ configure() {
   jdk=${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")}
   echo "JDK $jdk: $("$jdk/bin/javac" -version 2>&1); Chromium's: $(git -C src show HEAD:DEPS |
     grep -oP "'jdk_version': '\K[^']+")"
-  mkdir -p src/third_party/jdk
-  rm -rf src/third_party/jdk/current
-  ln -s "$jdk" src/third_party/jdk/current
+  # Laid out like Chromium's (bin/java wrapper, no GraalVM javac).
+  python3 -I fdroid/jdk_layout.py src "$jdk"
   # The SDK platform and build tools DEPS names, with F-Droid's sdkmanager
   # (packages checked against its Android SDK transparency log; sdk_install.py
   # also installs platforms whose metadata sdkmanager cannot parse).

@@ -133,14 +133,15 @@ configure() {
   rm -rf src/third_party/jdk/current
   ln -s "$jdk" src/third_party/jdk/current
   # The SDK platform and build tools DEPS names, with F-Droid's sdkmanager
-  # (packages checked against its Android SDK transparency log).
+  # (packages checked against its Android SDK transparency log; sdk_install.py
+  # also installs platforms whose metadata sdkmanager cannot parse).
   deps=$(git -C src show HEAD:DEPS)
   bt=$(grep -oP "'android_sdk_build-tools_version': '[^0-9]*\K[0-9.]+" <<<"$deps")
   plat=$(grep -oP "android_sdk/public/platforms/\K[^']+" <<<"$deps" | head -1)
   sdk=$root/android-sdk
   if [ ! -d "$sdk/platforms/$plat" ] || [ ! -d "$sdk/build-tools/$bt" ]; then
     mkdir -p "$sdk"
-    ANDROID_HOME=$sdk sdkmanager "platforms;$plat" "build-tools;$bt"
+    python3 -I fdroid/sdk_install.py "$sdk" "platforms;$plat" "build-tools;$bt"
   fi
   ls -d "$sdk/platforms/$plat/android.jar" "$sdk/build-tools/$bt/apksigner"
   rm -rf src/third_party/android_sdk/public

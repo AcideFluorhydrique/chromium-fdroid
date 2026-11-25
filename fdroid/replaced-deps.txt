@@ -34,3 +34,6 @@ src/third_party/android_build_tools/protoc/cipd
 # build tools from F-Droid's sdkmanager (fdroid/build.sh configure).
 src/third_party/jdk/current
 src/third_party/android_sdk/public
+# gperf and tsc: built from source (tools_from_source.sh + swap_tools.py).
+src/third_party/gperf/cipd
+src/third_party/typescript/linux-amd64/src

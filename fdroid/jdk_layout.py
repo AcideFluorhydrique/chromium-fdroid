@@ -70,6 +70,16 @@ def main():
         sys.exit(f'{jdk} lacks what build/config/android/jdk.gni lists: {" ".join(missing)} '
                  '(Debian: openjdk-NN-jdk, not -headless)')
 
+    # jdk.gni also lists javac-graalvm as an input on linux-x64.
+    gni_path = os.path.join(src, 'build/config/android/jdk.gni')
+    new, n = re.subn(r'\nif \(host_os == "linux" && host_cpu == "x64"\) \{\n'
+                     r'  javac_paths_for_inputs \+= \[ "\$android_jdk_home/bin/javac-graalvm" \]\n\}\n',
+                     '\n', gni)
+    if n != 1:
+        sys.exit(f'{gni_path}: javac-graalvm input not found')
+    with open(gni_path, 'w') as f:
+        f.write(new)
+
     path = os.path.join(src, 'build/android/gyp/compile_java.py')
     s = open(path).read()
     new, n = re.subn(r"(    use_javac_graalvm = \()\n        sys\.platform == 'linux'\n",

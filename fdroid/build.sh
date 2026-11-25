@@ -94,6 +94,13 @@ GCLIENT
 
   echo "== delete the flagged files chrome_public_apk never reads"
   python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt.gz"
+  # Files build replaces (fdroid/replaced-files.txt).
+  grep -v '^#' fdroid/replaced-files.txt | grep . | while read -r f; do
+    [ -e "src/$f" ] || [ -L "src/$f" ] || continue
+    chmod -R u+w "src/$f" 2>/dev/null || true
+    rm -rf "src/$f"
+    echo "deleted $f"
+  done
   # The androidx and android_deps libraries: build fetches them from Maven.
   python3 -I fdroid/maven_libs.py --delete src "reports/$version/cipd-pins.json"
 
@@ -185,6 +192,13 @@ configure() {
   # build_tools_maven.py (tools= below) reads the r8 and kotlinc versions there.
   export FDROID_CIPD_PINS=$pins
   python3 -I fdroid/maven_libs.py src "$pins"
+  # ARCore's client is non-free (prebuild deleted it): an empty placeholder.
+  for aar in $(grep -oP 'aar_path = "\K[^"]+' src/third_party/arcore-android-sdk-client/BUILD.gn); do
+    python3 -I -c 'import sys; sys.path.insert(0, "fdroid"); import maven_libs
+maven_libs.placeholder(sys.argv[1], sys.argv[2], "com_google_ar_core", "aar")' \
+      src "third_party/arcore-android-sdk-client/$aar"
+    echo "placeholder third_party/arcore-android-sdk-client/$aar"
+  done
   # Never released to Google Maven: build it from AOSP's source.
   python3 -I fdroid/sidecar_aar.py src
 

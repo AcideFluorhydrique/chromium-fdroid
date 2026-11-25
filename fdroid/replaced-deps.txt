@@ -30,3 +30,7 @@ src/third_party/r8/cipd
 src/third_party/turbine/cipd
 src/third_party/android_build_tools/aapt2/cipd
 src/third_party/android_build_tools/protoc/cipd
+# The JDK and the Android SDK: Debian's OpenJDK and the SDK platform and
+# build tools from F-Droid's sdkmanager (fdroid/build.sh configure).
+src/third_party/jdk/current
+src/third_party/android_sdk/public

@@ -19,7 +19,7 @@
 #                 cloned when unset
 #   PACKAGE_NAME  application id (default org.chromium.chrome.fdroid)
 #   JOBS          parallel jobs (default: nproc)
-#   JAVA_HOME     JDK to use instead of the CIPD one (not tried yet)
+#   JAVA_HOME     JDK (default: the one javac on PATH belongs to)
 # For testing the script on GitHub Actions (6-hour jobs) only:
 #   TOOLCHAIN_PKG directory with toolchain artifacts (*.tar.zst) of earlier
 #                 toolchain builds, used instead of building the toolchain here
@@ -103,14 +103,6 @@ GCLIENT
   mkdir -p src/third_party/cpython3/host/bin
   ln -s "$(command -v python3)" src/third_party/cpython3/host/bin/python3
 
-  # TODO (not tried yet): Debian's JDK in place of the CIPD one. Chromium's
-  # build reads third_party/jdk/current; the version must match DEPS.
-  if [ -n "${JAVA_HOME:-}" ]; then
-    echo "== JDK from the build server: $JAVA_HOME"
-    rm -rf src/third_party/jdk/current
-    ln -s "$JAVA_HOME" src/third_party/jdk/current
-  fi
-
   echo "== NDK from the build server: ${ANDROID_NDK:?set ANDROID_NDK}"
   rm -rf src/third_party/android_toolchain/ndk
   mkdir -p src/third_party/android_toolchain
@@ -131,6 +123,29 @@ build() {
 }
 
 configure() {
+
+  echo "== JDK and Android SDK from the build server (fdroid/replaced-deps.txt)"
+  # Debian's OpenJDK (the recipe's sudo: installs the version DEPS names).
+  jdk=${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")}
+  echo "JDK $jdk: $("$jdk/bin/javac" -version 2>&1); Chromium's: $(git -C src show HEAD:DEPS |
+    grep -oP "'jdk_version': '\K[^']+")"
+  mkdir -p src/third_party/jdk
+  rm -rf src/third_party/jdk/current
+  ln -s "$jdk" src/third_party/jdk/current
+  # The SDK platform and build tools DEPS names, with F-Droid's sdkmanager
+  # (packages checked against its Android SDK transparency log).
+  deps=$(git -C src show HEAD:DEPS)
+  bt=$(grep -oP "'android_sdk_build-tools_version': '[^0-9]*\K[0-9.]+" <<<"$deps")
+  plat=$(grep -oP "android_sdk/public/platforms/\K[^']+" <<<"$deps" | head -1)
+  sdk=$root/android-sdk
+  if [ ! -d "$sdk/platforms/$plat" ] || [ ! -d "$sdk/build-tools/$bt" ]; then
+    mkdir -p "$sdk"
+    ANDROID_HOME=$sdk sdkmanager "platforms;$plat" "build-tools;$bt"
+  fi
+  ls -d "$sdk/platforms/$plat/android.jar" "$sdk/build-tools/$bt/apksigner"
+  rm -rf src/third_party/android_sdk/public
+  mkdir -p src/third_party/android_sdk
+  ln -s "$sdk" src/third_party/android_sdk/public
 
   echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
   rm -rf pkg

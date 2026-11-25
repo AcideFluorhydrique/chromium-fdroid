@@ -38,3 +38,14 @@ src/third_party/android_sdk/public
 # typescript package is synced for its lib/*.d.ts; replaced-files.txt deletes
 # its tsc binary.)
 src/third_party/gperf/cipd
+# Probe: Java build tools still from CIPD; the dry run lists the ones build
+# needs (then they get a Maven/source replacement or go back to being synced).
+src/third_party/android_build_tools/error_prone/cipd
+src/third_party/android_build_tools/error_prone_javac/cipd
+src/third_party/android_build_tools/nullaway/cipd
+src/third_party/android_build_tools/manifest_merger/cipd
+src/third_party/android_build_tools/signflinger/cipd
+src/third_party/android_build_tools/bazel_tools/cipd
+src/third_party/aosp_dalvik/cipd
+src/third_party/android_system_sdk/cipd
+src/buildtools/android/doclava

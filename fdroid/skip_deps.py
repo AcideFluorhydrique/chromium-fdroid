@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Remove DEPS entries from chromium/src/DEPS before gclient sync.
 
-Usage: skip_deps.py <src/DEPS> <skip-deps.txt>
+Usage: skip_deps.py <src/DEPS> <list.txt>...
 
 custom_deps = None in .gclient only skips git dependencies: gclient names a
 CIPD dependency "<path>:<package>", so a custom_deps key with the path does
@@ -16,8 +16,8 @@ import sys
 
 
 def main():
-    deps_path, list_path = sys.argv[1:3]
-    skip = [l.strip() for l in open(list_path)
+    deps_path, lists = sys.argv[1], sys.argv[2:]
+    skip = [l.strip() for path in lists for l in open(path)
             if l.strip() and not l.lstrip().startswith('#')]
     text = open(deps_path).read()
     tree = ast.parse(text)

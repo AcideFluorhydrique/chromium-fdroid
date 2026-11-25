@@ -26,6 +26,7 @@
 #   TOOLS_PKG     directory with the tools-from-source artifacts, likewise
 #   NINJA_TIMEOUT stop ninja after this many seconds and exit 0
 #   NINJA_DEADLINE the same as a Unix time
+#   NINJA_DRY_RUN  run ninja -n only (every input there?) and stop
 #
 # The Debian packages it needs are in the recipe's sudo: section (the scripts
 # it calls are run with NO_APT=1 and never use apt themselves).
@@ -73,8 +74,9 @@ prebuild() {
   git -C src checkout -q FETCH_HEAD
 
   echo "== DEPS without the ones chrome_public_apk does not need (fdroid/skip-deps.txt)"
+  echo "   and the ones build provides itself (fdroid/replaced-deps.txt)"
   # Deleted from src/DEPS: custom_deps = None would skip only the git ones.
-  python3 -I fdroid/skip_deps.py src/DEPS fdroid/skip-deps.txt
+  python3 -I fdroid/skip_deps.py src/DEPS fdroid/skip-deps.txt fdroid/replaced-deps.txt
   cat > .gclient <<GCLIENT
 solutions = [{
   "name": "src",
@@ -182,6 +184,13 @@ run_ninja() {
     left=$((NINJA_DEADLINE - $(date +%s)))
     # Both set: whichever comes first.
     [ -n "${NINJA_TIMEOUT:-}" ] && [ "$NINJA_TIMEOUT" -lt "$left" ] || NINJA_TIMEOUT=$left
+  fi
+  if [ -n "${NINJA_DRY_RUN:-}" ]; then
+    # Test mode: check that every input of chrome_public_apk is there
+    # (validations included) without compiling anything.
+    src/third_party/ninja/ninja -C src/out/Default -n chrome_public_apk > ninja-dry-run.log
+    echo "ninja -n chrome_public_apk: ok ($(wc -l < ninja-dry-run.log) lines)"
+    return 0
   fi
   if [ -n "${NINJA_TIMEOUT:-}" ]; then
     [ "$NINJA_TIMEOUT" -gt 60 ] || { echo "no time left for ninja"; return 0; }

@@ -44,6 +44,11 @@ on:
         required: false
         default: ""
         type: string
+      dry_run:
+        description: "測試用：configure 完只跑 ninja -n（檢查編譯需要的檔案都在）就結束，不編譯"
+        required: false
+        default: false
+        type: boolean
       resume_from:
         description: "接著另一個 run 沒編完的工作目錄：owner/repo/run_id/fdroid-recipe-work-N（空白 = 從頭開始）"
         required: false
@@ -66,6 +71,7 @@ jobs:
       scan: ${{ inputs.scan }}
       ninja_minutes: ${{ inputs.ninja_minutes }}
       resume_from: ${{ inputs.resume_from }}
+      dry_run: ${{ inputs.dry_run }}
 
   stage2:
     needs: stage1

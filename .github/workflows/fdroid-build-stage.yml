@@ -35,6 +35,11 @@ on:
         type: string
         required: false
         default: ""
+      dry_run:
+        description: "test: configure, then only ninja -n (every input there?) and stop"
+        type: boolean
+        required: false
+        default: false
       resume_from:
         description: "stage 1 only: owner/repo/run_id/artifact of a workspace another run packed, to continue that build"
         type: string
@@ -131,6 +136,7 @@ jobs:
           CPU: ${{ inputs.cpu }}
           SCAN: ${{ inputs.scan }}
           NINJA_MINUTES: ${{ inputs.ninja_minutes }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: |
           # Stop ninja 35 minutes before the job limit: packing and uploading
           # the workspace for the next stage took 10-12 minutes.
@@ -180,18 +186,22 @@ jobs:
           echo "::group::build"
           limit=""
           [ -z "$NINJA_MINUTES" ] || limit="NINJA_TIMEOUT=$((NINJA_MINUTES * 60))"
+          [ -z "$DRY_RUN" ] || limit="$limit NINJA_DRY_RUN=1"
           time run "ANDROID_NDK=/w/android-sdk/ndk/$ndk TOOLCHAIN_PKG=/w/tc TOOLS_PKG=/w/tools \
             NINJA_DEADLINE=$DEADLINE $limit fdroid/build.sh build $VERSION $CPU"
           echo "::endgroup::"
           INSIDE
           rc=0
-          docker run --rm -v "$GITHUB_WORKSPACE:/w" -e STAGE -e VERSION -e CPU -e SCAN -e NINJA_MINUTES \
+          docker run --rm -v "$GITHUB_WORKSPACE:/w" -e STAGE -e VERSION -e CPU -e SCAN -e NINJA_MINUTES -e DRY_RUN \
             -e DEADLINE="$deadline" debian:trixie bash /w/inside.sh || rc=$?
           # The container made its builder user the owner of the whole workspace,
           # its root included; give it back to the runner for the steps after.
           sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
           [ "$rc" = 0 ] || exit "$rc"
-          if [ -f repo/fdroid-out/ChromePublic-unsigned.apk ]; then
+          if [ -n "$DRY_RUN" ]; then
+            echo "dry run: no APK, no next stage"
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          elif [ -f repo/fdroid-out/ChromePublic-unsigned.apk ]; then
             ls -l repo/fdroid-out
             echo "done=true" >> "$GITHUB_OUTPUT"
           else

@@ -131,6 +131,13 @@ def placeholder(src, rel, name, ext):
                        '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n'
                        f'    package="org.fdroid.nonfree_placeholder.{name}" />\n')
             z.writestr('R.txt', '')
+            # An empty classes.jar: without one GN's aar template leaves
+            # variables such as enable_bytecode_checks unused, an error.
+            import io
+            jar = io.BytesIO()
+            with zipfile.ZipFile(jar, 'w') as j:
+                j.writestr('META-INF/MANIFEST.MF', 'Manifest-Version: 1.0\n')
+            z.writestr('classes.jar', jar.getvalue())
         else:
             z.writestr('META-INF/MANIFEST.MF', 'Manifest-Version: 1.0\n')
 

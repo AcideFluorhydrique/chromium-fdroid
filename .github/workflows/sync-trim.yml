@@ -119,6 +119,10 @@ jobs:
           } | tee sync-trim.md >> "$GITHUB_STEP_SUMMARY"
           grep -q '^Done' gn.log && [ "$dry" = ok ]
 
+      # fdroid/build.sh rebuilds these CIPD packages from Maven: record what they hold
+      - name: Record the CIPD packages build replaces
+        run: python3 -I ci/.github/scripts/record_cipd.py src cipd-pins.json
+
       - name: Commit report
         if: always()
         run: |
@@ -127,6 +131,7 @@ jobs:
           d="repo/reports/$VERSION"
           mkdir -p "$d"
           cp sync-trim.md "$d/sync-trim.md"
+          [ -f cipd-pins.json ] && cp cipd-pins.json "$d/cipd-pins.json"
           cd repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

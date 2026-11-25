@@ -8,6 +8,7 @@ third_party/depot_tools/.cipd_bin
 third_party/depot_tools/.cipd_client
 # Built from source by build (tools_from_source.sh + swap_tools.py).
 third_party/devtools-frontend/src/third_party/esbuild/esbuild
+third_party/typescript/linux-amd64/src/lib/tsc
 third_party/node/node_modules/@rollup/wasm-node/dist/wasm-node/bindings_wasm_bg.wasm
 # The tarball node_modules/ was unpacked from (it holds the wasm above too).
 third_party/node/node_modules/node_modules.tar.gz

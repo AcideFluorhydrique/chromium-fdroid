@@ -1,1 +1,1 @@
-typescript synced for its .d.ts, only lib/tsc deleted
+D: delete the Gradle build files GN never reads

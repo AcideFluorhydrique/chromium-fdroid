@@ -32,8 +32,8 @@ GOOGLE = 'https://dl.google.com/dl/android/maven2'
 CENTRAL = 'https://repo1.maven.org/maven2'
 PACKAGES = ('third_party/androidx', 'third_party/android_deps')
 # Never fetched: Google's non-free libraries. The F-Droid variant replaces
-# them (gms_variant.py: microG, stubs, drop=), so the build must not need
-# their files; if it does, build.sh's dry run lists them as missing.
+# them (gms_variant.py: microG, stubs, drop=); each gets an empty placeholder
+# (placeholder()), since gn gen reads every aar whether it is used or not.
 NONFREE = re.compile(r'^(com\.google\.android\.gms|com\.google\.firebase|com\.google\.android\.play'
                      r'|com\.google\.mlkit|com\.google\.ar|com\.google\.android\.datatransport'
                      r'|com\.google\.android\.libraries|com\.google\.android\.recaptcha)(\.|$)')
@@ -117,6 +117,24 @@ def delete(src, pins):
           f'android_deps CIPD packages; build fetches them from Maven')
 
 
+def placeholder(src, rel, name, ext):
+    """An empty .aar/.jar in place of a non-free library: gn gen reads every
+    aar a BUILD.gn names, used or not. No code, so anything that still
+    compiles against one of these fails instead of using it."""
+    import zipfile
+    path = os.path.join(src, rel)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with zipfile.ZipFile(path, 'w') as z:
+        if ext == 'aar':
+            z.writestr('AndroidManifest.xml',
+                       '<?xml version="1.0" encoding="utf-8"?>\n'
+                       '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n'
+                       f'    package="org.fdroid.nonfree_placeholder.{name}" />\n')
+            z.writestr('R.txt', '')
+        else:
+            z.writestr('META-INF/MANIFEST.MF', 'Manifest-Version: 1.0\n')
+
+
 def main():
     args = sys.argv[1:]
     remove = args[0] == '--delete'
@@ -140,6 +158,7 @@ def main():
             unknown.append(rel)
             continue
         if NONFREE.match(c[0]):
+            placeholder(src, rel, d, ext)
             nonfree.append(f'{rel}: {c[0]}:{c[1]}')
             continue
         wanted.append((rel, sha, c, ext))
@@ -168,9 +187,10 @@ def main():
             (failed if same is None else identical if same else differ).append(f'{rel}: {what}')
     print(f'maven_libs: {len(identical)} files byte-identical to the CIPD ones, '
           f'{len(differ)} differ (snapshots or rebuilt), {len(failed)} not on Maven, '
-          f'{len(unknown)} other CIPD files not reproduced, {len(nonfree)} non-free not fetched')
+          f'{len(unknown)} other CIPD files not reproduced, {len(nonfree)} non-free not fetched '
+          f'(empty placeholders)')
     for title, items in (('differ', differ), ('not on Maven', failed), ('not reproduced', unknown),
-                         ('non-free, not fetched', nonfree)):
+                         ('non-free, empty placeholder', nonfree)):
         for x in items:
             print(f'  {title}: {x}')
     # Not fatal here: the build graph decides whether a missing file matters

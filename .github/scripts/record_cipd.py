@@ -79,8 +79,13 @@ def cipd_version(src, rel_dir):
     for t in tags:
         v = re.fullmatch(r'version:(?:\d+@)?(.+?)(?:\.cr\d+)?', t)
         if v:
-            return v[1]
+            return maven_version(v[1])
     return None
+
+
+def maven_version(tag):
+    """3pp version tags end in a hash of the version_deps (".2be7cec8ac")."""
+    return re.sub(r'\.[0-9a-f]{10}$', '', tag)
 
 
 def sha256(path):

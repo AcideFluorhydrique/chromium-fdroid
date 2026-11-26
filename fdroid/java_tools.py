@@ -218,9 +218,11 @@ def main():
     tools = json.load(open(pins_path)).get('maven_tools', {})
     work = tempfile.mkdtemp(prefix='java-tools-')
     for name in MAVEN_TOOLS:
-        tool = tools.get(name) or {}
+        tool = dict(tools.get(name) or {})
         if not tool.get('version'):
             sys.exit(f'java_tools: no {name} version in {pins_path} (run sync-trim.yml)')
+        # CIPD's 3pp tags end in a hash of the version_deps (".2be7cec8ac").
+        tool['version'] = re.sub(r'\.[0-9a-f]{10}$', '', tool['version'])
         maven_jar(src, name, tool, work)
     signflinger_jar_only(src)
     ijar(src, work)

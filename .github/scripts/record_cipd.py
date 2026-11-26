@@ -60,6 +60,29 @@ def jar_maven_version(jar, group, artifact):
     return m[1] if m else None
 
 
+def cipd_version(src, rel_dir):
+    """The 3pp version tag (version:2@<v>.crN) of the CIPD instance DEPS pins
+    at rel_dir, asked of CIPD (cipd describe), for jars that do not name it."""
+    import tempfile
+    deps = subprocess.run(['git', '-C', src, 'show', 'HEAD:DEPS'], capture_output=True, text=True).stdout
+    m = re.search(r"'src/" + re.escape(rel_dir) + r"'\s*:\s*\{.*?'package':\s*'([^']+)',\s*'version':\s*'([^']+)'",
+                  deps, re.S)
+    if not m:
+        return None
+    with tempfile.NamedTemporaryFile(suffix='.json') as out:
+        r = subprocess.run(['cipd', 'describe', m[1], '-version', m[2], '-json-output', out.name],
+                           capture_output=True, text=True)
+        if r.returncode:
+            print(f'cipd describe {m[1]}: {r.stderr.strip()}', file=sys.stderr)
+            return None
+        tags = [t['tag'] for t in json.load(open(out.name))['result'].get('tags', [])]
+    for t in tags:
+        v = re.fullmatch(r'version:(?:\d+@)?(.+?)(?:\.cr\d+)?', t)
+        if v:
+            return v[1]
+    return None
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -88,7 +111,8 @@ def main():
         'r8_version': (re.search(r'R8 (\S+)', r8_out) or [None, None])[1],
         'kotlinc_build': open(bt).read().strip() if os.path.exists(bt) else None,
         'maven_tools': {name: {'group': g, 'artifact': a,
-                               'version': jar_maven_version(os.path.join(src, jar), g, a)}
+                               'version': jar_maven_version(os.path.join(src, jar), g, a)
+                               or cipd_version(src, os.path.dirname(jar))}
                         for name, (jar, g, a) in MAVEN_TOOLS.items()},
         'files': dict(sorted(files.items())),
     }

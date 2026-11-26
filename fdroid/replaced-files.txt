@@ -38,3 +38,7 @@ components/dom_distiller/core/data/distillable_page_model_new.bin
 components/dom_distiller/core/data/long_page_model.bin
 ui/file_manager/image_loader/piex/piex.js.wasm
 ui/file_manager/image_loader/piex/piex.out.wasm
+# What Chromium's extract_and_commit_extras.py (a tool for rolling the
+# libraries) unpacks into committed/; the build does not read the zips.
+third_party/androidx/cipd/to_commit.zip
+third_party/android_deps/cipd/to_commit.zip

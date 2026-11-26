@@ -10,22 +10,22 @@
   "error_prone_javac": {
    "group": "com.google.errorprone",
    "artifact": "javac",
-   "version": null
+   "version": "9-dev-r4023-3.32a18f6164"
   },
   "nullaway": {
    "group": "com.uber.nullaway",
    "artifact": "nullaway",
-   "version": null
+   "version": "0.14.2.2be7cec8ac"
   },
   "manifest_merger": {
    "group": "com.android.tools.build",
    "artifact": "manifest-merger",
-   "version": null
+   "version": "32.6.0-alpha01.30eab7e0dd"
   },
   "signflinger": {
    "group": "com.android",
    "artifact": "signflinger",
-   "version": null
+   "version": "9.5.0-alpha09.c0cf398784"
   }
  },
  "files": {

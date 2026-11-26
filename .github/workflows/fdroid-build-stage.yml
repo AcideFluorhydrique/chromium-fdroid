@@ -127,6 +127,16 @@ jobs:
           mkdir -p tc tools
           df -h /
 
+      # The workspace holds the scripts of the run that packed it; a run that
+      # resumes it uses its own (src/ and out/ are not tracked: only our files change).
+      - name: Bring the restored checkout to this commit
+        if: inputs.resume_from != ''
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" repo
+          git -C repo fetch -q --depth 1 origin "$GITHUB_SHA"
+          git -C repo checkout -q -f FETCH_HEAD
+          git -C repo log --oneline -1
+
       - name: Recipe in debian:trixie
         id: recipe
         env:

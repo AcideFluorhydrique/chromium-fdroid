@@ -135,6 +135,8 @@ jobs:
           TOKEN: ${{ github.token }}
         run: |
           sudo chown -R "$(id -u):$(id -g)" repo
+          # actions/checkout left its (now expired) token in the packed .git/config.
+          git -C repo config --local --unset-all http.https://github.com/.extraheader || true
           git -C repo fetch -q --depth 1 "https://x-access-token:$TOKEN@github.com/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
           git -C repo checkout -q -f FETCH_HEAD
           git -C repo log --oneline -1

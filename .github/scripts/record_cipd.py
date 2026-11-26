@@ -26,7 +26,38 @@ DIRS = [
     'third_party/turbine/cipd',
     'third_party/android_build_tools/aapt2/cipd',
     'third_party/android_build_tools/protoc/cipd',
+    'third_party/android_build_tools/error_prone/cipd',
+    'third_party/android_build_tools/error_prone_javac/cipd',
+    'third_party/android_build_tools/nullaway/cipd',
+    'third_party/android_build_tools/manifest_merger/cipd',
+    'third_party/android_build_tools/signflinger/cipd',
 ]
+
+# Jars Chromium's build/3pp_common/maven.py makes as Maven
+# jar-with-dependencies of one artifact: the jar itself names the version.
+MAVEN_TOOLS = {
+    'error_prone': ('third_party/android_build_tools/error_prone/cipd/error_prone_core.jar',
+                    'com.google.errorprone', 'error_prone_core'),
+    'error_prone_javac': ('third_party/android_build_tools/error_prone_javac/cipd/javac.jar',
+                          'com.google.errorprone', 'javac'),
+    'nullaway': ('third_party/android_build_tools/nullaway/cipd/nullaway.jar',
+                 'com.uber.nullaway', 'nullaway'),
+    'manifest_merger': ('third_party/android_build_tools/manifest_merger/cipd/manifest-merger.jar',
+                        'com.android.tools.build', 'manifest-merger'),
+    'signflinger': ('third_party/android_build_tools/signflinger/cipd/signflinger.jar',
+                    'com.android', 'signflinger'),
+}
+
+
+def jar_maven_version(jar, group, artifact):
+    import zipfile
+    try:
+        with zipfile.ZipFile(jar) as z:
+            text = z.read(f'META-INF/maven/{group}/{artifact}/pom.properties').decode()
+    except (OSError, KeyError, zipfile.BadZipFile):
+        return None
+    m = re.search(r'^version=(\S+)', text, re.M)
+    return m[1] if m else None
 
 
 def sha256(path):
@@ -56,6 +87,9 @@ def main():
     pins = {
         'r8_version': (re.search(r'R8 (\S+)', r8_out) or [None, None])[1],
         'kotlinc_build': open(bt).read().strip() if os.path.exists(bt) else None,
+        'maven_tools': {name: {'group': g, 'artifact': a,
+                               'version': jar_maven_version(os.path.join(src, jar), g, a)}
+                        for name, (jar, g, a) in MAVEN_TOOLS.items()},
         'files': dict(sorted(files.items())),
     }
     with open(out, 'w') as f:

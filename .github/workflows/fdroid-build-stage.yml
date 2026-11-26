@@ -131,9 +131,11 @@ jobs:
       # resumes it uses its own (src/ and out/ are not tracked: only our files change).
       - name: Bring the restored checkout to this commit
         if: inputs.resume_from != ''
+        env:
+          TOKEN: ${{ github.token }}
         run: |
           sudo chown -R "$(id -u):$(id -g)" repo
-          git -C repo fetch -q --depth 1 origin "$GITHUB_SHA"
+          git -C repo fetch -q --depth 1 "https://x-access-token:$TOKEN@github.com/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
           git -C repo checkout -q -f FETCH_HEAD
           git -C repo log --oneline -1
 

@@ -199,6 +199,9 @@ maven_libs.placeholder(sys.argv[1], sys.argv[2], "com_google_ar_core", "aar")' \
       src "third_party/arcore-android-sdk-client/$aar"
     echo "placeholder third_party/arcore-android-sdk-client/$aar"
   done
+  # error_prone, nullaway, manifest_merger, signflinger, ijar, dx and the
+  # system SDK stand-in, as their 3pp scripts make them (Maven / source).
+  python3 -I fdroid/java_tools.py src "$pins"
   # Never released to Google Maven: build it from AOSP's source.
   python3 -I fdroid/sidecar_aar.py src
 

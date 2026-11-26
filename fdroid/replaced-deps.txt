@@ -40,3 +40,13 @@ src/third_party/android_sdk/public
 src/third_party/gperf/cipd
 # doclava (javadoc): the build does not use it.
 src/buildtools/android/doclava
+# The other Android build tools: built the way their 3pp scripts make them,
+# from Maven (jar-with-dependencies) or source (fdroid/java_tools.py).
+src/third_party/android_build_tools/error_prone/cipd
+src/third_party/android_build_tools/error_prone_javac/cipd
+src/third_party/android_build_tools/nullaway/cipd
+src/third_party/android_build_tools/manifest_merger/cipd
+src/third_party/android_build_tools/signflinger/cipd
+src/third_party/android_build_tools/bazel_tools/cipd
+src/third_party/aosp_dalvik/cipd
+src/third_party/android_system_sdk/cipd

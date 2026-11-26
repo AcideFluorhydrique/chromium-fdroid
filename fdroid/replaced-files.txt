@@ -32,12 +32,6 @@ third_party/cardboard/src/paperscope/build.gradle
 third_party/cardboard/src/hellocardboard-android/build.gradle
 third_party/tflite/src/tensorflow/lite/java/demo
 third_party/libwebp/src/build.gradle
-# Data files the scanner flags and the Android build never names (dom_distiller's
-# models, ChromeOS file manager's piex).
-components/dom_distiller/core/data/distillable_page_model_new.bin
-components/dom_distiller/core/data/long_page_model.bin
-ui/file_manager/image_loader/piex/piex.js.wasm
-ui/file_manager/image_loader/piex/piex.out.wasm
 # What Chromium's extract_and_commit_extras.py (a tool for rolling the
 # libraries) unpacks into committed/; the build does not read the zips.
 third_party/androidx/cipd/to_commit.zip

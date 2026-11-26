@@ -123,6 +123,9 @@ build() {
   # skips straight to ninja: the toolchain, tools and variant are in place.
   if [ -f src/out/Default/.fdroid-configured ]; then
     echo "== configured already, continuing ninja"
+    # Files a .grd names that an older prebuild deleted (grit reads them, but
+    # they are not ninja inputs): put them back from Gitiles.
+    python3 -I fdroid/prune_binaries.py --restore "$version" src "reports/$version/prune-list.txt.gz"
   else
     configure
   fi

@@ -1,1 +1,1 @@
-probe: which remaining CIPD Java tools and flagged data files build needs
+baseline: probe results applied (doclava + 4 data files dropped; the 8 needed tools synced again)

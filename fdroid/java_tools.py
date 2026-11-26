@@ -22,8 +22,10 @@ prebuild does not sync these packages (fdroid/replaced-deps.txt):
       AOSP's platform/dalvik dx at the commit aosp_dalvik/3pp/3pp.pb names,
       compiled with javac --release 11 (its 3pp/install.sh).
   android_system_sdk/cipd/android_system.jar
-      Google's system SDK stubs are not public; they are for WebView and
-      Monochrome. The public SDK's android.jar stands in for chrome_public_apk.
+      Chromium's copy is an internal build of the system API stubs; AOSP
+      publishes the same stubs in platform/prebuilts/sdk
+      (current/system/android.jar, Apache-2.0), fetched at a pinned commit.
+      base:flagged_apis_java compiles against them (WebViewDelegate).
 """
 
 import base64
@@ -203,14 +205,24 @@ def dx(src, work):
     print(f'java_tools: aosp_dalvik/cipd/lib/dx.jar from {url} ({len(javas)} sources)')
 
 
-def android_system(src):
-    import glob
-    jars = sorted(glob.glob(os.path.join(src, 'third_party/android_sdk/public/platforms/android-*/android.jar')))
+# AOSP platform/prebuilts/sdk: current/system/android.jar, the system API
+# stubs AOSP's SDK build makes (Apache-2.0), at this commit of main.
+PREBUILTS_SDK = 'https://android.googlesource.com/platform/prebuilts/sdk'
+PREBUILTS_SDK_REVISION = '3af7c93524be6f51e092b87b17f009f13ee98b43'
+
+
+def android_system(src, work):
+    d = os.path.join(work, 'prebuilts-sdk')
+    run(['git', 'init', '-q', d])
+    run(['git', '-C', d, 'fetch', '-q', '--depth', '1', '--filter=blob:none', PREBUILTS_SDK,
+         PREBUILTS_SDK_REVISION])
+    run(['git', '-C', d, 'sparse-checkout', 'set', '--no-cone', '/current/system/android.jar'])
+    run(['git', '-C', d, 'checkout', '-q', 'FETCH_HEAD'])
     out = os.path.join(src, 'third_party/android_system_sdk/cipd/android_system.jar')
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    shutil.copyfile(jars[-1], out)
-    print(f'java_tools: android_system_sdk/cipd/android_system.jar <- {os.path.relpath(jars[-1], src)} '
-          '(the system SDK is not public)')
+    shutil.copyfile(os.path.join(d, 'current/system/android.jar'), out)
+    print(f'java_tools: android_system_sdk/cipd/android_system.jar <- AOSP prebuilts/sdk '
+          f'{PREBUILTS_SDK_REVISION[:12]} current/system/android.jar')
 
 
 def main():
@@ -227,7 +239,7 @@ def main():
     signflinger_jar_only(src)
     ijar(src, work)
     dx(src, work)
-    android_system(src)
+    android_system(src, work)
     shutil.rmtree(work)
 
 

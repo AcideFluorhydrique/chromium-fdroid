@@ -1,9 +1,42 @@
 {
  "r8_version": "9.6.0-alpha08",
  "kotlinc_build": "2.4.21",
+ "maven_tools": {
+  "error_prone": {
+   "group": "com.google.errorprone",
+   "artifact": "error_prone_core",
+   "version": "2.51.0"
+  },
+  "error_prone_javac": {
+   "group": "com.google.errorprone",
+   "artifact": "javac",
+   "version": null
+  },
+  "nullaway": {
+   "group": "com.uber.nullaway",
+   "artifact": "nullaway",
+   "version": null
+  },
+  "manifest_merger": {
+   "group": "com.android.tools.build",
+   "artifact": "manifest-merger",
+   "version": null
+  },
+  "signflinger": {
+   "group": "com.android",
+   "artifact": "signflinger",
+   "version": null
+  }
+ },
  "files": {
   "third_party/android_build_tools/aapt2/cipd/aapt2": "d0c30c343c61bfdc837abd02e195741dba7407bcb61ca34e037bcc1dc26ea06c",
+  "third_party/android_build_tools/error_prone/cipd/error_prone_core.jar": "a6c2fd3972cbcdc3d4fc33ae9bb3d1c76c310c27c3a71bae5eb0cb5cbbb2d737",
+  "third_party/android_build_tools/error_prone_javac/cipd/javac.jar": "165a749cf271381e271dc59069b59dcd5687dcc9427bd21b96aea71534555c56",
+  "third_party/android_build_tools/manifest_merger/cipd/manifest-merger.jar": "f176234d14c7ce0a93008f81475544bf769586fa6384d7f064d4ddaf7f0c3036",
+  "third_party/android_build_tools/nullaway/cipd/nullaway.jar": "40966782cd0ab7d3a45c346c21d302dda1b10ed3791e2019770c31584e6ae58d",
   "third_party/android_build_tools/protoc/cipd/protoc": "d2c65c3ea5eeb59427f684ed3e0a0cd458386122fc9f1b98de946a7242b53d31",
+  "third_party/android_build_tools/signflinger/cipd/signflinger": "5c5e90b5e803dfd6da4269ba3869d34fcb7f6dae476beb1f1a2f17ef1d720da6",
+  "third_party/android_build_tools/signflinger/cipd/signflinger.jar": "193e09598584a22d597ab463ffc1de56404ef21e4db1bfbe3d94241e169790f6",
   "third_party/android_deps/cipd/BUILD.gn": "0415ee828d77fef463ee148b44cfb0487083d42720debfcd734714ad2cc086ce",
   "third_party/android_deps/cipd/VERSION.txt": "84b55262a013d29940cbbad0a8208ea8e2c53e7c97e88c455a1462400ad15179",
   "third_party/android_deps/cipd/additional_readme_paths.json": "d4b82c5a89a2312ece01f742753e9742a94c1023c7711916ee81db7e490593b8",

@@ -169,7 +169,9 @@ configure() {
   for part in clang-hostsys:clang rust-rustup:rust tools:tools; do
     [ -f "pkg/${part#*:}.tar.zst" ] || bash .github/scripts/toolchain_debian.sh "${part%%:*}"
   done
-  python3 .github/scripts/swap_toolchain.py src pkg
+  # Google's toolchain is not synced (fdroid/replaced-deps.txt): parts built
+  # above are in place already, so "unchanged by the swap" is not an error.
+  TOOLCHAIN_NOT_SYNCED=1 python3 .github/scripts/swap_toolchain.py src pkg
   # V8's metagen loads libclang through its Python bindings (Google's
   # llvm-libclang package is in fdroid/replaced-deps.txt).
   python3 -I fdroid/llvm_libclang.py src

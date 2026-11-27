@@ -58,7 +58,11 @@ depot_tools() {
     [ -d "$DEPOT_TOOLS" ] || git clone -q --depth 1 \
       https://chromium.googlesource.com/chromium/tools/depot_tools.git "$DEPOT_TOOLS"
   fi
-  export PATH=$DEPOT_TOOLS:$PATH
+  # Last: only gclient, vpython3 and cipd are wanted from it. Its ninja and
+  # python3 are wrappers that need depot_tools bootstrapped (update_depot_tools,
+  # which DEPOT_TOOLS_UPDATE=0 skips); CMake (the clang build) and the build
+  # scripts must find Debian's ninja-build and python3 first.
+  export PATH=$PATH:$DEPOT_TOOLS
 }
 
 prebuild() {

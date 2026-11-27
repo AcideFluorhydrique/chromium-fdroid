@@ -35,6 +35,11 @@ on:
         type: string
         required: false
         default: ""
+      fresh_toolchain:
+        description: "test: comma-separated toolchain parts (clang, rust, tools) build.sh builds itself although toolchain_from has them"
+        type: string
+        required: false
+        default: ""
       dry_run:
         description: "test: configure, then only ninja -n (every input there?) and stop"
         type: boolean
@@ -78,6 +83,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TC_FROM: ${{ inputs.toolchain_from }}
+          FRESH: ${{ inputs.fresh_toolchain }}
           TOOLS_FROM: ${{ inputs.tools_from }}
         run: |
           mkdir -p tc tools
@@ -94,6 +100,8 @@ jobs:
             mkdir -p dl/tools && find dl/tools -type f -exec mv -t tools {} +
           fi
           rm -rf dl
+          # Parts build.sh must build itself, as on F-Droid's build server.
+          for part in ${FRESH//,/ }; do rm -fv "tc/$part.tar.zst"; done
           ls -lh tc tools
 
       - name: Previous stage

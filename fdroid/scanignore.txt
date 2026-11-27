@@ -25,9 +25,3 @@ third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin
 # (components/resources/dom_distiller_resources.grdp).
 components/dom_distiller/core/data/distillable_page_model_new.bin
 components/dom_distiller/core/data/long_page_model.bin
-
-# The piex image-metadata parser (ChromeOS file manager) compiled to
-# WebAssembly, next to its JavaScript loader; a .grd names them, so prune
-# keeps them (grit reads every file a .grd includes).
-ui/file_manager/image_loader/piex/piex.js.wasm
-ui/file_manager/image_loader/piex/piex.out.wasm

@@ -211,7 +211,7 @@ jobs:
       - name: F-Droid tree (prune, NDK from sdkmanager)
         if: inputs.stage == 1 && inputs.fdroid_tree
         run: |
-          list=ci/reports/$VERSION/prune-list.txt.gz
+          list=ci/reports/$VERSION/prune-list.txt
           [ -f "$list" ] || { echo "no $list: run scan.yml for $VERSION first"; exit 1; }
           python3 -I ci/fdroid/prune_binaries.py src "$list"
           # GN 和所有 build 腳本都用 third_party/cpython3/host/bin/python3 執行，它不是 ninja 的

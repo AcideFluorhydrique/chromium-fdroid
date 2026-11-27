@@ -22,7 +22,7 @@ Repo: https://github.com/AcideFluorhydrique/chromium-fdroid.git
 Builds:
   - versionName: 158.0.8127.36
     versionCode: 812703604
-    commit: b1de9de29f8ecf5cb3dae587ed1a1136127315f5
+    commit: 18c8acbb4f6e95fdeb26746bb61e79d0226fa14d
     timeout: 86400
     sudo:
       - apt-get update
@@ -50,8 +50,6 @@ Builds:
       - src/third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin
       - src/components/dom_distiller/core/data/distillable_page_model_new.bin
       - src/components/dom_distiller/core/data/long_page_model.bin
-      - src/ui/file_manager/image_loader/piex/piex.js.wasm
-      - src/ui/file_manager/image_loader/piex/piex.out.wasm
     build: DEPOT_TOOLS=$$depot_tools$$ ANDROID_NDK=$$NDK$$ fdroid/build.sh build $$VERSION$$
       arm64
     ndk: 30.0.16248370
@@ -61,21 +59,40 @@ MaintainerNotes: |-
   (fdroiddata#3911): androidx releases from Google Maven, microG in place of
   Play services, signature-only stubs for the remaining Google libraries,
   Play Core / ML Kit / Impress removed, a few small patches. Everything is
-  done by fdroid/build.sh in the Repo, which the GitHub Actions builds of that
-  repository run too:
+  done by fdroid/build.sh in the Repo; its GitHub Actions run the same
+  script in debian:trixie with this recipe's sudo: commands.
 
-  prebuild: chromium/src at the version tag; gclient sync without the
-  DEPS chrome_public_apk does not need (fdroid/skip-deps.txt); deletes the
+  prebuild (what the scanner sees): chromium/src at the version tag, then
+  gclient sync without
+  - the DEPS chrome_public_apk does not need (fdroid/skip-deps.txt), and
+  - the DEPS build provides itself (fdroid/replaced-deps.txt): Google's
+    sysroots, clang, Rust, libclang, GN, Ninja, Node, clang-format, the JDK,
+    the Android SDK, kotlinc, r8, turbine, aapt2, protoc, gperf and the
+    Java build tools (error_prone, nullaway, manifest_merger, signflinger,
+    ijar, dx, the system SDK stubs).
+  Both lists are cut out of src/DEPS (fdroid/skip_deps.py): custom_deps =
+  None only skips git dependencies, not CIPD/GCS ones. Then it deletes the
   flagged files the build never reads (fdroid/prune_binaries.py with
-  reports/<version>/prune-list.txt.gz, generated from the scanner findings
-  and the chrome_public_apk build graph); Debian's Python; the NDK given by
-  the recipe.
+  reports/<version>/prune-list.txt), the files build replaces
+  (fdroid/replaced-files.txt), the Gradle files GN never reads, and the
+  .aar/.jar files of the androidx and android_deps CIPD packages (synced
+  for their BUILD.gn, licenses and .info files).
 
   build: clang, Rust, GN, Ninja and Node built from source with Debian's
-  compilers; gperf, esbuild, tsc, rollup's wasm and Dawn's Go built from
-  source; r8, turbine, aapt2, protoc and kotlinc from Google Maven / Maven
-  Central; then gn gen, ninja and an unsigned copy of the APK
-  (fdroid/unsign_apk.py; Chromium signs it with its debug key).
+  compilers; gperf, esbuild, tsc, rollup's wasm and Dawn's Go from source;
+  Debian's OpenJDK; the SDK platform and build tools from sdkmanager
+  (fdroid/sdk_install.py, also for platforms sdkmanager cannot parse,
+  sha256 from F-Droid's transparency log); androidx and android_deps from
+  Google Maven / Maven Central (fdroid/maven_libs.py; Play services,
+  Firebase, ML Kit, ARCore and other non-free groups are never fetched,
+  they get empty placeholder aars because gn gen reads every aar);
+  r8, turbine, aapt2, protoc and kotlinc from Maven; error_prone, javac,
+  nullaway, manifest_merger and signflinger as Chromium's 3pp scripts make
+  them (mvn jar-with-dependencies); ijar from Bazel's source, dx from AOSP's,
+  the system API stubs from AOSP prebuilts/sdk (fdroid/java_tools.py).
+  Versions of what was CIPD-only come from reports/<version>/cipd-pins.json.
+  Then gn gen, ninja and an unsigned copy of the APK (fdroid/unsign_apk.py;
+  Chromium signs it with its debug key).
 
   The build takes about 20 hours on 4 cores.
 
@@ -84,13 +101,15 @@ MaintainerNotes: |-
   09 = x64. Example: 158.0.8127.36 arm64 = 812703604.
 
   New versions: https://chromiumdash.appspot.com/releases?platform=Android
-  (Stable). The Repo needs reports/<version>/prune-list.txt.gz for each
-  version (its scan.yml workflow writes it).
+  (Stable). The Repo needs reports/<version>/prune-list.txt (scan.yml)
+  and reports/<version>/cipd-pins.json (sync-trim.yml) for each version.
 
   NDK version: grep android_ndk_version src/DEPS
 
   Scanner: microG's com.google.android.gms classes and the stubs in
-  fdroid/stubs are expected (they replace Play services).
+  fdroid/stubs are expected (they replace Play services). The scanignore
+  entries are data or source files the build reads (reasons in
+  fdroid/scanignore.txt in the Repo).
 
 ArchivePolicy: 3
 AutoUpdateMode: None

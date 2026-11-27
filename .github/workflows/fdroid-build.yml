@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Chromium 版本（要有 reports/<version>/prune-list.txt.gz）"
+        description: "Chromium 版本（要有 reports/<version>/prune-list.txt）"
         required: false
         default: "158.0.8127.36"
         type: string

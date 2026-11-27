@@ -65,10 +65,13 @@ def safe(rel):
 
 def restore(version, src, prune_list):
     keep = grit_names(src)
+    # Files fdroid/replaced-files.txt deletes on purpose stay deleted.
+    here = os.path.dirname(os.path.abspath(__file__))
+    replaced = set(read_list(os.path.join(here, 'replaced-files.txt')))
     restored = 0
     for rel in read_list(prune_list):
         path = os.path.join(src, safe(rel))
-        if os.path.basename(rel) not in keep or os.path.lexists(path):
+        if os.path.basename(rel) not in keep or os.path.lexists(path) or rel in replaced:
             continue
         url = GITILES.format(version, rel)
         for attempt in range(5):

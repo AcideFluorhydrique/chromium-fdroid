@@ -36,3 +36,8 @@ third_party/libwebp/src/build.gradle
 # libraries) unpacks into committed/; the build does not read the zips.
 third_party/androidx/cipd/to_commit.zip
 third_party/android_deps/cipd/to_commit.zip
+# piex (ChromeOS file manager) compiled to WebAssembly: only
+# ui/file_manager/file_manager_resources.grd includes it, inside
+# <if expr="is_chromeos">, so the Android build does not read it.
+ui/file_manager/image_loader/piex/piex.js.wasm
+ui/file_manager/image_loader/piex/piex.out.wasm

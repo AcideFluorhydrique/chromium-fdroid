@@ -123,12 +123,12 @@ jobs:
           d="repo/reports/$VERSION"
           mkdir -p "$d"
           cp "scan-$VERSION/summary.md" "$d/fdroid-scan.md"
-          gzip -9c "scan-$VERSION/findings-build.tsv" > "$d/fdroid-scan-findings.tsv.gz"
+          # No archives in the repository: fdroidserver's scanner flags them (it
+          # scans this repository too). The per-file findings are in the artifact.
           cp "scan-$VERSION/scan-rules.txt" "$d/scan-rules.txt"
-          gzip -9c "scan-$VERSION/prune-list.txt" > "$d/prune-list.txt.gz"
+          cp "scan-$VERSION/prune-list.txt" "$d/prune-list.txt"
           cp "scan-$VERSION/build-graph.md" "$d/build-graph.md"
           cp "scan-$VERSION/after-rules/summary.md" "$d/fdroid-scan-after-rules.md"
-          gzip -9c "scan-$VERSION/after-rules/findings.tsv" > "$d/fdroid-scan-after-rules-findings.tsv.gz"
           cd repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

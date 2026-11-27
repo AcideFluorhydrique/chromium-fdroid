@@ -19,13 +19,14 @@
 #                 cloned when unset
 #   PACKAGE_NAME  application id (default org.chromium.chrome.fdroid)
 #   JOBS          parallel jobs (default: nproc)
-#   JAVA_HOME     JDK to use instead of the CIPD one (not tried yet)
+#   JAVA_HOME     JDK (default: the one javac on PATH belongs to)
 # For testing the script on GitHub Actions (6-hour jobs) only:
 #   TOOLCHAIN_PKG directory with toolchain artifacts (*.tar.zst) of earlier
 #                 toolchain builds, used instead of building the toolchain here
 #   TOOLS_PKG     directory with the tools-from-source artifacts, likewise
 #   NINJA_TIMEOUT stop ninja after this many seconds and exit 0
 #   NINJA_DEADLINE the same as a Unix time
+#   NINJA_DRY_RUN  run ninja -n only (every input there?) and stop
 #
 # The Debian packages it needs are in the recipe's sudo: section (the scripts
 # it calls are run with NO_APT=1 and never use apt themselves).
@@ -73,13 +74,15 @@ prebuild() {
   git -C src checkout -q FETCH_HEAD
 
   echo "== DEPS without the ones chrome_public_apk does not need (fdroid/skip-deps.txt)"
-  skip=$(grep -v '^#' fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+  echo "   and the ones build provides itself (fdroid/replaced-deps.txt)"
+  # Deleted from src/DEPS: custom_deps = None would skip only the git ones.
+  python3 -I fdroid/skip_deps.py src/DEPS fdroid/skip-deps.txt fdroid/replaced-deps.txt
   cat > .gclient <<GCLIENT
 solutions = [{
   "name": "src",
   "url": "https://chromium.googlesource.com/chromium/src.git",
   "managed": False,
-  "custom_deps": {$skip},
+  "custom_deps": {},
   "custom_vars": {"checkout_pgo_profiles": False},
 }]
 target_os = ["android"]
@@ -91,20 +94,21 @@ GCLIENT
 
   echo "== delete the flagged files chrome_public_apk never reads"
   python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt.gz"
+  # Files build replaces (fdroid/replaced-files.txt).
+  grep -v '^#' fdroid/replaced-files.txt | grep . | while read -r f; do
+    [ -e "src/$f" ] || [ -L "src/$f" ] || continue
+    chmod -R u+w "src/$f" 2>/dev/null || true
+    rm -rf "src/$f"
+    echo "deleted $f"
+  done
+  # The androidx and android_deps libraries: build fetches them from Maven.
+  python3 -I fdroid/maven_libs.py --delete src "reports/$version/cipd-pins.json"
 
   # GN and the build scripts run third_party/cpython3/host/bin/python3, which
   # the prune list removes: use Debian's Python.
   rm -rf src/third_party/cpython3/host
   mkdir -p src/third_party/cpython3/host/bin
   ln -s "$(command -v python3)" src/third_party/cpython3/host/bin/python3
-
-  # TODO (not tried yet): Debian's JDK in place of the CIPD one. Chromium's
-  # build reads third_party/jdk/current; the version must match DEPS.
-  if [ -n "${JAVA_HOME:-}" ]; then
-    echo "== JDK from the build server: $JAVA_HOME"
-    rm -rf src/third_party/jdk/current
-    ln -s "$JAVA_HOME" src/third_party/jdk/current
-  fi
 
   echo "== NDK from the build server: ${ANDROID_NDK:?set ANDROID_NDK}"
   rm -rf src/third_party/android_toolchain/ndk
@@ -115,17 +119,63 @@ GCLIENT
 build() {
   depot_tools
   : "${ANDROID_NDK:?set ANDROID_NDK}"
+  # A second run after an interrupted ninja (relay jobs on GitHub Actions)
+  # skips straight to ninja: the toolchain, tools and variant are in place.
+  if [ -f src/out/Default/.fdroid-configured ]; then
+    echo "== configured already, continuing ninja"
+    # Files a .grd names that an older prebuild deleted (grit reads them, but
+    # they are not ninja inputs): put them back from Gitiles.
+    python3 -I fdroid/prune_binaries.py --restore "$version" src "reports/$version/prune-list.txt.gz"
+  else
+    configure
+  fi
+  run_ninja
+}
+
+configure() {
+
+  echo "== JDK and Android SDK from the build server (fdroid/replaced-deps.txt)"
+  # Debian's OpenJDK (the recipe's sudo: installs the version DEPS names).
+  jdk=${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")}
+  echo "JDK $jdk: $("$jdk/bin/javac" -version 2>&1); Chromium's: $(git -C src show HEAD:DEPS |
+    grep -oP "'jdk_version': '\K[^']+")"
+  # Laid out like Chromium's (bin/java wrapper, no GraalVM javac).
+  python3 -I fdroid/jdk_layout.py src "$jdk"
+  # The SDK platform and build tools DEPS names, with F-Droid's sdkmanager
+  # (packages checked against its Android SDK transparency log; sdk_install.py
+  # also installs platforms whose metadata sdkmanager cannot parse).
+  deps=$(git -C src show HEAD:DEPS)
+  bt=$(grep -oP "'android_sdk_build-tools_version': '[^0-9]*\K[0-9.]+" <<<"$deps")
+  plat=$(grep -oP "android_sdk/public/platforms/\K[^']+" <<<"$deps" | head -1)
+  sdk=$root/android-sdk
+  if [ ! -d "$sdk/platforms/$plat" ] || [ ! -d "$sdk/build-tools/$bt" ]; then
+    mkdir -p "$sdk"
+    python3 -I fdroid/sdk_install.py "$sdk" "platforms;$plat" "build-tools;$bt"
+  fi
+  ls -d "$sdk/platforms/$plat/android.jar" "$sdk/build-tools/$bt/apksigner"
+  rm -rf src/third_party/android_sdk/public
+  mkdir -p src/third_party/android_sdk
+  ln -s "$sdk" src/third_party/android_sdk/public
 
   echo "== toolchain from source (Debian's compilers): clang, Rust, GN, Ninja, Node"
   rm -rf pkg
-  if [ -n "${TOOLCHAIN_PKG:-}" ]; then
-    cp -a "$TOOLCHAIN_PKG" pkg
-  else
-    for part in clang-hostsys rust-rustup tools; do
-      bash .github/scripts/toolchain_debian.sh "$part"
-    done
-  fi
+  mkdir -p pkg
+  [ -n "${TOOLCHAIN_PKG:-}" ] && cp -a "$TOOLCHAIN_PKG"/. pkg/
+  # Build every part that TOOLCHAIN_PKG does not already provide.
+  for part in clang-hostsys:clang rust-rustup:rust tools:tools; do
+    [ -f "pkg/${part#*:}.tar.zst" ] || bash .github/scripts/toolchain_debian.sh "${part%%:*}"
+  done
   python3 .github/scripts/swap_toolchain.py src pkg
+  # V8's metagen loads libclang through its Python bindings (Google's
+  # llvm-libclang package is in fdroid/replaced-deps.txt).
+  python3 -I fdroid/llvm_libclang.py src
+  # Crubit's generated headers go through clang-format (Google's package is
+  # in fdroid/replaced-deps.txt): ours if the clang build has it, else Debian's.
+  cf=src/third_party/llvm-build/Release+Asserts/bin/clang-format
+  [ -x "$cf" ] || cf=$(command -v clang-format) || { echo "no clang-format (Debian package clang-format)"; exit 1; }
+  mkdir -p src/buildtools/linux64-format
+  ln -sfn "$(readlink -f "$cf")" src/buildtools/linux64-format/clang-format
+  echo "clang-format: $(src/buildtools/linux64-format/clang-format --version)"
 
   echo "== prebuilt tools the build reads, from source: $TOOLS_FROM_SOURCE"
   rm -rf tools-build && mkdir tools-build
@@ -138,6 +188,25 @@ build() {
   fi
   python3 -I .github/scripts/swap_tools.py src tools-build/pkg
   rm -rf tools-build
+
+  echo "== androidx and android_deps from Google Maven / Maven Central"
+  pins=$root/reports/$version/cipd-pins.json
+  [ -f "$pins" ] || { echo "no $pins: run sync-trim.yml for $version first"; exit 1; }
+  # build_tools_maven.py (tools= below) reads the r8 and kotlinc versions there.
+  export FDROID_CIPD_PINS=$pins
+  python3 -I fdroid/maven_libs.py src "$pins"
+  # ARCore's client is non-free (prebuild deleted it): an empty placeholder.
+  for aar in $(grep -oP 'aar_path = "\K[^"]+' src/third_party/arcore-android-sdk-client/BUILD.gn); do
+    python3 -I -c 'import sys; sys.path.insert(0, "fdroid"); import maven_libs
+maven_libs.placeholder(sys.argv[1], sys.argv[2], "com_google_ar_core", "aar")' \
+      src "third_party/arcore-android-sdk-client/$aar"
+    echo "placeholder third_party/arcore-android-sdk-client/$aar"
+  done
+  # error_prone, nullaway, manifest_merger, signflinger, ijar, dx and the
+  # system SDK stand-in, as their 3pp scripts make them (Maven / source).
+  python3 -I fdroid/java_tools.py src "$pins"
+  # Never released to Google Maven: build it from AOSP's source.
+  python3 -I fdroid/sidecar_aar.py src
 
   echo "== F-Droid variant"
   # shellcheck disable=SC2086
@@ -162,9 +231,39 @@ chrome_public_manifest_package = "$PACKAGE_NAME"
 ARGS
   cat variant.gn >> src/out/Default/args.gn
   (cd src && buildtools/linux64/gn gen out/Default)
+  touch src/out/Default/.fdroid-configured
+}
 
+run_ninja() {
   echo "== ninja"
-  [ -n "${NINJA_DEADLINE:-}" ] && NINJA_TIMEOUT=$((NINJA_DEADLINE - $(date +%s)))
+  if [ -n "${NINJA_DEADLINE:-}" ]; then
+    left=$((NINJA_DEADLINE - $(date +%s)))
+    # Both set: whichever comes first.
+    [ -n "${NINJA_TIMEOUT:-}" ] && [ "$NINJA_TIMEOUT" -lt "$left" ] || NINJA_TIMEOUT=$left
+  fi
+  if [ -n "${NINJA_DRY_RUN:-}" ]; then
+    # Test mode: check that every input of chrome_public_apk is there
+    # (validations included) without compiling anything. ninja stops at the
+    # first missing file, so first list every source path the .ninja files
+    # name that does not exist.
+    (cd src/out/Default && find . -name '*.ninja' -print0 | xargs -0 grep -oh '\.\./\.\./[^ :|$]*' \
+      | sort -u | while read -r f; do [ -e "$f" ] || echo "${f#../../}"; done) > ninja-missing.txt
+    if [ -s ninja-missing.txt ]; then
+      echo "== $(wc -l < ninja-missing.txt) files the build graph names are missing (not all of them"
+      echo "   need be chrome_public_apk inputs):"
+      # (head closes the pipe early: not a failure under pipefail)
+      { sed 's|/[^/]*$||' ninja-missing.txt | sort | uniq -c | sort -rn | head -40; } || true
+      head -60 ninja-missing.txt || true
+      # The ones prebuild removed on purpose (replaced-deps.txt, replaced-files.txt).
+      { grep -v '^#' fdroid/replaced-deps.txt | grep . | sed 's|^src/||'
+        grep -v '^#' fdroid/replaced-files.txt | grep .; } | sort -u > replaced-paths.txt
+      echo "== missing under what prebuild removed (fdroid/replaced-*.txt):"
+      python3 -I fdroid/under_paths.py ninja-missing.txt replaced-paths.txt || true
+    fi
+    src/third_party/ninja/ninja -C src/out/Default -n chrome_public_apk > ninja-dry-run.log
+    echo "ninja -n chrome_public_apk: ok ($(wc -l < ninja-dry-run.log) lines)"
+    return 0
+  fi
   if [ -n "${NINJA_TIMEOUT:-}" ]; then
     [ "$NINJA_TIMEOUT" -gt 60 ] || { echo "no time left for ninja"; return 0; }
     rc=0

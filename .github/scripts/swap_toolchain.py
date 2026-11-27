@@ -72,7 +72,9 @@ def replace_dir(src, staged, rel):
 
 def replace_file(src, staged, rel):
     dst = os.path.join(src, rel)
-    os.remove(dst)
+    if os.path.lexists(dst):
+        os.remove(dst)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.move(os.path.join(staged, rel), dst)
     os.chmod(dst, 0o755)
 
@@ -129,7 +131,9 @@ def main():
     # Our clang build keeps every LLVM tool; keep only the ones Google ships.
     # Symlinks Google ships (clang -> clang-24 in our build) keep their targets.
     bin_dir = os.path.join(src, CLANG, 'bin')
-    keep = {n for n in os.listdir(bin_dir) if f'bin/{n}' in google_clang}
+    # Without Google's package (fdroid/replaced-deps.txt: not synced at all)
+    # there is nothing to compare with: keep every tool.
+    keep = {n for n in os.listdir(bin_dir) if f'bin/{n}' in google_clang or not google_clang}
     for n in list(keep):
         p = os.path.join(bin_dir, n)
         while os.path.islink(p):

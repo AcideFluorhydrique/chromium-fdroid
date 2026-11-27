@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""Record what the CIPD packages that fdroid/build.sh rebuilds from Maven hold.
+
+Usage: record_cipd.py <chromium src dir> <out.json>
+
+The packages are pinned in DEPS by CIPD instance id only, with no version:
+r8 and turbine are built from their main branches, androidx partly from
+snapshots. sync-trim.yml (a full gclient sync on GitHub Actions) writes this
+file per Chromium version to reports/<version>/cipd-pins.json; build.sh then
+knows which files to fetch from Google Maven / Maven Central, which versions
+to ask for, and can tell whether what Maven has is byte-identical.
+"""
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+
+DIRS = [
+    'third_party/androidx/cipd',
+    'third_party/android_deps/cipd',
+    'third_party/kotlinc/current',
+    'third_party/r8/cipd',
+    'third_party/turbine/cipd',
+    'third_party/android_build_tools/aapt2/cipd',
+    'third_party/android_build_tools/protoc/cipd',
+    'third_party/android_build_tools/error_prone/cipd',
+    'third_party/android_build_tools/error_prone_javac/cipd',
+    'third_party/android_build_tools/nullaway/cipd',
+    'third_party/android_build_tools/manifest_merger/cipd',
+    'third_party/android_build_tools/signflinger/cipd',
+]
+
+# Jars Chromium's build/3pp_common/maven.py makes as Maven
+# jar-with-dependencies of one artifact: the jar itself names the version.
+MAVEN_TOOLS = {
+    'error_prone': ('third_party/android_build_tools/error_prone/cipd/error_prone_core.jar',
+                    'com.google.errorprone', 'error_prone_core'),
+    'error_prone_javac': ('third_party/android_build_tools/error_prone_javac/cipd/javac.jar',
+                          'com.google.errorprone', 'javac'),
+    'nullaway': ('third_party/android_build_tools/nullaway/cipd/nullaway.jar',
+                 'com.uber.nullaway', 'nullaway'),
+    'manifest_merger': ('third_party/android_build_tools/manifest_merger/cipd/manifest-merger.jar',
+                        'com.android.tools.build', 'manifest-merger'),
+    'signflinger': ('third_party/android_build_tools/signflinger/cipd/signflinger.jar',
+                    'com.android', 'signflinger'),
+}
+
+
+def jar_maven_version(jar, group, artifact):
+    import zipfile
+    try:
+        with zipfile.ZipFile(jar) as z:
+            text = z.read(f'META-INF/maven/{group}/{artifact}/pom.properties').decode()
+    except (OSError, KeyError, zipfile.BadZipFile):
+        return None
+    m = re.search(r'^version=(\S+)', text, re.M)
+    return m[1] if m else None
+
+
+def cipd_version(src, rel_dir):
+    """The 3pp version tag (version:2@<v>.crN) of the CIPD instance DEPS pins
+    at rel_dir, asked of CIPD (cipd describe), for jars that do not name it."""
+    import tempfile
+    deps = subprocess.run(['git', '-C', src, 'show', 'HEAD:DEPS'], capture_output=True, text=True).stdout
+    m = re.search(r"'src/" + re.escape(rel_dir) + r"'\s*:\s*\{.*?'package':\s*'([^']+)',\s*'version':\s*'([^']+)'",
+                  deps, re.S)
+    if not m:
+        return None
+    with tempfile.NamedTemporaryFile(suffix='.json') as out:
+        r = subprocess.run(['cipd', 'describe', m[1], '-version', m[2], '-json-output', out.name],
+                           capture_output=True, text=True)
+        if r.returncode:
+            print(f'cipd describe {m[1]}: {r.stderr.strip()}', file=sys.stderr)
+            return None
+        tags = [t['tag'] for t in json.load(open(out.name))['result'].get('tags', [])]
+    for t in tags:
+        v = re.fullmatch(r'version:(?:\d+@)?(.+?)(?:\.cr\d+)?', t)
+        if v:
+            return maven_version(v[1])
+    return None
+
+
+def maven_version(tag):
+    """3pp version tags end in a hash of the version_deps (".2be7cec8ac")."""
+    return re.sub(r'\.[0-9a-f]{10}$', '', tag)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def main():
+    src, out = sys.argv[1:3]
+    files = {}
+    for d in DIRS:
+        root = os.path.join(src, d)
+        for dirpath, dirnames, names in os.walk(root):
+            dirnames[:] = [n for n in dirnames if n != '.cipd']
+            for n in names:
+                p = os.path.join(dirpath, n)
+                if os.path.isfile(p) and not os.path.islink(p):
+                    files[os.path.relpath(p, src)] = sha256(p)
+    java = os.path.join(src, 'third_party/jdk/current/bin/java')
+    r8 = os.path.join(src, 'third_party/r8/cipd/lib/r8.jar')
+    r8_out = subprocess.run([java, '-cp', r8, 'com.android.tools.r8.R8', '--version'],
+                            capture_output=True, text=True).stdout
+    bt = os.path.join(src, 'third_party/kotlinc/current/build.txt')
+    pins = {
+        'r8_version': (re.search(r'R8 (\S+)', r8_out) or [None, None])[1],
+        'kotlinc_build': open(bt).read().strip() if os.path.exists(bt) else None,
+        'maven_tools': {name: {'group': g, 'artifact': a,
+                               'version': jar_maven_version(os.path.join(src, jar), g, a)
+                               or cipd_version(src, os.path.dirname(jar))}
+                        for name, (jar, g, a) in MAVEN_TOOLS.items()},
+        'files': dict(sorted(files.items())),
+    }
+    with open(out, 'w') as f:
+        json.dump(pins, f, indent=1)
+        f.write('\n')
+    print(f"{out}: r8 {pins['r8_version']}, kotlinc {pins['kotlinc_build']}, {len(files)} files")
+
+
+if __name__ == '__main__':
+    main()

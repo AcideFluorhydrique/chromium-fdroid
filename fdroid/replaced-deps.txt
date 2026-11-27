@@ -1,0 +1,52 @@
+# DEPS entries prebuild does not sync because build provides them itself,
+# built from source (fdroid/build.sh: toolchain_debian.sh + swap_toolchain.py,
+# tools_from_source.sh + swap_tools.py), or does not use them. Unlike
+# skip-deps.txt these are build inputs, so sync-trim.yml (which builds with
+# Google's toolchain) keeps them.
+#
+# Google's sysroots: the F-Droid variant builds without them (nosysroot).
+src/build/linux/debian_bullseye_amd64-sysroot
+src/build/linux/debian_bullseye_i386-sysroot
+# Google's clang, Rust and libclang: built from source (libclang for V8's
+# metagen: fdroid/llvm_libclang.py).
+src/third_party/llvm-build/Release+Asserts
+src/third_party/rust-toolchain
+src/third_party/llvm-libclang
+# GN, Ninja and Node: built from source.
+src/buildtools/linux64
+src/third_party/ninja
+src/third_party/node/linux
+# clang-format: ours or Debian's (Crubit's generated headers); mold: not
+# used (use_mold = false).
+src/buildtools/linux64-format
+src/buildtools/third_party/mold/cipd
+# Java build tools: from Google Maven / Maven Central (build_tools_maven.py
+# through gms_variant.py tools=), versions from reports/<version>/cipd-pins.json
+# (sync-trim.yml). (androidx/cipd and android_deps/cipd are synced for their
+# BUILD.gn, licenses and .info files; prebuild deletes their .aar/.jar files
+# and build fetches them from Maven: fdroid/maven_libs.py.)
+src/third_party/kotlinc/current
+src/third_party/r8/cipd
+src/third_party/turbine/cipd
+src/third_party/android_build_tools/aapt2/cipd
+src/third_party/android_build_tools/protoc/cipd
+# The JDK and the Android SDK: Debian's OpenJDK and the SDK platform and
+# build tools from F-Droid's sdkmanager (fdroid/build.sh configure).
+src/third_party/jdk/current
+src/third_party/android_sdk/public
+# gperf: built from source (tools_from_source.sh + swap_tools.py). (The
+# typescript package is synced for its lib/*.d.ts; replaced-files.txt deletes
+# its tsc binary.)
+src/third_party/gperf/cipd
+# doclava (javadoc): the build does not use it.
+src/buildtools/android/doclava
+# The other Android build tools: built the way their 3pp scripts make them,
+# from Maven (jar-with-dependencies) or source (fdroid/java_tools.py).
+src/third_party/android_build_tools/error_prone/cipd
+src/third_party/android_build_tools/error_prone_javac/cipd
+src/third_party/android_build_tools/nullaway/cipd
+src/third_party/android_build_tools/manifest_merger/cipd
+src/third_party/android_build_tools/signflinger/cipd
+src/third_party/android_build_tools/bazel_tools/cipd
+src/third_party/aosp_dalvik/cipd
+src/third_party/android_system_sdk/cipd

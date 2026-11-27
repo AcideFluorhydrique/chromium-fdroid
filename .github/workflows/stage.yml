@@ -191,16 +191,16 @@ jobs:
         run: |
           PGO=False
           [ "$OFFICIAL" = "true" ] && PGO=True
-          DEPS_SKIP=""
+          # custom_deps = None 只跳過 git 的 DEPS，CIPD/GCS 的照樣下載，所以直接從 src/DEPS 刪掉
           if [ "$FDROID_TREE" = "true" ]; then
-            DEPS_SKIP=$(grep -v '^#' ci/fdroid/skip-deps.txt | grep . | sed 's/.*/"&": None,/' | tr '\n' ' ')
+            python3 -I ci/fdroid/skip_deps.py src/DEPS ci/fdroid/skip-deps.txt
           fi
           cat > .gclient <<GCLIENT
           solutions = [{
             "name": "src",
             "url": "https://chromium.googlesource.com/chromium/src.git",
             "managed": False,
-            "custom_deps": {$DEPS_SKIP},
+            "custom_deps": {},
             "custom_vars": {"checkout_pgo_profiles": $PGO},
           }]
           target_os = ["android"]

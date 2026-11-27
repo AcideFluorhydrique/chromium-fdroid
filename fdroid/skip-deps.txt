@@ -1,5 +1,6 @@
 # DEPS entries chrome_public_apk does not need: test, benchmark and developer
-# tooling. Listed as custom_deps = None in .gclient so gclient sync skips them.
+# tooling. fdroid/skip_deps.py deletes them from src/DEPS before gclient sync
+# (custom_deps = None in .gclient would skip only the git ones, not CIPD/GCS).
 src/android_webview/tools/cts_archive/cipd
 src/chrome/test/data/perf/canvas_bench
 src/chrome/test/data/perf/frame_rate/content
@@ -37,9 +38,9 @@ src/third_party/updater/chrome_linux64_sans_iid/cipd
 # reports/158.0.8127.36/android-tools.md, with android_static_analysis = "off").
 src/third_party/android_build_tools/aapt2/linux-amd64
 src/third_party/android_build_tools/bundletool/cipd
-src/third_party/android_build_tools/error_prone/cipd
-src/third_party/android_build_tools/error_prone_javac/cipd
 src/third_party/android_build_tools/lint/cipd
-src/third_party/android_build_tools/nullaway/cipd
 src/third_party/jdk/linux-amd64
 src/third_party/jdk11
+# Not skipped although static analysis is off: chrome/browser/xsurface sets
+# enable_errorprone = true, so the build needs android_build_tools/error_prone,
+# error_prone_javac and nullaway (ninja validations, not in ninja -t inputs).

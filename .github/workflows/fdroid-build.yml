@@ -1,16 +1,15 @@
 name: Try fdroid/build.sh in Debian
 
 # Runs the fdroiddata recipe in fdroid/metadata the way F-Droid's build server
-# would, as far as one 6-hour job allows: a debian:trixie container, the
-# recipe's sudo: commands as root, the NDK from sdkmanager, then
-# fdroid/build.sh prebuild and build as an unprivileged user, with
-# fdroidserver's scanner in between.
+# would: a debian:trixie container, the recipe's sudo: commands as root, the
+# NDK from sdkmanager, then fdroid/build.sh prebuild and build as an
+# unprivileged user, with fdroidserver's scanner in between.
 #
-# To fit in the job, build takes the toolchain and the tools built from source
-# from earlier runs (the same scripts built them) and ninja stops before the
-# job's time runs out. What this checks: the Debian packages are enough, no
-# step needs root, prebuild works, what the scanner still flags, and that
-# build gets through gn gen into ninja.
+# F-Droid runs build once; GitHub's jobs stop after 6 hours, so here build is
+# relayed over up to six jobs (fdroid-build-stage.yml): each stops ninja
+# before the limit and hands the whole workspace to the next, whose build
+# continues where ninja stopped. To save time, stage 1 takes the toolchain and
+# the tools built from source from earlier runs (the same scripts built them).
 
 on:
   workflow_dispatch:
@@ -28,7 +27,7 @@ on:
       toolchain_from:
         description: "工具鏈 artifact（chromium-tc-*）的 run，空白分隔 owner/repo/run_id，後面的蓋過前面的"
         required: false
-        default: "AcideFluorhydrique/chromium-fdroid/43426073206 AcideFluorhydrique/chromium-fdroid/43573902951 AcideFluorhydrique/chromium-fdroid/43711783516"
+        default: "AcideFluorhydrique/chromium-fdroid/44875838806"
         type: string
       tools_from:
         description: "tools-from-source 的 run（tool-* artifact）"
@@ -40,109 +39,86 @@ on:
         required: false
         default: true
         type: boolean
+      ninja_minutes:
+        description: "測試交棒用：每一棒的 ninja 只跑這麼多分鐘（空白 = 跑到期限）"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "測試用：configure 完只跑 ninja -n（檢查編譯需要的檔案都在）就結束，不編譯"
+        required: false
+        default: false
+        type: boolean
+      resume_from:
+        description: "接著另一個 run 沒編完的工作目錄：owner/repo/run_id/fdroid-recipe-work-N（空白 = 從頭開始）"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   actions: read
   contents: read
 
 jobs:
-  recipe:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 358
-    steps:
-      - name: Record start time
-        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+  stage1:
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 1
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      toolchain_from: ${{ inputs.toolchain_from }}
+      tools_from: ${{ inputs.tools_from }}
+      scan: ${{ inputs.scan }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
+      resume_from: ${{ inputs.resume_from }}
+      dry_run: ${{ inputs.dry_run }}
 
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
-            /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          sudo docker image prune -af > /dev/null || true
-          df -h /
+  stage2:
+    needs: stage1
+    if: needs.stage1.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 2
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
-      - uses: actions/checkout@v4
-        with:
-          path: repo
+  stage3:
+    needs: stage2
+    if: needs.stage2.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 3
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
-      - name: Download toolchain and tools from earlier runs
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TC_FROM: ${{ inputs.toolchain_from }}
-          TOOLS_FROM: ${{ inputs.tools_from }}
-        run: |
-          mkdir -p tc tools
-          i=0
-          for s in $TC_FROM; do
-            i=$((i + 1))
-            gh run download "${s##*/}" -R "${s%/*}" -p 'chromium-tc-*' -D "dl/$i"
-            find "dl/$i" -name '*.tar.zst' -exec mv -f -t tc {} +
-          done
-          gh run download "${TOOLS_FROM##*/}" -R "${TOOLS_FROM%/*}" -p 'tool-*' -D dl/tools
-          find dl/tools -type f -exec mv -t tools {} +
-          rm -rf dl
-          ls -lh tc tools
+  stage4:
+    needs: stage3
+    if: needs.stage3.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 4
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
-      - name: Recipe in debian:trixie
-        env:
-          VERSION: ${{ inputs.version }}
-          CPU: ${{ inputs.cpu }}
-          SCAN: ${{ inputs.scan }}
-        run: |
-          # Stop ninja 25 minutes before the job limit, for the summary and cleanup.
-          deadline=$((JOB_START + 358 * 60 - 25 * 60))
-          cat > inside.sh <<'INSIDE'
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          cd /w/repo
-          apt-get update -q && apt-get install -y -q python3 python3-yaml
-          # The recipe's sudo: commands and ndk:, as fdroidserver would run them.
-          python3 - > /w/sudo.sh <<'PY'
-          import yaml
-          b = yaml.safe_load(open('fdroid/metadata/org.chromium.chrome.fdroid.yml'))['Builds'][-1]
-          print('set -ex')
-          print('\n'.join(b['sudo']))
-          print(f"echo {b['ndk']} > /w/ndk-version")
-          PY
-          cat /w/sudo.sh
-          time bash /w/sudo.sh
-          # The build server has the NDK already; here it comes from sdkmanager.
-          apt-get install -y -q sdkmanager python3-venv
-          ndk=$(cat /w/ndk-version)
-          sdkmanager --sdk_root=/opt/android-sdk "ndk;$ndk" > /dev/null
-          useradd -m builder
-          chown -R builder /w
-          run() { su builder -c "cd /w/repo && $*"; }
-          echo "::group::prebuild"
-          time run "ANDROID_NDK=/opt/android-sdk/ndk/$ndk fdroid/build.sh prebuild $VERSION $CPU"
-          echo "::endgroup::"
-          if [ "$SCAN" = true ]; then
-            echo "::group::scanner"
-            run "python3 -m venv /w/fd && /w/fd/bin/pip install -q fdroidserver==2.4.5 \
-              && /w/fd/bin/python -I .github/scripts/fdroid_scan.py src /w/scan --ignore fdroid/scanignore.txt" \
-              || echo "scanner failed"
-            echo "::endgroup::"
-          fi
-          echo "::group::build"
-          time run "ANDROID_NDK=/opt/android-sdk/ndk/$ndk TOOLCHAIN_PKG=/w/tc TOOLS_PKG=/w/tools \
-            NINJA_DEADLINE=$DEADLINE fdroid/build.sh build $VERSION $CPU"
-          echo "::endgroup::"
-          ls -l fdroid-out 2>/dev/null || echo "no APK (ninja stopped at the deadline)"
-          INSIDE
-          docker run --rm -v "$GITHUB_WORKSPACE:/w" -e VERSION -e CPU -e SCAN -e DEADLINE="$deadline" \
-            debian:trixie bash /w/inside.sh
+  stage5:
+    needs: stage4
+    if: needs.stage4.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 5
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}
 
-      - name: Summary
-        if: always()
-        run: |
-          [ -f scan/summary.md ] && cat scan/summary.md >> "$GITHUB_STEP_SUMMARY"
-          [ -f repo/src/toolchain-report.md ] && cat repo/src/toolchain-report.md >> "$GITHUB_STEP_SUMMARY"
-          df -h /
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: fdroid-recipe-${{ inputs.version }}-${{ inputs.cpu }}
-          path: |
-            scan/
-            repo/fdroid-out/
-          if-no-files-found: ignore
+  stage6:
+    needs: stage5
+    if: needs.stage5.outputs.done == 'false'
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 6
+      version: ${{ inputs.version }}
+      cpu: ${{ inputs.cpu }}
+      ninja_minutes: ${{ inputs.ninja_minutes }}

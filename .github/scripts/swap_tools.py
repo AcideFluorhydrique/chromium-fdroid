@@ -4,7 +4,7 @@ Chromium checkout, in place of the copies gclient sync downloaded.
 
 Usage: swap_tools.py <chromium src dir> <dir with the tool files>
 
-Every tool must be present; each replaced file is printed with the sha256 of
+Every tool must be in the tool directory; each replaced file is printed with the sha256 of
 both versions.
 """
 
@@ -43,12 +43,15 @@ def main():
     lines = ['## Prebuilt tools built from source', '', '| tool | path | before | after |', '|---|---|---|---|']
     for name, (rel, exe) in TOOLS.items():
         dst = os.path.join(src, rel)
-        if not os.path.exists(dst):
-            sys.exit(f'{rel} does not exist in this checkout')
-        before = sha(dst)
-        os.chmod(os.path.dirname(dst), 0o755)
-        os.chmod(dst, 0o644)
-        os.remove(dst)
+        if os.path.exists(dst):
+            before = sha(dst)
+            os.chmod(os.path.dirname(dst), 0o755)
+            os.chmod(dst, 0o644)
+            os.remove(dst)
+        else:
+            # Not synced (fdroid/replaced-deps.txt).
+            before = 'not synced'
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(os.path.join(tools, name), dst)
         os.chmod(dst, 0o755 if exe else 0o644)
         lines.append(f'| {name} | `{rel}` | `{before}` | `{sha(dst)}` |')

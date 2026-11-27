@@ -80,7 +80,10 @@ def restore(version, src, prune_list):
                 err = e
                 time.sleep(10 * (attempt + 1))
         else:
-            sys.exit(f'{rel}: {err} (a file from another repository in DEPS?)')
+            # Not fatal: a file of another DEPS repository, or of a package
+            # build provides itself (fdroid/replaced-*.txt).
+            print(f'not restored {rel}: {err} (a file from another repository in DEPS?)')
+            continue
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'wb') as f:
             f.write(data)

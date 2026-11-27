@@ -1,0 +1,26 @@
+name: fdroid/build.sh dry run (on push)
+
+# fdroid-build.yml with dry_run=true, started by a push that changes
+# .github/fdroid-dry-run (any text, e.g. the reason) instead of
+# workflow_dispatch: configure, the scanner, then ninja -n only.
+
+on:
+  push:
+    branches: [test/nifty-hypatia-c9t1lq]
+    paths: [.github/fdroid-dry-run]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  stage1:
+    uses: ./.github/workflows/fdroid-build-stage.yml
+    with:
+      stage: 1
+      version: "158.0.8127.36"
+      cpu: arm64
+      toolchain_from: "AcideFluorhydrique/chromium-fdroid/44875838806"
+      tools_from: "AcideFluorhydrique/chromium-fdroid/44573113946"
+      scan: true
+      dry_run: true

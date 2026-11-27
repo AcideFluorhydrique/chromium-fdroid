@@ -50,8 +50,6 @@ Builds:
       - src/third_party/rust/chromium_crates_io/vendor/jxl-v*/src/util/dither_32x32.bin
       - src/components/dom_distiller/core/data/distillable_page_model_new.bin
       - src/components/dom_distiller/core/data/long_page_model.bin
-      - src/ui/file_manager/image_loader/piex/piex.js.wasm
-      - src/ui/file_manager/image_loader/piex/piex.out.wasm
     build: DEPOT_TOOLS=$$depot_tools$$ ANDROID_NDK=$$NDK$$ fdroid/build.sh build $$VERSION$$
       arm64
     ndk: 30.0.16248370
@@ -75,7 +73,7 @@ MaintainerNotes: |-
   Both lists are cut out of src/DEPS (fdroid/skip_deps.py): custom_deps =
   None only skips git dependencies, not CIPD/GCS ones. Then it deletes the
   flagged files the build never reads (fdroid/prune_binaries.py with
-  reports/<version>/prune-list.txt.gz), the files build replaces
+  reports/<version>/prune-list.txt), the files build replaces
   (fdroid/replaced-files.txt), the Gradle files GN never reads, and the
   .aar/.jar files of the androidx and android_deps CIPD packages (synced
   for their BUILD.gn, licenses and .info files).
@@ -103,7 +101,7 @@ MaintainerNotes: |-
   09 = x64. Example: 158.0.8127.36 arm64 = 812703604.
 
   New versions: https://chromiumdash.appspot.com/releases?platform=Android
-  (Stable). The Repo needs reports/<version>/prune-list.txt.gz (scan.yml)
+  (Stable). The Repo needs reports/<version>/prune-list.txt (scan.yml)
   and reports/<version>/cipd-pins.json (sync-trim.yml) for each version.
 
   NDK version: grep android_ndk_version src/DEPS

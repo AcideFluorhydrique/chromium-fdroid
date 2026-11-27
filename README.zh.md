@@ -90,7 +90,7 @@ F-Droid 版（arm64，[run 44267270985](https://github.com/AcideFluorhydrique/ch
 | Java 套件（androidx、android_deps） | 360 | 178 MB | 改從 Maven 拿，或從原始碼編 |
 | 不開源依賴的引用（Play 服務、Firebase、ML Kit、未知 Maven repo） | 123 | 3.6 MB | 打補丁拿掉 |
 
-完整清單：[`fdroid-scan-findings.tsv.gz`](reports/157.0.8103.50/fdroid-scan-findings.tsv.gz)（欄位：類別、種類、路徑、大小、編譯是否會讀到）。
+完整的逐檔清單在 scan workflow 的 artifact 裡（repo 不放壓縮檔：fdroidserver 的 scanner 會把它們標記出來）。
 
 ### 套用 scandelete 和 scanignore 規則之後
 

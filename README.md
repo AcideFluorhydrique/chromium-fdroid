@@ -92,7 +92,7 @@ After `gclient sync`, the source tree contains 70,988 files flagged by the F-Dro
 | Java packages (`androidx`, `android_deps`) | 360 | 178 MB | Fetch from Maven or build from source. |
 | References to non-open-source dependencies (Play services, Firebase, ML Kit, unknown Maven repositories) | 123 | 3.6 MB | Remove through patches. |
 
-The complete findings are available in [`fdroid-scan-findings.tsv.gz`](reports/157.0.8103.50/fdroid-scan-findings.tsv.gz).
+The complete per-file findings are in the scan workflow's artifact (the repository keeps no archives: fdroidserver's scanner flags them).
 
 Columns include category, type, path, size, and whether the file is accessed during the build.
 

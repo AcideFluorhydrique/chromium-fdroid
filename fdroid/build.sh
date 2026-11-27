@@ -93,7 +93,7 @@ GCLIENT
   gclient sync --no-history -j 8
 
   echo "== delete the flagged files chrome_public_apk never reads"
-  python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt.gz"
+  python3 -I fdroid/prune_binaries.py src "reports/$version/prune-list.txt"
   # Files build replaces (fdroid/replaced-files.txt).
   grep -v '^#' fdroid/replaced-files.txt | grep . | while read -r f; do
     [ -e "src/$f" ] || [ -L "src/$f" ] || continue
@@ -125,7 +125,7 @@ build() {
     echo "== configured already, continuing ninja"
     # Files a .grd names that an older prebuild deleted (grit reads them, but
     # they are not ninja inputs): put them back from Gitiles.
-    python3 -I fdroid/prune_binaries.py --restore "$version" src "reports/$version/prune-list.txt.gz"
+    python3 -I fdroid/prune_binaries.py --restore "$version" src "reports/$version/prune-list.txt"
   else
     configure
   fi

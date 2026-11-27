@@ -87,7 +87,7 @@ jobs:
               recipe:*)
                 # fdroid-build.yml's unsigned APK, signed with a throwaway key
                 # the way F-Droid signs it with its own.
-                gh run download "${src#recipe:}" -R "$GITHUB_REPOSITORY" -p 'fdroid-recipe-*' -D "$d"
+                gh run download "${src#recipe:}" -R "$GITHUB_REPOSITORY" -p 'fdroid-recipe-[0-9]*' -D "$d"
                 u=$(find "$d" -name 'ChromePublic-unsigned.apk' | head -1)
                 [ -n "$u" ] || { echo "no unsigned APK in run ${src#recipe:}"; find "$d"; exit 1; }
                 bt=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)

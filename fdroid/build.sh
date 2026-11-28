@@ -58,7 +58,11 @@ depot_tools() {
     [ -d "$DEPOT_TOOLS" ] || git clone -q --depth 1 \
       https://chromium.googlesource.com/chromium/tools/depot_tools.git "$DEPOT_TOOLS"
   fi
-  export PATH=$DEPOT_TOOLS:$PATH
+  # Last: only gclient, vpython3 and cipd are wanted from it. Its ninja and
+  # python3 are wrappers that need depot_tools bootstrapped (update_depot_tools,
+  # which DEPOT_TOOLS_UPDATE=0 skips); CMake (the clang build) and the build
+  # scripts must find Debian's ninja-build and python3 first.
+  export PATH=$PATH:$DEPOT_TOOLS
 }
 
 prebuild() {
@@ -165,7 +169,9 @@ configure() {
   for part in clang-hostsys:clang rust-rustup:rust tools:tools; do
     [ -f "pkg/${part#*:}.tar.zst" ] || bash .github/scripts/toolchain_debian.sh "${part%%:*}"
   done
-  python3 .github/scripts/swap_toolchain.py src pkg
+  # Google's toolchain is not synced (fdroid/replaced-deps.txt): parts built
+  # above are in place already, so "unchanged by the swap" is not an error.
+  TOOLCHAIN_NOT_SYNCED=1 python3 .github/scripts/swap_toolchain.py src pkg
   # V8's metagen loads libclang through its Python bindings (Google's
   # llvm-libclang package is in fdroid/replaced-deps.txt).
   python3 -I fdroid/llvm_libclang.py src

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       apks:
-        description: "空白分隔的 label=來源。來源是本 repo 的 run id、owner/repo/run_id，或 release:owner/repo（最新 release 的 arm64 APK）"
+        description: "空白分隔的 label=來源。來源是本 repo 的 run id、owner/repo/run_id、release:owner/repo（最新 release 的 arm64 APK），或 recipe:<fdroid-build 的 run id>（未簽名的 APK，用測試金鑰簽）"
         required: true
         type: string
       api_level:
@@ -84,6 +84,17 @@ jobs:
             mkdir -p "$d"
             case "$src" in
               release:*) gh release download -R "${src#release:}" -p '*arm64*.apk' -D "$d" ;;
+              recipe:*)
+                # fdroid-build.yml's unsigned APK, signed with a throwaway key
+                # the way F-Droid signs it with its own.
+                gh run download "${src#recipe:}" -R "$GITHUB_REPOSITORY" -p 'fdroid-recipe-[0-9]*' -D "$d"
+                u=$(find "$d" -name 'ChromePublic-unsigned.apk' | head -1)
+                [ -n "$u" ] || { echo "no unsigned APK in run ${src#recipe:}"; find "$d"; exit 1; }
+                bt=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+                keytool -genkeypair -keystore "$d/t.jks" -storepass android -keypass android -alias t \
+                  -keyalg RSA -keysize 2048 -validity 1 -dname CN=test > /dev/null 2>&1
+                "$bt/apksigner" sign --ks "$d/t.jks" --ks-pass pass:android --out "$d/signed.apk" "$u"
+                rm "$u" ;;
               */*/*) gh run download "${src##*/}" -R "${src%/*}" -p 'chromium-android-*' -D "$d" ;;
               *) gh run download "$src" -R "$GITHUB_REPOSITORY" -p 'chromium-android-*' -D "$d" ;;
             esac

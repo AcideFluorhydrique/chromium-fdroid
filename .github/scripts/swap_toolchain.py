@@ -173,8 +173,11 @@ def main():
         with open(summary, 'a') as f:
             f.write(report)
 
+    # fdroid/build.sh does not sync Google's packages (fdroid/replaced-deps.txt)
+    # and builds the missing parts in place: then "unchanged" is ours.
+    not_synced = os.environ.get('TOOLCHAIN_NOT_SYNCED') == '1'
     for name, rel, _ in CHECKS:
-        if before[name][0] != 'missing' and after[name][0] == before[name][0]:
+        if before[name][0] != 'missing' and after[name][0] == before[name][0] and not not_synced:
             sys.exit(f'{name} still is the Google binary')
         if after[name][0] == 'missing' and before[name][0] != 'missing':
             sys.exit(f'{name} missing after swap')

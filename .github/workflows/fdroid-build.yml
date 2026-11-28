@@ -44,6 +44,11 @@ on:
         required: false
         default: ""
         type: string
+      fresh_toolchain:
+        description: "測試用：逗號分隔的工具鏈部分（clang、rust、tools），即使 toolchain_from 有也讓 build.sh 自己編（跟 F-Droid 的伺服器一樣）"
+        required: false
+        default: ""
+        type: string
       dry_run:
         description: "測試用：configure 完只跑 ninja -n（檢查編譯需要的檔案都在）就結束，不編譯"
         required: false
@@ -72,6 +77,7 @@ jobs:
       ninja_minutes: ${{ inputs.ninja_minutes }}
       resume_from: ${{ inputs.resume_from }}
       dry_run: ${{ inputs.dry_run }}
+      fresh_toolchain: ${{ inputs.fresh_toolchain }}
 
   stage2:
     needs: stage1

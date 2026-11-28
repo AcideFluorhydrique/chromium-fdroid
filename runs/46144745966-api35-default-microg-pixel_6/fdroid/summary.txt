@@ -1,0 +1,6 @@
+fdroid
+package org.chromium.chrome.fdroid
+crash lines: 0
+
+lines from org.chromium.chrome.fdroid mentioning Play services: 0
+
